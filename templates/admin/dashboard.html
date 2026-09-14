@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Dashboard - Bún Chả Việt</title>
+
+
+    <!-- GOOGLE FONT -->
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- CSS -->
+
+    <link rel="stylesheet"
+          href="/static/css/dashboard.css">
+
+</head>
+
+
+
+<body>
+
+
+<div class="admin-layout">
+
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="sidebar">
+
+
+        <!-- BRAND -->
+
+        <div class="brand">
+
+            <a href="/admin/dashboard"
+               class="brand-link">
+
+                <div class="brand-logo">
+                    🍜
+                </div>
+
+                <div class="brand-text">
+
+                    <h2>
+                        BÚN CHẢ VIỆT
+                    </h2>
+
+                    <span>
+                        ADMIN SYSTEM
+                    </span>
+
+                </div>
+
+            </a>
+
+        </div>
+
+
+
+        <!-- MENU LABEL -->
+
+        <div class="menu-label">
+            QUẢN LÝ
+        </div>
+
+
+
+        <!-- NAVIGATION -->
+
+        <nav class="sidebar-nav">
+
+
+            <a class="nav-item active"
+               href="/admin/dashboard">
+
+                <span class="nav-icon">
+                    🏠
+                </span>
+
+                <span class="nav-text">
+                    Trang quản lý
+                </span>
+
+            </a>
+
+
+
+            <a class="nav-item"
+               href="/admin/products">
+
+                <span class="nav-icon">
+                    🍜
+                </span>
+
+                <span class="nav-text">
+                    Quản lý sản phẩm
+                </span>
+
+            </a>
+
+
+
+            <a class="nav-item"
+               href="/admin/orders">
+
+                <span class="nav-icon">
+                    🛒
+                </span>
+
+                <span class="nav-text">
+                    Quản lý đơn hàng
+                </span>
+
+            </a>
+
+
+
+            <a class="nav-item"
+               href="/admin/users">
+
+                <span class="nav-icon">
+                    👨‍🍳
+                </span>
+
+                <span class="nav-text">
+                    Quản lý nhân viên
+                </span>
+
+            </a>
+
+
+
+            <a class="nav-item"
+               href="/admin/shippers">
+
+                <span class="nav-icon">
+                    🛵
+                </span>
+
+                <span class="nav-text">
+                    Quản lý Shipper
+                </span>
+
+            </a>
+
+
+        </nav>
+
+
+
+        <!-- SECOND MENU -->
+
+        <div class="menu-label second-label">
+            HỆ THỐNG
+        </div>
+
+
+
+        <nav class="sidebar-nav">
+
+            <a class="nav-item"
+               href="/">
+
+                <span class="nav-icon">
+                    🌐
+                </span>
+
+                <span class="nav-text">
+                    Xem trang bán hàng
+                </span>
+
+            </a>
+
+        </nav>
+
+
+
+        <!-- SIDEBAR FOOTER -->
+
+        <div class="sidebar-footer">
+
+            <div class="sidebar-user">
+
+                <div class="sidebar-avatar">
+
+                    {{ username[0]|upper }}
+
+                </div>
+
+
+                <div class="sidebar-user-info">
+
+                    <strong>
+                        {{ username }}
+                    </strong>
+
+                    <span>
+                        Quản trị viên
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <a href="/logout"
+               class="logout-btn">
+
+                <span>
+                    🚪
+                </span>
+
+                Đăng xuất
+
+            </a>
+
+        </div>
+
+
+    </aside>
+
+
+
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="content">
+
+
+
+        <!-- =================================================
+             TOPBAR
+        ================================================== -->
+
+        <header class="topbar">
+
+
+            <div class="topbar-title">
+
+                <p class="breadcrumb">
+                    Admin / Dashboard
+                </p>
+
+                <h1>
+                    Trang quản lý
+                </h1>
+
+                <p class="welcome-text">
+
+                    Xin chào,
+
+                    <strong>
+                        {{ username }}
+                    </strong>
+
+                    👋 Chúc bạn một ngày làm việc hiệu quả.
+
+                </p>
+
+            </div>
+
+
+
+            <div class="topbar-actions">
+
+
+                <a href="/"
+                   class="store-btn">
+
+                    <span>
+                        🌐
+                    </span>
+
+                    Xem cửa hàng
+
+                </a>
+
+
+                <div class="admin-profile">
+
+                    <div class="avatar">
+
+                        {{ username[0]|upper }}
+
+                    </div>
+
+
+                    <div class="profile-info">
+
+                        <strong>
+                            {{ username }}
+                        </strong>
+
+                        <span>
+                            Administrator
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        </header>
+
+
+
+
+
+        <!-- =================================================
+             STATISTICS
+        ================================================== -->
+
+        
+
+        <!-- =================================================
+             MAIN DASHBOARD GRID
+        ================================================== -->
+
+        <section class="dashboard-grid">
+
+
+
+            <!-- =============================================
+                 QUICK MANAGEMENT
+            ============================================== -->
+
+            <div class="dashboard-panel management-panel">
+
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="panel-label">
+                            TRUY CẬP NHANH
+                        </span>
+
+                        <h2>
+                            Quản lý cửa hàng
+                        </h2>
+
+                    </div>
+
+
+                    <span class="panel-icon">
+                        ⚙️
+                    </span>
+
+                </div>
+
+
+
+                <div class="management-list">
+
+
+
+                    <!-- PRODUCT -->
+
+                    <a href="/admin/products"
+                       class="management-item">
+
+                        <div class="management-icon product-icon">
+                            🍜
+                        </div>
+
+
+                        <div class="management-content">
+
+                            <h3>
+                                Sản phẩm
+                            </h3>
+
+                            <p>
+                                Thêm, sửa, xoá và cập nhật món ăn
+                            </p>
+
+                        </div>
+
+
+                        <span class="management-arrow">
+                            ›
+                        </span>
+
+                    </a>
+
+
+
+
+
+                    <!-- ORDERS -->
+
+                    <a href="/admin/orders"
+                       class="management-item">
+
+                        <div class="management-icon order-icon">
+                            📦
+                        </div>
+
+
+                        <div class="management-content">
+
+                            <h3>
+                                Đơn hàng
+                            </h3>
+
+                            <p>
+                                Kiểm tra và cập nhật trạng thái đơn hàng
+                            </p>
+
+                        </div>
+
+
+                        <span class="management-arrow">
+                            ›
+                        </span>
+
+                    </a>
+
+
+
+
+
+                    <!-- USER -->
+
+                    <a href="/admin/users"
+                       class="management-item">
+
+                        <div class="management-icon employee-icon">
+                            👥
+                        </div>
+
+
+                        <div class="management-content">
+
+                            <h3>
+                                Nhân viên
+                            </h3>
+
+                            <p>
+                                Quản lý tài khoản và nhân sự cửa hàng
+                            </p>
+
+                        </div>
+
+
+                        <span class="management-arrow">
+                            ›
+                        </span>
+
+                    </a>
+
+
+
+
+
+                    <!-- SHIPPER -->
+
+                    <a href="/admin/shippers"
+                       class="management-item">
+
+                        <div class="management-icon shipper-icon">
+                            🛵
+                        </div>
+
+
+                        <div class="management-content">
+
+                            <h3>
+                                Shipper
+                            </h3>
+
+                            <p>
+                                Quản lý nhân viên giao hàng
+                            </p>
+
+                        </div>
+
+
+                        <span class="management-arrow">
+                            ›
+                        </span>
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+
+
+
+            <!-- =============================================
+                 SYSTEM INFO
+            ============================================== -->
+
+            <div class="dashboard-panel system-panel">
+
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="panel-label">
+                            HỆ THỐNG
+                        </span>
+
+                        <h2>
+                            Trạng thái hoạt động
+                        </h2>
+
+                    </div>
+
+
+                    <span class="online-dot"></span>
+
+                </div>
+
+
+
+                <div class="system-status">
+
+
+                    <div class="status-row">
+
+                        <div>
+
+                            <span class="status-icon">
+                                🛒
+                            </span>
+
+                            <span>
+                                Hệ thống đặt hàng
+                            </span>
+
+                        </div>
+
+                        <span class="status-active">
+                            Hoạt động
+                        </span>
+
+                    </div>
+
+
+
+                    <div class="status-row">
+
+                        <div>
+
+                            <span class="status-icon">
+                                🍜
+                            </span>
+
+                            <span>
+                                Quản lý thực đơn
+                            </span>
+
+                        </div>
+
+                        <span class="status-active">
+                            Hoạt động
+                        </span>
+
+                    </div>
+
+
+
+                    <div class="status-row">
+
+                        <div>
+
+                            <span class="status-icon">
+                                🛵
+                            </span>
+
+                            <span>
+                                Giao hàng
+                            </span>
+
+                        </div>
+
+                        <span class="status-active">
+                            Hoạt động
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="system-message">
+
+                    <div class="system-message-icon">
+                        ✓
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Hệ thống đang hoạt động bình thường
+                        </strong>
+
+                        <p>
+                            Không phát hiện vấn đề cần xử lý.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+
+
+
+        <!-- =================================================
+             BOTTOM SECTION
+        ================================================== -->
+
+        <section class="bottom-grid">
+
+
+
+            <!-- WELCOME -->
+
+            <div class="welcome-card">
+
+                <div class="welcome-decoration">
+                    🍜
+                </div>
+
+
+                <div class="welcome-content">
+
+                    <span>
+                        BÚN CHẢ VIỆT
+                    </span>
+
+                    <h2>
+                        Hệ thống quản lý cửa hàng
+                    </h2>
+
+                    <p>
+                        Theo dõi và quản lý toàn bộ hoạt động
+                        của Bún Chả Việt tại một nơi — từ thực đơn,
+                        đơn hàng đến nhân viên và đội ngũ giao hàng.
+                    </p>
+
+
+                    <a href="/admin/orders"
+                       class="welcome-button">
+
+                        Xem đơn hàng
+
+                        <span>
+                            →
+                        </span>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+
+
+
+            <!-- QUICK ACTION -->
+
+            <div class="quick-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="panel-label">
+                            THAO TÁC
+                        </span>
+
+                        <h2>
+                            Tác vụ nhanh
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="quick-actions">
+
+
+                    <a href="/admin/products"
+                       class="quick-action">
+
+                        <span>
+                            ➕
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Thêm sản phẩm
+                            </strong>
+
+                            <small>
+                                Cập nhật thực đơn
+                            </small>
+
+                        </div>
+
+                    </a>
+
+
+
+                    <a href="/admin/orders"
+                       class="quick-action">
+
+                        <span>
+                            📋
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Kiểm tra đơn
+                            </strong>
+
+                            <small>
+                                Xử lý đơn hàng mới
+                            </small>
+
+                        </div>
+
+                    </a>
+
+
+
+                    <a href="/admin/users"
+                       class="quick-action">
+
+                        <span>
+                            👤
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Quản lý nhân viên
+                            </strong>
+
+                            <small>
+                                Tài khoản nội bộ
+                            </small>
+
+                        </div>
+
+                    </a>
+
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+
+
+        <!-- =================================================
+             FOOTER
+        ================================================== -->
+
+        <footer class="admin-footer">
+
+            <p>
+                © 2026 Bún Chả Việt
+            </p>
+
+            <p>
+                Admin Management System
+            </p>
+
+        </footer>
+
+
+    </main>
+
+
+</div>
+
+
+
+</body>
+
+</html>

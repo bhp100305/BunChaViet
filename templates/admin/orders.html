@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Quản lý đơn hàng - Bún Chả Việt</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link rel="stylesheet" href="/static/css/orders.css">
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- HEADER -->
+
+    <header class="page-header">
+
+        <div class="header-left">
+
+            <h1>
+                🛒 Quản lý đơn hàng
+            </h1>
+
+            <p>
+                Theo dõi, lọc và xử lý đơn khách hàng
+            </p>
+
+        </div>
+
+        <a
+            href="/admin/dashboard"
+            class="back-btn"
+        >
+            ← Quay về Trang Quản lý
+        </a>
+
+    </header>
+
+
+    <!-- BỘ LỌC -->
+
+    <section class="filter-box">
+
+        <div class="filter-title">
+            🔎 Tra cứu đơn hàng
+        </div>
+
+        <div class="filter-row">
+
+            <div class="filter-group">
+
+                <label for="filter-date">
+                    Tra cứu theo ngày
+                </label>
+
+                <input
+                    type="date"
+                    id="filter-date"
+                    value="{{ selected_date }}"
+                >
+
+            </div>
+
+
+            <div class="filter-group">
+
+                <label for="filter-month">
+                    Tra cứu theo tháng
+                </label>
+
+                <input
+                    type="month"
+                    id="filter-month"
+                    value="{{ selected_month }}"
+                >
+
+            </div>
+
+
+            <div class="filter-group">
+
+                <label for="filter-status">
+                    Trạng thái
+                </label>
+
+                <select id="filter-status">
+
+                    <option value="">
+                        Tất cả trạng thái
+                    </option>
+
+                    <option
+                        value="Đã tiếp nhận"
+                        {% if selected_status == "Đã tiếp nhận" %}selected{% endif %}
+                    >
+                        🟡 Đã tiếp nhận
+                    </option>
+
+                    <option
+                        value="Đang chuẩn bị"
+                        {% if selected_status == "Đang chuẩn bị" %}selected{% endif %}
+                    >
+                        🔵 Đang chuẩn bị
+                    </option>
+
+                    <option
+                        value="Đang giao"
+                        {% if selected_status == "Đang giao" %}selected{% endif %}
+                    >
+                        🚚 Đang giao
+                    </option>
+
+                    <option
+                        value="Hoàn thành"
+                        {% if selected_status == "Hoàn thành" %}selected{% endif %}
+                    >
+                        🟢 Hoàn thành
+                    </option>
+
+                    <option
+                        value="Đã hủy"
+                        {% if selected_status == "Đã hủy" %}selected{% endif %}
+                    >
+                        🔴 Đã hủy
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="filter-buttons">
+
+                <button
+                    type="button"
+                    class="filter-btn"
+                    onclick="filterOrders()"
+                >
+                    🔎 Lọc
+                </button>
+
+                <button
+                    type="button"
+                    class="reset-btn"
+                    onclick="resetFilter()"
+                >
+                    ↻ Tất cả
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="filter-hint">
+
+            Chọn ngày cụ thể hoặc tháng để xem lịch sử đơn hàng.
+
+        </div>
+
+    </section>
+
+
+
+
+    <!-- DANH SÁCH ĐƠN -->
+
+    <section class="order-table">
+
+        <div class="table-header">
+
+            <div>
+
+                <h2>
+                    📋 Danh sách đơn hàng
+                </h2>
+
+                <p>
+                    Các đơn hàng mới nhất được hiển thị ở trên
+                </p>
+
+            </div>
+
+            <div class="order-count">
+
+                {{ orders|length }} đơn hàng
+
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                <tr>
+
+                    <th>
+                        Mã đơn
+                    </th>
+
+                    <th>
+                        Thời gian
+                    </th>
+
+                    <th>
+                        Khách hàng
+                    </th>
+
+                    <th>
+                        SĐT
+                    </th>
+
+                    <th>
+                        Địa chỉ
+                    </th>
+
+                    <th>
+                        Tổng tiền
+                    </th>
+
+                    <th>
+                        Trạng thái
+                    </th>
+
+                    <th>
+                        Giao shipper
+                    </th>
+
+                    <th>
+                        Cập nhật
+                    </th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for o in orders %}
+
+                <tr>
+
+                    <!-- MÃ ĐƠN -->
+
+                    <td class="order-code">
+
+                        <strong>
+                            {{ o.OrderCode }}
+                        </strong>
+
+                    </td>
+
+
+                    <!-- THỜI GIAN -->
+
+                    <td class="order-time">
+
+                        {% if o.CreatedAt %}
+
+                            <strong>
+                                {{ o.CreatedAt.strftime("%d/%m/%Y") }}
+                            </strong>
+
+                            <small>
+                                {{ o.CreatedAt.strftime("%H:%M") }}
+                            </small>
+
+                        {% else %}
+
+                            <span>
+                                —
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- KHÁCH HÀNG -->
+
+                    <td class="customer">
+
+                        <strong>
+                            {{ o.CustomerName }}
+                        </strong>
+
+                    </td>
+
+
+                    <!-- SỐ ĐIỆN THOẠI -->
+
+                    <td>
+
+                        <a
+                            href="tel:{{ o.Phone }}"
+                            class="phone-link"
+                        >
+                            {{ o.Phone }}
+                        </a>
+
+                    </td>
+
+
+                    <!-- ĐỊA CHỈ -->
+
+                    <td class="address">
+
+                        <div>
+                            {{ o.Address }}
+                        </div>
+
+                        <small>
+
+                            {{ o.Ward }},
+                            {{ o.District }},
+                            {{ o.Province }}
+
+                        </small>
+
+                    </td>
+
+
+                    <!-- TỔNG TIỀN -->
+
+                    <td class="price">
+
+                        {{ "{:,.0f}".format(o.TotalMoney) }} đ
+
+                    </td>
+
+
+                    <!-- TRẠNG THÁI -->
+
+                    <td>
+
+                        <select
+                            id="status-{{ o.OrderID }}"
+                            class="status-select"
+                        >
+
+                            <option
+                                value="Đã tiếp nhận"
+                                {% if o.Status == "Đã tiếp nhận" %}selected{% endif %}
+                            >
+                                🟡 Đã tiếp nhận
+                            </option>
+
+                            <option
+                                value="Đang chuẩn bị"
+                                {% if o.Status == "Đang chuẩn bị" %}selected{% endif %}
+                            >
+                                🔵 Đang chuẩn bị
+                            </option>
+
+                            <option
+                                value="Đang giao"
+                                {% if o.Status == "Đang giao" %}selected{% endif %}
+                            >
+                                🚚 Đang giao
+                            </option>
+
+                            <option
+                                value="Hoàn thành"
+                                {% if o.Status == "Hoàn thành" %}selected{% endif %}
+                            >
+                                🟢 Hoàn thành
+                            </option>
+
+                            <option
+                                value="Đã hủy"
+                                {% if o.Status == "Đã hủy" %}selected{% endif %}
+                            >
+                                🔴 Đã hủy
+                            </option>
+
+                        </select>
+
+                    </td>
+
+
+                    <!-- SHIPPER -->
+
+                    <td>
+
+                        <div class="shipper-action">
+
+                            <select
+                                class="shipper-select"
+                                data-order="{{ o.OrderID }}"
+                            >
+
+                                <option value="">
+                                    Chọn shipper
+                                </option>
+
+                                {% for s in shippers %}
+
+                                <option
+                                    value="{{ s.UserID }}"
+                                    {% if o.DriverID == s.UserID %}selected{% endif %}
+                                >
+                                    {{ s.FullName }}
+                                </option>
+
+                                {% endfor %}
+
+                            </select>
+
+
+                            <button
+                                type="button"
+                                class="assign-btn"
+                                data-id="{{ o.OrderID }}"
+                            >
+                                🚚 Giao
+                            </button>
+
+                        </div>
+
+                    </td>
+
+
+                    <!-- CẬP NHẬT -->
+
+                    <td>
+
+                        <button
+                            type="button"
+                            class="save-btn update-order-btn"
+                            data-id="{{ o.OrderID }}"
+                        >
+                            💾 Lưu
+                        </button>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="9"
+                        class="empty"
+                    >
+
+                        <div class="empty-icon">
+                            📭
+                        </div>
+
+                        <strong>
+                            Không có đơn hàng
+                        </strong>
+
+                        <p>
+                            Không có đơn hàng phù hợp với bộ lọc hiện tại.
+                        </p>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script src="/static/js/orders.js"></script>
+
+</body>
+
+</html>

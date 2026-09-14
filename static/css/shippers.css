@@ -1,0 +1,273 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Roboto", sans-serif;
+    background: #fdfbf7;
+    color: #333;
+}
+
+.page {
+    min-height: 100vh;
+    padding: 35px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    font-family: "Playfair Display", serif;
+    color: #7a0c1e;
+    font-size: 32px;
+    margin-bottom: 6px;
+}
+
+.page-header p {
+    color: #777;
+}
+
+.back-btn {
+    text-decoration: none;
+    background: #7a0c1e;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.back-btn:hover {
+    background: #5f0918;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.add-btn {
+    border: none;
+    background: #7a0c1e;
+    color: white;
+    padding: 13px 22px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.add-btn:hover {
+    background: #5f0918;
+}
+
+.table-box {
+    background: white;
+    border-radius: 14px;
+    overflow-x: auto;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 950px;
+}
+
+thead {
+    background: #7a0c1e;
+    color: white;
+}
+
+th,
+td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    font-weight: 700;
+}
+
+tbody tr:hover {
+    background: #fffaf2;
+}
+
+.order-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 20px;
+    background: #fff1c2;
+    color: #7a0c1e;
+    font-weight: 700;
+}
+
+.status {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.status.active {
+    color: #16803c;
+}
+
+.status.inactive {
+    color: #999;
+}
+
+.action-group {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-btn,
+.lock-btn,
+.unlock-btn {
+    border: none;
+    padding: 9px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.edit-btn {
+    background: #eee;
+    color: #333;
+}
+
+.lock-btn {
+    background: #ffe0e0;
+    color: #a00000;
+}
+
+.unlock-btn {
+    background: #dff5e6;
+    color: #16753b;
+}
+
+.edit-btn:hover,
+.lock-btn:hover,
+.unlock-btn:hover {
+    opacity: 0.8;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+    font-family: "Playfair Display", serif;
+    color: #7a0c1e;
+    margin-bottom: 25px;
+}
+
+.close-btn {
+    position: absolute;
+    right: 18px;
+    top: 15px;
+    border: none;
+    background: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #777;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 700;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+}
+
+.form-group input:focus {
+    border-color: #7a0c1e;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 6px;
+    color: #888;
+}
+
+.save-btn {
+    width: 100%;
+    border: none;
+    background: #7a0c1e;
+    color: white;
+    padding: 13px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.save-btn:hover {
+    background: #5f0918;
+}
+
+@media (max-width: 700px) {
+    .page {
+        padding: 20px;
+    }
+
+    .page-header {
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .page-header h1 {
+        font-size: 25px;
+    }
+
+    .back-btn {
+        white-space: nowrap;
+    }
+
+    .action-group {
+        flex-direction: column;
+    }
+}

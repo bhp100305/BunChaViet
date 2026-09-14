@@ -1,0 +1,386 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+
+
+body{
+
+    font-family:'Roboto',sans-serif;
+
+}
+
+
+
+.login-body{
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+
+    background:
+
+    linear-gradient(
+        rgba(122,12,30,0.75),
+        rgba(0,0,0,0.75)
+    ),
+
+    url("https://images.unsplash.com/photo-1601050690597-df0568f70950")
+    center/cover;
+
+
+}
+
+
+
+
+.login-container{
+
+    width:100%;
+
+    display:flex;
+
+    justify-content:center;
+
+}
+
+
+
+
+
+.login-card{
+
+
+    width:420px;
+
+    padding:45px 40px;
+
+
+    background:
+
+    rgba(255,255,255,0.95);
+
+
+
+    border-radius:20px;
+
+
+    box-shadow:
+
+    0 20px 50px rgba(0,0,0,.35);
+
+
+
+    animation:
+
+    show .6s ease;
+
+
+
+}
+
+
+
+
+
+@keyframes show{
+
+
+from{
+
+    opacity:0;
+
+    transform:translateY(30px);
+
+}
+
+
+to{
+
+    opacity:1;
+
+    transform:none;
+
+}
+
+
+}
+
+
+
+
+
+.login-header{
+
+    text-align:center;
+
+    margin-bottom:35px;
+
+}
+
+
+
+.logo-circle{
+
+
+    width:80px;
+
+    height:80px;
+
+
+    margin:auto;
+
+
+    border-radius:50%;
+
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+
+    font-size:45px;
+
+
+    background:#7a0c1e;
+
+
+    border:5px solid #ffcc00;
+
+
+}
+
+
+
+
+
+.login-header h1{
+
+
+    margin-top:18px;
+
+
+    font-family:'Playfair Display';
+
+
+    color:#7a0c1e;
+
+
+    letter-spacing:2px;
+
+
+}
+
+
+
+.login-header p{
+
+    margin-top:8px;
+
+    font-size:17px;
+
+    color:#555;
+
+}
+
+
+
+.login-header span{
+
+
+    font-size:13px;
+
+    color:#999;
+
+
+}
+
+
+
+
+.input-box{
+
+    margin-bottom:22px;
+
+}
+
+
+
+.input-box label{
+
+
+    display:block;
+
+    margin-bottom:8px;
+
+
+    color:#7a0c1e;
+
+    font-weight:600;
+
+
+}
+
+
+
+.input-box input{
+
+
+    width:100%;
+
+
+    padding:14px 16px;
+
+
+    border-radius:10px;
+
+
+    border:1px solid #ddd;
+
+
+    outline:none;
+
+
+    font-size:15px;
+
+
+    transition:.3s;
+
+
+}
+
+
+
+
+.input-box input:focus{
+
+
+    border-color:#e6a100;
+
+
+    box-shadow:
+
+    0 0 0 3px rgba(230,161,0,.15);
+
+
+}
+
+
+
+
+
+.login-btn{
+
+
+    width:100%;
+
+
+    padding:14px;
+
+
+    border:none;
+
+
+    border-radius:30px;
+
+
+    background:#7a0c1e;
+
+
+    color:white;
+
+
+    font-weight:700;
+
+
+    letter-spacing:1px;
+
+
+    cursor:pointer;
+
+
+    transition:.3s;
+
+
+}
+
+
+
+
+
+.login-btn:hover{
+
+
+    background:#5c0715;
+
+
+    transform:translateY(-2px);
+
+
+}
+
+
+
+
+
+.back-home{
+
+
+    text-align:center;
+
+
+    margin-top:25px;
+
+
+}
+
+
+
+.back-home a{
+
+
+    color:#7a0c1e;
+
+    text-decoration:none;
+
+
+    font-size:14px;
+
+
+}
+
+
+
+.back-home a:hover{
+
+    color:#e6a100;
+
+}
+
+
+
+.error-message{
+
+
+    color:#b00020;
+
+    background:#ffe5e5;
+
+    padding:10px;
+
+    border-radius:8px;
+
+    margin-bottom:15px;
+
+    display:none;
+
+}

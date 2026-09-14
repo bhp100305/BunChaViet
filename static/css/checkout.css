@@ -1,0 +1,482 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+
+    font-family: 'Roboto', sans-serif;
+
+    background: #fdfbf7;
+
+    color: #333;
+
+}
+
+
+
+.checkout-header {
+
+    background: #7a0c1e;
+
+    padding: 25px 50px;
+
+}
+
+
+
+.header-content {
+
+    max-width: 1200px;
+
+    margin: auto;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+}
+
+
+
+.checkout-header h1 {
+
+    font-family: 'Playfair Display', serif;
+
+    color: white;
+
+    font-size: 32px;
+
+}
+
+
+
+.checkout-header a {
+
+    color: white;
+
+    text-decoration: none;
+
+    padding: 12px 25px;
+
+    border-radius: 30px;
+
+    background: rgba(255,255,255,0.15);
+
+}
+
+
+
+.checkout-container {
+
+    max-width: 1200px;
+
+    margin: 40px auto;
+
+    display: grid;
+
+    grid-template-columns: 1fr 400px;
+
+    gap: 30px;
+
+}
+
+
+
+
+.customer-box,
+.order-box {
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 20px;
+
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+
+}
+
+
+
+h2 {
+
+    color: #7a0c1e;
+
+    font-family: 'Playfair Display', serif;
+
+    margin-bottom: 25px;
+
+    font-size: 26px;
+
+}
+
+
+
+.form-group {
+
+    margin-bottom: 18px;
+
+}
+
+
+
+label {
+
+    display: block;
+
+    font-weight: 600;
+
+    margin-bottom: 8px;
+
+    color: #555;
+
+}
+
+
+
+input,
+textarea,
+select {
+
+    width: 100%;
+
+    padding: 13px 15px;
+
+    border-radius: 10px;
+
+    border: 1px solid #ddd;
+
+    font-size: 15px;
+
+    outline: none;
+
+}
+
+
+
+input:focus,
+textarea:focus,
+select:focus {
+
+    border-color: #7a0c1e;
+
+}
+
+
+
+textarea {
+
+    height: 100px;
+
+    resize: none;
+
+}
+
+
+
+
+.address-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(3,1fr);
+
+    gap: 15px;
+
+}
+
+
+
+
+.checkout-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 15px 0;
+
+    border-bottom: 1px solid #eee;
+
+}
+
+
+
+.checkout-item img {
+
+    width: 70px;
+
+    height: 70px;
+
+    border-radius: 12px;
+
+    object-fit: cover;
+
+}
+
+
+
+.checkout-item h3 {
+
+    font-size: 16px;
+
+    color:#7a0c1e;
+
+}
+
+
+
+.checkout-item p {
+
+    margin-top: 5px;
+
+    color:#666;
+
+}
+
+
+
+
+.total {
+
+    margin-top: 25px;
+
+    padding-top:20px;
+
+    border-top:2px solid #eee;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    font-size:20px;
+
+}
+
+
+
+.total strong {
+
+    color:#7a0c1e;
+
+}
+
+
+
+
+
+.order-btn {
+
+    width:100%;
+
+    margin-top:25px;
+
+    padding:15px;
+
+    border:none;
+
+    border-radius:30px;
+
+    background:#7a0c1e;
+
+    color:white;
+
+    font-weight:bold;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+}
+
+
+
+.order-btn:hover {
+
+    background:#ffcc00;
+
+    color:#7a0c1e;
+
+}
+
+
+
+
+@media(max-width:900px){
+
+
+    .checkout-container {
+
+        grid-template-columns:1fr;
+
+        padding:20px;
+
+    }
+
+
+
+    .address-grid {
+
+        grid-template-columns:1fr;
+
+    }
+
+
+}
+/* ===============================
+   SUCCESS MODAL
+================================ */
+
+
+.success-modal {
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,0.5);
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:999;
+
+}
+
+
+
+.success-box {
+
+    width:420px;
+
+    background:white;
+
+    padding:35px;
+
+    border-radius:25px;
+
+    text-align:center;
+
+    animation:show .3s;
+
+}
+
+
+
+.success-icon {
+
+    width:70px;
+
+    height:70px;
+
+    margin:auto;
+
+    border-radius:50%;
+
+    background:#7a0c1e;
+
+    color:white;
+
+    font-size:40px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+
+
+.success-box h2 {
+
+    margin-top:20px;
+
+    color:#7a0c1e;
+
+}
+
+
+
+.success-box p {
+
+    margin-top:15px;
+
+    color:#555;
+
+}
+
+
+
+.track-btn,
+.home-btn {
+
+
+    width:100%;
+
+    padding:14px;
+
+    border:none;
+
+    border-radius:30px;
+
+    margin-top:20px;
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+}
+
+
+
+.track-btn {
+
+    background:#7a0c1e;
+
+    color:white;
+
+}
+
+
+
+.home-btn {
+
+    background:#ffcc00;
+
+    color:#7a0c1e;
+
+}
+
+
+
+@keyframes show {
+
+    from{
+
+        transform:scale(.7);
+
+        opacity:0;
+
+    }
+
+    to{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}

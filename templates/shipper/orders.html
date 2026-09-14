@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Shipper - Bún Chả Việt
+    </title>
+
+    <link rel="stylesheet" href="/static/css/shipper.css">
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+    <div class="brand">
+
+        <h1>
+            🛵 BÚN CHẢ VIỆT
+        </h1>
+
+        <p>
+            Xin chào {{ username }}
+        </p>
+
+    </div>
+
+
+    <a href="/logout">
+        Đăng xuất
+    </a>
+
+
+</header>
+
+
+
+
+<main class="container">
+
+
+    <h2>
+        📦 Đơn hàng được giao
+    </h2>
+
+
+
+    <div class="order-list">
+
+
+
+        {% for order in orders %}
+
+
+        <div class="order-card">
+
+
+            <div class="order-top">
+
+
+                <h3>
+                    🧾 Đơn #{{ order.OrderCode }}
+                </h3>
+
+
+                <span class="status">
+
+                    {{ order.Status }}
+
+                </span>
+
+
+            </div>
+
+
+
+
+            <div class="customer-info">
+
+
+                <p>
+                    👤 
+                    {{ order.CustomerName }}
+                </p>
+
+
+                <p>
+                    📞
+                    {{ order.Phone }}
+                </p>
+
+
+                <p>
+                    📍
+                    {{ order.Address }},
+                    {{ order.Ward }},
+                    {{ order.District }},
+                    {{ order.Province }}
+                </p>
+
+
+                {% if order.Note %}
+
+                <p>
+                    📝
+                    {{ order.Note }}
+                </p>
+
+                {% endif %}
+
+
+            </div>
+
+
+
+
+
+            <div class="action-group">
+
+
+                <button
+                class="status-btn"
+                data-id="{{ order.OrderID }}"
+                data-status="Đang chuẩn bị">
+
+                    🍜 Đã lấy món
+
+                </button>
+
+
+
+
+                <button
+                class="status-btn"
+                data-id="{{ order.OrderID }}"
+                data-status="Đang giao">
+
+                    🛵 Bắt đầu giao
+
+                </button>
+
+
+
+
+                <button
+                class="status-btn"
+                data-id="{{ order.OrderID }}"
+                data-status="Hoàn thành">
+
+                    ✅ Hoàn thành
+
+                </button>
+
+
+            </div>
+
+
+
+        </div>
+
+
+        {% else %}
+
+
+        <div class="empty">
+
+            Hiện chưa có đơn hàng
+
+        </div>
+
+
+        {% endfor %}
+
+
+
+    </div>
+
+
+</main>
+
+
+
+
+<script src="/static/js/shipper.js"></script>
+
+
+</body>
+
+</html>

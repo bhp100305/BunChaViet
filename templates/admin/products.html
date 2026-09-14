@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Quản lý sản phẩm - Bún Chả Việt</title>
+
+    <link rel="stylesheet" href="/static/css/products.css">
+</head>
+
+<body>
+
+<div class="page">
+
+    <header class="page-header">
+
+        <div>
+            <h1>🍜 Quản lý món ăn</h1>
+            <p>Quản lý thực đơn Bún Chả Việt</p>
+        </div>
+
+        <a href="/admin/dashboard" class="back-btn">
+            ← Dashboard
+        </a>
+
+    </header>
+
+
+    <div class="toolbar">
+
+        <button id="btnAdd" class="add-btn">
+            + Thêm món mới
+        </button>
+
+    </div>
+
+
+    <div class="table-box">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ảnh</th>
+                    <th>Tên món</th>
+                    <th>Danh mục</th>
+                    <th>Giá</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+            {% for p in products %}
+
+                <tr>
+
+                    <td>
+                        {{ p.ProductID }}
+                    </td>
+
+
+                    <td>
+
+                        {% if p.Image %}
+
+                            <img class="product-img"
+                                 src="/static/images/{{ p.Image }}"
+                                 alt="{{ p.ProductName }}">
+
+                        {% else %}
+
+                            Không có ảnh
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td class="product-info">
+
+                        <h3>
+                            {{ p.ProductName }}
+                        </h3>
+
+                        <p>
+                            {{ p.Description }}
+                        </p>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="category-tag">
+                            {{ p.CategoryName }}
+                        </span>
+
+                    </td>
+
+
+                    <td class="price">
+
+                        {{ "{:,.0f}".format(p.Price) }} đ
+
+                    </td>
+
+
+                    <td>
+
+                        <button class="edit-btn edit-product"
+                                data-id="{{ p.ProductID }}"
+                                data-name="{{ p.ProductName }}"
+                                data-description="{{ p.Description }}"
+                                data-price="{{ p.Price }}"
+                                data-category="{{ p.CategoryID }}">
+
+                            ✏ Sửa
+
+                        </button>
+
+
+                        <button class="delete-btn delete-product"
+                                data-id="{{ p.ProductID }}">
+
+                            🗑 Xóa
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+
+
+
+<!-- FORM MODAL -->
+
+<div id="productModal" class="modal">
+
+    <div class="modal-content">
+
+        <span id="btnClose" class="close">
+            ×
+        </span>
+
+
+        <h2 id="modalTitle">
+            Thêm món ăn
+        </h2>
+
+
+        <form id="productForm"
+              method="POST"
+              enctype="multipart/form-data">
+
+
+            <input type="hidden"
+                   id="productID">
+
+
+
+            <label>
+                Tên món
+            </label>
+
+            <input type="text"
+                   id="productName"
+                   name="name"
+                   required>
+
+
+
+            <label>
+                Mô tả
+            </label>
+
+            <textarea id="description"
+                      name="description"></textarea>
+
+
+
+            <label>
+                Giá
+            </label>
+
+            <input type="number"
+                   id="price"
+                   name="price"
+                   required>
+
+
+
+            <label>
+                Danh mục
+            </label>
+
+            <select id="category"
+                    name="category">
+
+                {% for c in categories %}
+
+                    <option value="{{ c.CategoryID }}">
+                        {{ c.CategoryName }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+
+
+            <label>
+                Hình ảnh
+            </label>
+
+            <input type="file"
+                   id="image"
+                   name="image"
+                   accept="image/*">
+
+
+
+            <button type="submit"
+                    class="save-btn">
+
+                Lưu sản phẩm
+
+            </button>
+
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script src="/static/js/products.js"></script>
+
+</body>
+</html>
