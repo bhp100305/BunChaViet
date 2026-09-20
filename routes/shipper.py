@@ -18,18 +18,21 @@ shipper_bp = Blueprint(
 )
 
 
-# =========================================================
-# KIỂM TRA SHIPPER
-# =========================================================
+
+# =====================================================
+# CHECK ROLE
+# =====================================================
 
 def check_shipper():
 
     return session.get("role") == "Shipper"
 
 
-# =========================================================
-# TRANG ĐƠN HÀNG SHIPPER
-# =========================================================
+
+
+# =====================================================
+# SHIPPER ORDERS PAGE
+# =====================================================
 
 @shipper_bp.route("/orders")
 def orders():
@@ -46,30 +49,34 @@ def orders():
     cursor = conn.cursor()
 
 
+
     cursor.execute("""
+
         SELECT
             OrderID,
             OrderCode,
             CustomerName,
             Phone,
-            Province,
-            District,
-            Ward,
             Address,
             Note,
             TotalMoney,
+            ShippingFee,
+            (TotalMoney + ShippingFee) AS FinalMoney,
             Status,
             DriverID
         FROM Orders
         WHERE DriverID = ?
         ORDER BY OrderID DESC
+
     """,
     (
         session.get("user_id"),
     ))
 
 
+
     orders = cursor.fetchall()
+
 
 
     cursor.close()
@@ -77,16 +84,24 @@ def orders():
     conn.close()
 
 
+
     return render_template(
+
         "shipper/orders.html",
+
         orders=orders,
+
         username=session.get("fullname")
+
     )
 
 
-# =========================================================
-# SHIPPER CẬP NHẬT TRẠNG THÁI
-# =========================================================
+
+
+
+# =====================================================
+# UPDATE ORDER STATUS
+# =====================================================
 
 @shipper_bp.route(
     "/update/<int:id>",
@@ -94,31 +109,53 @@ def orders():
 )
 def update_status(id):
 
+
     if not check_shipper():
 
         return jsonify({
+
             "success": False,
-            "message": "Không có quyền!"
+
+            "message":
+            "Không có quyền!"
+
         }), 403
+
 
 
     data = request.get_json()
 
+
     status = data.get("status")
 
 
+
     allowed_status = [
+
+        "Đang chuẩn bị",
+
         "Đang giao",
+
         "Hoàn thành"
+
     ]
+
 
 
     if status not in allowed_status:
 
+
         return jsonify({
+
             "success": False,
-            "message": "Trạng thái không hợp lệ!"
+
+            "message":
+            "Trạng thái không hợp lệ"
+
         }), 400
+
+
+
 
 
     conn = get_connection()
@@ -126,7 +163,9 @@ def update_status(id):
     cursor = conn.cursor()
 
 
+
     cursor.execute("""
+
         UPDATE Orders
 
         SET Status = ?
@@ -134,12 +173,19 @@ def update_status(id):
         WHERE OrderID = ?
 
         AND DriverID = ?
+
+
     """,
     (
+
         status,
+
         id,
+
         session.get("user_id")
+
     ))
+
 
 
     conn.commit()
@@ -150,14 +196,21 @@ def update_status(id):
     conn.close()
 
 
+
     return jsonify({
+
         "success": True
+
     })
 
 
-# =========================================================
-# SHIPPER GỬI VỊ TRÍ GPS
-# =========================================================
+
+
+
+
+# =====================================================
+# UPDATE SHIPPER GPS
+# =====================================================
 
 @shipper_bp.route(
     "/location",
@@ -165,15 +218,25 @@ def update_status(id):
 )
 def update_location():
 
+
+
     if not check_shipper():
 
         return jsonify({
-            "success": False,
-            "message": "Không có quyền!"
-        }), 403
+
+            "success":False,
+
+            "message":
+            "Không có quyền!"
+
+        }),403
+
+
+
 
 
     data = request.get_json()
+
 
 
     latitude = data.get("latitude")
@@ -181,15 +244,22 @@ def update_location():
     longitude = data.get("longitude")
 
 
+
+
     if latitude is None or longitude is None:
 
+
         return jsonify({
-            "success": False,
-            "message": "Thiếu tọa độ GPS!"
-        }), 400
+
+            "success":False,
+
+            "message":
+            "Thiếu GPS"
+
+        }),400
 
 
-    user_id = session.get("user_id")
+
 
 
     conn = get_connection()
@@ -197,65 +267,54 @@ def update_location():
     cursor = conn.cursor()
 
 
+
     cursor.execute("""
-        SELECT UserID
-        FROM ShipperLocations
-        WHERE UserID = ?
+
+        INSERT INTO DriverLocations
+
+        (
+
+            DriverID,
+
+            Latitude,
+
+            Longitude,
+
+            UpdatedAt
+
+        )
+
+
+        VALUES
+
+        (
+
+            ?,
+
+            ?,
+
+            ?,
+
+            GETDATE()
+
+        )
+
+
     """,
     (
-        user_id,
+
+        session.get("user_id"),
+
+        latitude,
+
+        longitude
+
     ))
 
 
-    existing = cursor.fetchone()
-
-
-    if existing:
-
-        cursor.execute("""
-            UPDATE ShipperLocations
-
-            SET
-                Latitude = ?,
-                Longitude = ?,
-                UpdatedAt = GETDATE()
-
-            WHERE UserID = ?
-        """,
-        (
-            latitude,
-            longitude,
-            user_id
-        ))
-
-
-    else:
-
-        cursor.execute("""
-            INSERT INTO ShipperLocations
-            (
-                UserID,
-                Latitude,
-                Longitude,
-                UpdatedAt
-            )
-
-            VALUES
-            (
-                ?,
-                ?,
-                ?,
-                GETDATE()
-            )
-        """,
-        (
-            user_id,
-            latitude,
-            longitude
-        ))
-
 
     conn.commit()
+
 
 
     cursor.close()
@@ -263,6 +322,9 @@ def update_location():
     conn.close()
 
 
+
     return jsonify({
-        "success": True
+
+        "success":True
+
     })

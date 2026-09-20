@@ -414,32 +414,29 @@
             🔎 Theo dõi đơn hàng
         </h2>
 
-
         <p>
             Nhập số điện thoại đặt hàng
         </p>
 
 
-        <input
-            id="phone"
-            type="tel"
-            placeholder="Nhập số điện thoại"
-        >
+        <div class="search-form">
+
+            <input
+                id="phone"
+                type="tel"
+                placeholder="Nhập số điện thoại"
+                autocomplete="tel"
+            >
 
 
-        <button
-            onclick="searchOrder()"
-        >
-            Tra cứu đơn hàng
-        </button>
+            <button onclick="searchOrder()">
+                Tra cứu đơn hàng
+            </button>
+
+        </div>
 
     </section>
 
-
-
-    <!-- ================================
-         KẾT QUẢ
-    ================================= -->
 
     <section
         id="order-result"

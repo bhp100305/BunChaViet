@@ -2,225 +2,343 @@
 <html lang="vi">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Thanh toán - Bún Chả Việt</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/css/checkout.css">
+    <title>
+        Thanh toán - Bún Chả Việt
+    </title>
+
+
+    <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet">
+
+
+    <link
+    rel="stylesheet"
+    href="/static/css/checkout.css">
+
+
+    <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css">
+
 </head>
+
 
 
 <body>
 
-<header class="checkout-header">
+
+
+<header class="header">
 
     <div class="header-content">
+
 
         <h1>
             🍜 BÚN CHẢ VIỆT
         </h1>
 
+
+
         <a href="/">
             ← Quay lại thực đơn
         </a>
 
+
     </div>
 
+
 </header>
+
+
 
 
 
 <main class="checkout-container">
 
 
-    <!-- THÔNG TIN KHÁCH HÀNG -->
 
-    <section class="customer-box">
+<section class="customer-box">
 
-        <h2>
-            📍 Thông tin giao hàng
-        </h2>
 
+<h2>
+    📍 Thông tin giao hàng
+</h2>
 
-        <div class="form-group">
 
-            <label>
-                Họ và tên
-            </label>
 
-            <input 
-                id="fullname"
-                type="text"
-                placeholder="Nhập họ tên">
 
-        </div>
+<div class="form-group">
 
 
+<label>
+    Họ và tên
+</label>
 
-        <div class="form-group">
 
-            <label>
-                Số điện thoại
-            </label>
+<input
+id="fullname"
+placeholder="Nhập họ tên">
 
-            <input 
-                id="phone"
-                type="text"
-                placeholder="Nhập số điện thoại">
+</div>
 
-        </div>
 
 
 
-        <div class="address-grid">
 
+<div class="form-group">
 
-            <div class="form-group">
 
-                <label>
-                    Tỉnh/Thành phố
-                </label>
+<label>
+    Số điện thoại
+</label>
 
-                <select id="province">
 
-                    <option>
-                        Chọn tỉnh/thành phố
-                    </option>
+<input
+id="phone"
+placeholder="Nhập số điện thoại">
 
-                </select>
+</div>
 
-            </div>
 
 
 
-            <div class="form-group">
 
-                <label>
-                    Quận/Huyện
-                </label>
+<div class="form-group">
 
-                <select id="district">
 
-                    <option>
-                        Chọn quận/huyện
-                    </option>
+<label>
+    Địa chỉ giao hàng
+</label>
 
-                </select>
 
-            </div>
 
+<div class="address-search">
 
 
+<input
+id="address"
+placeholder="Nhập địa chỉ giao hàng..."
+autocomplete="off">
 
-            <div class="form-group">
 
-                <label>
-                    Phường/Xã
-                </label>
 
-                <select id="ward">
+<button
+id="search-location"
+type="button">
 
-                    <option>
-                        Chọn phường/xã
-                    </option>
+🔎
 
-                </select>
+</button>
 
-            </div>
 
+<div id="suggestions"></div>
 
-        </div>
 
+</div>
 
 
 
-        <div class="form-group">
 
-            <label>
-                Địa chỉ cụ thể
-            </label>
 
-            <textarea 
-                id="address"
-                placeholder="Ví dụ: Số 10, đường ABC">
-            </textarea>
+<button
+class="current-btn"
+id="current-location"
+type="button">
 
-        </div>
+📍 Dùng vị trí hiện tại
 
+</button>
 
 
+</div>
 
-        <div class="form-group">
 
-            <label>
-                Ghi chú
-            </label>
 
-            <textarea
-                id="note"
-                placeholder="Ví dụ: Giao giờ trưa, ít hành...">
-            </textarea>
 
-        </div>
 
+<div id="map"></div>
 
-    </section>
 
 
+<input
+type="hidden"
+id="latitude">
 
 
+<input
+type="hidden"
+id="longitude">
 
-    <!-- ĐƠN HÀNG -->
 
-    <section class="order-box">
 
-        <h2>
-            🛒 Đơn hàng của bạn
-        </h2>
 
 
-        <div id="checkout-items">
+<div class="form-group">
 
-        </div>
 
+<label>
+    Ghi chú
+</label>
 
 
-        <div class="total">
+<textarea
+id="note"
+placeholder="Ví dụ: Giao giờ trưa, ít hành...">
+</textarea>
 
-            <span>
-                Tổng tiền:
-            </span>
 
+</div>
 
-            <strong id="checkout-total">
-                0 ₫
-            </strong>
 
-        </div>
 
 
+</section>
 
 
-        <button 
-            id="order-btn"
-            class="order-btn">
 
-            ĐẶT HÀNG
 
-        </button>
 
 
-    </section>
+<section class="order-box">
+
+
+
+<h2>
+    🛒 Đơn hàng của bạn
+</h2>
+
+
+
+
+<div id="checkout-items"></div>
+
+
+
+
+
+<div class="summary">
+
+
+
+<div>
+
+<span>
+Tiền món:
+</span>
+
+
+<strong id="food-total">
+0 ₫
+</strong>
+
+
+</div>
+
+
+
+
+
+<div>
+
+<span>
+Khoảng cách:
+</span>
+
+
+<strong id="distance">
+0 km
+</strong>
+
+
+</div>
+
+
+
+
+
+<div>
+
+<span>
+Phí giao hàng:
+</span>
+
+
+<strong id="shipping-fee">
+0 ₫
+</strong>
+
+
+</div>
+
+
+
+
+
+
+<div class="final-total">
+
+
+<span>
+Tổng tiền:
+</span>
+
+
+<strong id="checkout-total">
+0 ₫
+</strong>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<button
+id="order-btn"
+class="order-btn">
+
+ĐẶT HÀNG
+
+</button>
+
+
+
+</section>
+
+
 
 
 </main>
 
 
 
-<script src="/static/js/checkout.js"></script>
+
+
+
+<script
+src="https://unpkg.com/leaflet/dist/leaflet.js">
+</script>
+
+
+
+<script
+src="/static/js/checkout.js">
+</script>
+
 
 
 </body>

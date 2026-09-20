@@ -1,115 +1,510 @@
-// =======================================
-// CART
-// =======================================
+// =====================================================
+// CART + SHIPPING CONFIG
+// =====================================================
 
-let cart = JSON.parse(
-    localStorage.getItem("cart")
-) || [];
+let cart =
+    JSON.parse(localStorage.getItem("cart")) || [];
 
 
-// =======================================
-// HIỂN THỊ ĐƠN HÀNG
-// =======================================
+let shippingFee = 0;
+
+
+// Tọa độ cửa hàng
+// Số 3 Cầu Giấy
+
+const SHOP_LAT = 21.0338;
+
+const SHOP_LNG = 105.8019;
+
+
+
+// =====================================================
+// RENDER CART
+// =====================================================
 
 function renderCheckout() {
 
-    const box = document.getElementById(
-        "checkout-items"
-    );
 
-    const totalElement = document.getElementById(
-        "checkout-total"
-    );
+    const box =
+        document.getElementById(
+            "checkout-items"
+        );
+
+
+    const foodTotal =
+        document.getElementById(
+            "food-total"
+        );
+
+
+    const totalBox =
+        document.getElementById(
+            "checkout-total"
+        );
+
+
+    let total = 0;
 
 
     box.innerHTML = "";
 
-    let total = 0;
 
 
     cart.forEach(item => {
 
 
-        const itemTotal =
+        const money =
             item.price * item.quantity;
 
 
-        total += itemTotal;
+        total += money;
 
 
         box.innerHTML += `
 
-            <div class="checkout-item">
+        <div class="checkout-item">
 
-                <img 
-                src="/static/images/${item.image}">
-
-
-                <div>
-
-                    <h3>
-                        ${item.name}
-                    </h3>
+            <img src="/static/images/${item.image}">
 
 
-                    <p>
-                        ${item.quantity}
-                        x
-                        ${formatMoney(item.price)}
-                    </p>
+            <div>
 
-                </div>
+                <b>${item.name}</b>
 
-
-                <strong>
-                    ${formatMoney(itemTotal)}
-                </strong>
-
+                <p>
+                ${item.quantity} x 
+                ${item.price.toLocaleString()} ₫
+                </p>
 
             </div>
 
+
+            <strong>
+            ${money.toLocaleString()} ₫
+            </strong>
+
+        </div>
+
         `;
+
 
     });
 
 
-    totalElement.innerText =
-        formatMoney(total);
+
+    // tiền món
+
+    foodTotal.innerText =
+        total.toLocaleString()
+        +
+        " ₫";
+
+
+
+    // tổng cuối
+
+    totalBox.innerText =
+        (
+            total + shippingFee
+        )
+        .toLocaleString()
+        +
+        " ₫";
+        
 
 }
 
 
 
-// =======================================
-// LOAD ĐỊA CHỈ VIỆT NAM
-// API:
-// https://provinces.open-api.vn/api/
-// =======================================
-
-
-const province =
-    document.getElementById("province");
-
-
-const district =
-    document.getElementById("district");
-
-
-const ward =
-    document.getElementById("ward");
+renderCheckout();
 
 
 
+// =====================================================
+// MAP INITIALIZE
+// =====================================================
 
-// LOAD TỈNH
 
-async function loadProvince() {
+const map =
+    L.map("map")
+    .setView(
+        [
+            21.0285,
+            105.8542
+        ],
+        13
+    );
+
+
+
+L.tileLayer(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+)
+.addTo(map);
+
+
+
+let marker = null;
+
+
+
+
+// =====================================================
+// SET LOCATION MARKER
+// =====================================================
+
+
+async function setMarker(
+    lat,
+    lng
+) {
+
+
+    if(marker) {
+
+        map.removeLayer(marker);
+
+    }
+
+
+
+    marker =
+        L.marker(
+            [
+                lat,
+                lng
+            ]
+        )
+        .addTo(map);
+
+
+
+    map.setView(
+        [
+            lat,
+            lng
+        ],
+        16
+    );
+
+
+
+    document
+    .getElementById("latitude")
+    .value = lat;
+
+
+
+    document
+    .getElementById("longitude")
+    .value = lng;
+
+
+
+    calculateShipping(
+        lat,
+        lng
+    );
+
+
+
+    await reverseGeocode(
+        lat,
+        lng
+    );
+
+}
+
+
+
+// =====================================================
+// CALCULATE DISTANCE
+// =====================================================
+
+
+function calculateDistance(
+    lat1,
+    lon1,
+    lat2,
+    lon2
+) {
+
+
+    const R = 6371;
+
+
+    const dLat =
+        (lat2 - lat1)
+        *
+        Math.PI
+        /
+        180;
+
+
+    const dLon =
+        (lon2 - lon1)
+        *
+        Math.PI
+        /
+        180;
+
+
+
+    const a =
+
+        Math.sin(dLat / 2)
+        *
+        Math.sin(dLat / 2)
+
+        +
+
+        Math.cos(
+            lat1 * Math.PI / 180
+        )
+
+        *
+
+        Math.cos(
+            lat2 * Math.PI / 180
+        )
+
+        *
+
+        Math.sin(dLon / 2)
+        *
+        Math.sin(dLon / 2);
+
+
+
+    const c =
+        2 *
+        Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+        );
+
+
+
+    return R * c;
+
+}
+
+
+
+
+// =====================================================
+// SHIPPING FEE
+// =====================================================
+
+
+function calculateShippingFee(
+    distance
+) {
+
+
+    if(distance <= 2) {
+
+        return 10000;
+
+    }
+
+
+    if(distance <= 5) {
+
+        return 15000;
+
+    }
+
+
+    if(distance <= 10) {
+
+        return 25000;
+
+    }
+
+
+    return 50000;
+
+}
+
+
+
+
+function calculateShipping(
+    lat,
+    lng
+) {
+
+
+    const distance =
+        calculateDistance(
+            SHOP_LAT,
+            SHOP_LNG,
+            Number(lat),
+            Number(lng)
+        );
+
+
+
+    shippingFee =
+        calculateShippingFee(
+            distance
+        );
+
+
+
+    document
+    .getElementById("distance")
+    .innerText =
+        distance.toFixed(1)
+        +
+        " km";
+
+
+
+    document
+    .getElementById("shipping-fee")
+    .innerText =
+        shippingFee.toLocaleString()
+        +
+        " ₫";
+        renderCheckout();
+}
+
+
+
+
+
+// =====================================================
+// REVERSE GEOCODE
+// COORDINATE -> ADDRESS
+// =====================================================
+
+
+async function reverseGeocode(
+    lat,
+    lng
+) {
+
+
+    try {
+
+
+        const response =
+            await fetch(
+
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=vi`
+
+            );
+
+
+        const data =
+            await response.json();
+
+
+
+        if(data.display_name) {
+
+
+            document
+            .getElementById("address")
+            .value =
+            data.display_name;
+
+
+        }
+
+
+    }
+    catch(error) {
+
+
+        console.log(
+            error
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// ADDRESS AUTOCOMPLETE
+// =====================================================
+
+
+const addressInput =
+    document.getElementById(
+        "address"
+    );
+
+
+const suggestionBox =
+    document.getElementById(
+        "suggestions"
+    );
+
+
+
+let typingTimer;
+
+
+
+addressInput.addEventListener(
+    "input",
+    function() {
+
+
+        clearTimeout(
+            typingTimer
+        );
+
+
+
+        const keyword =
+            this.value.trim();
+
+
+
+        if(keyword.length < 3) {
+
+
+            suggestionBox.innerHTML =
+                "";
+
+
+            return;
+
+        }
+
+
+
+        typingTimer =
+            setTimeout(
+
+                () => searchAddress(keyword),
+
+                500
+
+            );
+
+
+    }
+);
+
+
+async function searchAddress(
+    keyword
+) {
 
 
     const response =
         await fetch(
-            "https://provinces.open-api.vn/api/?depth=1"
+
+        `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=vn&q=${encodeURIComponent(keyword)}`
+
         );
+
 
 
     const data =
@@ -117,16 +512,59 @@ async function loadProvince() {
 
 
 
-    data.forEach(item => {
+    suggestionBox.innerHTML =
+        "";
 
 
-        province.innerHTML += `
 
-            <option value="${item.code}">
-                ${item.name}
-            </option>
+    data.forEach(place => {
 
-        `;
+
+        const item =
+            document.createElement(
+                "div"
+            );
+
+
+        item.className =
+            "suggestion-item";
+
+
+
+        item.innerHTML =
+
+            `
+            📍 ${place.display_name}
+            `;
+
+
+
+        item.onclick = function() {
+
+
+            addressInput.value =
+                place.display_name;
+
+
+
+            setMarker(
+                place.lat,
+                place.lon
+            );
+
+
+
+            suggestionBox.innerHTML =
+                "";
+
+
+        };
+
+
+
+        suggestionBox.appendChild(
+            item
+        );
 
 
     });
@@ -135,65 +573,23 @@ async function loadProvince() {
 }
 
 
+// =====================================================
+// CLICK MAP
+// =====================================================
 
 
-// CHỌN TỈNH -> HUYỆN
-
-province.addEventListener(
-    "change",
-    async function () {
+map.on(
+    "click",
+    function(e) {
 
 
-        district.innerHTML = `
+        setMarker(
 
-            <option value="">
-                Chọn quận/huyện
-            </option>
+            e.latlng.lat,
 
-        `;
+            e.latlng.lng
 
-
-        ward.innerHTML = `
-
-            <option value="">
-                Chọn phường/xã
-            </option>
-
-        `;
-
-
-
-        const response =
-            await fetch(
-
-                "https://provinces.open-api.vn/api/p/"
-                +
-                this.value
-                +
-                "?depth=2"
-
-            );
-
-
-
-        const data =
-            await response.json();
-
-
-
-        data.districts.forEach(item => {
-
-
-            district.innerHTML += `
-
-                <option value="${item.code}">
-                    ${item.name}
-                </option>
-
-            `;
-
-
-        });
+        );
 
 
     }
@@ -202,223 +598,175 @@ province.addEventListener(
 
 
 
-// CHỌN HUYỆN -> XÃ
 
-district.addEventListener(
-    "change",
-    async function () {
-
-
-        ward.innerHTML = `
-
-            <option value="">
-                Chọn phường/xã
-            </option>
-
-        `;
-
-
-
-        const response =
-            await fetch(
-
-                "https://provinces.open-api.vn/api/d/"
-                +
-                this.value
-                +
-                "?depth=2"
-
-            );
-
-
-
-        const data =
-            await response.json();
-
-
-
-        data.wards.forEach(item => {
-
-
-            ward.innerHTML += `
-
-                <option>
-                    ${item.name}
-                </option>
-
-            `;
-
-
-        });
-
-
-    }
-);
-
-
-
-
-// =======================================
-// ĐẶT HÀNG
-// =======================================
+// =====================================================
+// CURRENT LOCATION
+// =====================================================
 
 
 document
-.getElementById("order-btn")
-.onclick = async function () {
+.getElementById(
+    "current-location"
+)
+.onclick = function() {
 
 
 
-    const fullname =
-        document
-        .getElementById("fullname")
-        .value
-        .trim();
+    navigator.geolocation.getCurrentPosition(
+
+        function(position) {
 
 
+            setMarker(
 
-    const phone =
-        document
-        .getElementById("phone")
-        .value
-        .trim();
+                position.coords.latitude,
 
+                position.coords.longitude
 
-
-    const address =
-        document
-        .getElementById("address")
-        .value
-        .trim();
+            );
 
 
+        },
 
 
-    // CHECK DỮ LIỆU
+        function() {
 
 
-    if(!fullname){
-
-        alert(
-            "Vui lòng nhập họ tên!"
-        );
-
-        return;
-
-    }
+            alert(
+                "Không lấy được vị trí"
+            );
 
 
-
-    if(!phone){
-
-        alert(
-            "Vui lòng nhập số điện thoại!"
-        );
-
-        return;
-
-    }
+        }
 
 
-
-    if(!province.value){
-
-        alert(
-            "Vui lòng chọn tỉnh/thành phố!"
-        );
-
-        return;
-
-    }
+    );
 
 
-
-    if(!district.value){
-
-        alert(
-            "Vui lòng chọn quận/huyện!"
-        );
-
-        return;
-
-    }
-
-
-
-    if(!ward.value){
-
-        alert(
-            "Vui lòng chọn phường/xã!"
-        );
-
-        return;
-
-    }
-
-
-
-    if(!address){
-
-        alert(
-            "Vui lòng nhập địa chỉ cụ thể!"
-        );
-
-        return;
-
-    }
+};
 
 
 
 
-    // TẠO ORDER
+
+// =====================================================
+// CREATE ORDER
+// =====================================================
+
+
+document
+.getElementById(
+    "order-btn"
+)
+.onclick = async function() {
+
 
 
     const order = {
 
 
         customerName:
-            fullname,
+
+            document
+            .getElementById("fullname")
+            .value
+            .trim(),
+
 
 
         phone:
-            phone,
 
+            document
+            .getElementById("phone")
+            .value
+            .trim(),
 
-        province:
-            province.options[
-                province.selectedIndex
-            ].text,
-
-
-        district:
-            district.options[
-                district.selectedIndex
-            ].text,
-
-
-        ward:
-            ward.options[
-                ward.selectedIndex
-            ].text,
 
 
         address:
-            address,
+
+            document
+            .getElementById("address")
+            .value
+            .trim(),
+
+
+
+        latitude:
+
+            document
+            .getElementById("latitude")
+            .value,
+
+
+
+        longitude:
+
+            document
+            .getElementById("longitude")
+            .value,
+
 
 
         note:
+
             document
             .getElementById("note")
             .value
             .trim(),
 
 
-        products:
-            cart
+
+        shippingFee,
+
+
+        products: cart
 
 
     };
 
+
+
+
+    if(!order.customerName) {
+
+
+        alert(
+            "Vui lòng nhập họ tên"
+        );
+
+
+        return;
+
+    }
+
+
+
+    if(!order.phone) {
+
+
+        alert(
+            "Vui lòng nhập số điện thoại"
+        );
+
+
+        return;
+
+    }
+
+
+
+    if(!order.latitude) {
+
+
+        alert(
+            "Vui lòng chọn vị trí giao hàng"
+        );
+
+
+        return;
+
+    }
 
 
 
@@ -433,10 +781,11 @@ document
 
                     method:"POST",
 
-
                     headers:{
+
                         "Content-Type":
                         "application/json"
+
                     },
 
 
@@ -453,11 +802,8 @@ document
 
 
 
+        if(data.success) {
 
-        if(data.success){
-
-
-            // lưu mã đơn
 
             localStorage.setItem(
                 "orderCode",
@@ -466,34 +812,33 @@ document
 
 
 
-            // chuyển sang trang theo dõi
-
             window.location.href =
                 "/track-order";
 
 
         }
-        else{
+        else {
 
 
             alert(
-                "Đặt hàng thất bại!"
+                "Đặt hàng thất bại"
             );
 
 
         }
 
 
-
     }
-    catch(error){
+    catch(error) {
 
 
-        console.error(error);
+        console.error(
+            error
+        );
 
 
         alert(
-            "Không thể kết nối máy chủ!"
+            "Không kết nối được server"
         );
 
 
@@ -501,32 +846,3 @@ document
 
 
 };
-
-
-
-
-// =======================================
-// FORMAT TIỀN
-// =======================================
-
-
-function formatMoney(price){
-
-    return Number(price)
-        .toLocaleString("vi-VN")
-        +
-        " ₫";
-
-}
-
-
-
-
-// =======================================
-// START
-// =======================================
-
-
-renderCheckout();
-
-loadProvince();

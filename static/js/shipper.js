@@ -110,3 +110,103 @@ document.addEventListener(
 
     }
 );
+
+// =========================================================
+// UPDATE ORDER STATUS
+// =========================================================
+
+document
+.querySelectorAll(".status-btn")
+.forEach(button => {
+
+
+    button.onclick = async function(){
+
+
+        const orderId =
+            this.dataset.id;
+
+
+        const status =
+            this.dataset.status;
+
+
+
+        try {
+
+
+            const response =
+                await fetch(
+
+                    "/shipper/update/" + orderId,
+
+                    {
+
+                        method:"POST",
+
+                        headers:{
+                            "Content-Type":
+                            "application/json"
+                        },
+
+                        body:
+                        JSON.stringify({
+
+                            status: status
+
+                        })
+
+                    }
+
+                );
+
+
+
+            const data =
+                await response.json();
+
+
+
+            if(data.success){
+
+
+                alert(
+                    "Cập nhật thành công!"
+                );
+
+
+                location.reload();
+
+
+            }
+            else{
+
+
+                alert(
+                    data.message ||
+                    "Không thể cập nhật!"
+                );
+
+
+            }
+
+
+        }
+        catch(error){
+
+
+            console.error(error);
+
+
+            alert(
+                "Lỗi kết nối server!"
+            );
+
+
+        }
+
+
+    };
+
+
+});

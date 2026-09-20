@@ -4,13 +4,17 @@
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>
         Shipper - Bún Chả Việt
     </title>
 
-    <link rel="stylesheet" href="/static/css/shipper.css">
+
+    <link rel="stylesheet"
+          href="/static/css/shipper.css">
 
 </head>
 
@@ -20,17 +24,20 @@
 
 <header class="header">
 
+
     <div class="brand">
 
         <h1>
             🛵 BÚN CHẢ VIỆT
         </h1>
 
+
         <p>
             Xin chào {{ username }}
         </p>
 
     </div>
+
 
 
     <a href="/logout">
@@ -43,12 +50,14 @@
 
 
 
+
 <main class="container">
 
 
     <h2>
         📦 Đơn hàng được giao
     </h2>
+
 
 
 
@@ -70,6 +79,7 @@
                 </h3>
 
 
+
                 <span class="status">
 
                     {{ order.Status }}
@@ -82,13 +92,16 @@
 
 
 
+
+
             <div class="customer-info">
 
 
                 <p>
-                    👤 
+                    👤
                     {{ order.CustomerName }}
                 </p>
+
 
 
                 <p>
@@ -97,26 +110,63 @@
                 </p>
 
 
+
                 <p>
                     📍
-                    {{ order.Address }},
-                    {{ order.Ward }},
-                    {{ order.District }},
-                    {{ order.Province }}
+                    {{ order.Address }}
                 </p>
+
+
+
+                {% if order.Latitude and order.Longitude %}
+
+                <p>
+
+                    🗺️
+
+                    <a
+                    href="https://www.google.com/maps?q={{order.Latitude}},{{order.Longitude}}"
+                    target="_blank">
+
+                        Xem vị trí giao hàng
+
+                    </a>
+
+
+                </p>
+
+
+                {% endif %}
+
+
+
 
 
                 {% if order.Note %}
 
                 <p>
+
                     📝
                     {{ order.Note }}
+
                 </p>
+
 
                 {% endif %}
 
 
+
+
+
+            <p>
+                💰
+                {{ "{:,.0f}".format(order.TotalMoney or 0) }} ₫
+            </p>
+
+
             </div>
+
+
 
 
 
@@ -127,7 +177,7 @@
 
                 <button
                 class="status-btn"
-                data-id="{{ order.OrderID }}"
+                data-id="{{order.OrderID}}"
                 data-status="Đang chuẩn bị">
 
                     🍜 Đã lấy món
@@ -139,7 +189,7 @@
 
                 <button
                 class="status-btn"
-                data-id="{{ order.OrderID }}"
+                data-id="{{order.OrderID}}"
                 data-status="Đang giao">
 
                     🛵 Bắt đầu giao
@@ -149,14 +199,16 @@
 
 
 
+
                 <button
                 class="status-btn"
-                data-id="{{ order.OrderID }}"
+                data-id="{{order.OrderID}}"
                 data-status="Hoàn thành">
 
                     ✅ Hoàn thành
 
                 </button>
+
 
 
             </div>
@@ -166,7 +218,9 @@
         </div>
 
 
+
         {% else %}
+
 
 
         <div class="empty">
@@ -176,14 +230,18 @@
         </div>
 
 
+
         {% endfor %}
+
 
 
 
     </div>
 
 
+
 </main>
+
 
 
 

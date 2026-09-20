@@ -1,554 +1,583 @@
-// =========================================================
-// BIẾN BẢN ĐỒ
-// =========================================================
+    // =========================================================
+    // BIẾN BẢN ĐỒ
+    // =========================================================
 
-let driverMap = null;
+    let driverMap = null;
 
-let driverMarker = null;
+    let driverMarker = null;
 
-let trackingTimer = null;
+    let trackingTimer = null;
 
-let currentPhone = "";
-
-
-// =========================================================
-// TRA CỨU ĐƠN HÀNG
-// =========================================================
-
-async function searchOrder() {
-
-    const phoneInput =
-        document.getElementById("phone");
+    let currentPhone = "";
 
 
-    const phone =
-        phoneInput.value.trim();
+    // =========================================================
+    // TRA CỨU ĐƠN HÀNG
+    // =========================================================
+
+    async function searchOrder() {
+
+        const phone =
+            document.getElementById("phone")
+            .value
+            .trim();
 
 
-    if (phone === "") {
+        if (!phone) {
 
-        alert(
-            "Vui lòng nhập số điện thoại!"
-        );
+            alert(
+                "Vui lòng nhập số điện thoại!"
+            );
 
-        return;
+            return;
+
+        }
+
+
+        currentPhone = phone;
+
+
+        try {
+
+
+            const response =
+                await fetch(
+                    "/api/orders/" +
+                    encodeURIComponent(phone)
+                );
+
+
+            const orders =
+                await response.json();
+
+
+
+            if (
+                !orders ||
+                orders.length === 0
+            ) {
+
+                showNotFound();
+
+                stopTracking();
+
+                return;
+
+            }
+
+
+
+            renderOrders(
+                orders
+            );
+
+
+
+            const shipping =
+                orders.some(order =>
+                    order.status === "Đang giao"
+                );
+
+
+
+            if (shipping) {
+
+                startTracking();
+
+            }
+            else {
+
+                stopTracking();
+
+            }
+
+
+
+        }
+        catch(error) {
+
+
+            console.error(
+                error
+            );
+
+
+            alert(
+                "Không thể kết nối máy chủ!"
+            );
+
+        }
+
     }
 
 
-    currentPhone = phone;
+    // =========================================================
+    // HIỆN KHÔNG TÌM THẤY
+    // =========================================================
 
+    function showNotFound() {
 
-    try {
-
-        const response =
-            await fetch(
-                "/api/orders/" +
-                encodeURIComponent(phone)
+        const box =
+            document.getElementById(
+                "order-result"
             );
 
 
-        if (!response.ok) {
+        box.innerHTML = `
 
-            throw new Error(
-                "Server trả về lỗi"
+            <div class="order-card not-found">
+
+                <div class="not-found-icon">
+                    ❌
+                </div>
+
+
+                <h3>
+                    Không tìm thấy đơn hàng
+                </h3>
+
+
+                <p>
+                    Vui lòng kiểm tra lại số điện thoại.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // =========================================================
+    // XÁC ĐỊNH BƯỚC TRẠNG THÁI
+    // =========================================================
+
+    function getStatusStep(status) {
+
+        const statusMap = {
+
+            "Đã tiếp nhận": 1,
+
+            "Đang chuẩn bị": 2,
+
+            "Đang giao": 3,
+
+            "Hoàn thành": 4,
+
+            "Đã hủy": 0
+
+        };
+
+
+        return statusMap[status] ?? 1;
+
+    }
+
+
+    // =========================================================
+    // HIỂN THỊ ĐƠN HÀNG
+    // =========================================================
+
+    function renderOrder(order) {
+
+        const box =
+            document.getElementById(
+                "order-result"
             );
 
-        }
+
+        const currentStep =
+            getStatusStep(
+                order.status
+            );
 
 
-        const order =
-            await response.json();
+        box.innerHTML = `   
 
 
-        if (!order) {
-
-            showNotFound();
-
-            stopTracking();
-
-            return;
-        }
+            <div class="order-card">
 
 
-        renderOrder(order);
+                <!-- HEADER ĐƠN -->
+
+                <div class="order-heading">
+
+                    <div>
+
+                        <p class="order-label">
+                            MÃ ĐƠN HÀNG
+                        </p>
+
+
+                        <h2>
+                            🧾 #${order.code}
+                        </h2>
+
+                    </div>
+
+
+                    <span class="status-badge">
+                        ${order.status}
+                    </span>
+
+                </div>
+
+
+
+                <!-- TRẠNG THÁI -->
+
+                <div class="status-tracker">
+
+
+                    ${createStatusStep(
+                        1,
+                        currentStep,
+                        "✓",
+                        "Đã tiếp nhận",
+                        "Quán đã nhận đơn"
+                    )}
+
+
+                    <div
+                        class="status-line ${
+                            currentStep >= 2
+                                ? "completed"
+                                : ""
+                        }"
+                    ></div>
+
+
+                    ${createStatusStep(
+                        2,
+                        currentStep,
+                        "🍜",
+                        "Đang chuẩn bị",
+                        "Món ăn đang được chuẩn bị"
+                    )}
+
+
+                    <div
+                        class="status-line ${
+                            currentStep >= 3
+                                ? "completed"
+                                : ""
+                        }"
+                    ></div>
+
+
+                    ${createStatusStep(
+                        3,
+                        currentStep,
+                        "🚚",
+                        "Đang giao",
+                        "Tài xế đang giao món"
+                    )}
+
+
+                    <div
+                        class="status-line ${
+                            currentStep >= 4
+                                ? "completed"
+                                : ""
+                        }"
+                    ></div>
+
+
+                    ${createStatusStep(
+                        4,
+                        currentStep,
+                        "✓",
+                        "Hoàn thành",
+                        "Đơn hàng đã giao"
+                    )}
+
+                </div>
+
+
+
+                <!-- THÔNG TIN GIAO HÀNG -->
+
+                <div class="order-info">
+
+                    <h3>
+                        👤 Thông tin giao hàng
+                    </h3>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Khách hàng
+                        </span>
+
+
+                        <strong>
+                            ${escapeHTML(
+                                order.name
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Địa chỉ
+                        </span>
+
+
+                        <strong>
+                            ${escapeHTML(
+                                order.address
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-row">
+
+                        <span>
+                            Trạng thái
+                        </span>
+
+
+                        <strong class="status-text">
+                            ${escapeHTML(
+                                order.status
+                            )}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- TỔNG TIỀN -->
+
+                <div class="order-total">
+
+                    <div>
+
+                        <p>
+                            Tiền món:
+                            ${formatMoney(order.foodMoney)}
+                        </p>
+
+
+                        <p>
+                            Phí giao hàng:
+                            ${formatMoney(order.shippingFee)}
+                        </p>
+
+                    </div>
+
+
+                    <strong>
+                        ${formatMoney(order.total)}
+                    </strong>
+
+                </div>
+
+
+
+                <!-- SHIPPER -->
+
+                ${renderDriverSection(order)}
+
+            </div>
+
+        `;
 
 
         /*
-         * Nếu đơn đang giao
-         * thì bắt đầu theo dõi shipper.
-         */
+        * Nếu đang giao thì tạo map
+        */
 
         if (
             order.status === "Đang giao"
         ) {
 
-            startTracking();
+            setTimeout(
+                function() {
 
-        } else {
+                    initDriverMap(
+                        order
+                    );
 
-            stopTracking();
+                },
+                100
+            );
+
+        }
+
+    }
+
+
+    // =========================================================
+    // TẠO STATUS
+    // =========================================================
+
+    function createStatusStep(
+        step,
+        currentStep,
+        icon,
+        title,
+        description
+    ) {
+
+        let className = "";
+
+
+        if (
+            step < currentStep
+        ) {
+
+            className =
+                "completed";
 
         }
 
 
-    } catch (error) {
+        if (
+            step === currentStep
+        ) {
 
-        console.error(
-            "Lỗi tra cứu:",
-            error
-        );
+            className =
+                "current";
 
-
-        alert(
-            "Không thể kết nối máy chủ!"
-        );
-
-    }
-
-}
-
-
-// =========================================================
-// HIỆN KHÔNG TÌM THẤY
-// =========================================================
-
-function showNotFound() {
-
-    const box =
-        document.getElementById(
-            "order-result"
-        );
-
-
-    box.innerHTML = `
-
-        <div class="order-card not-found">
-
-            <div class="not-found-icon">
-                ❌
-            </div>
-
-
-            <h3>
-                Không tìm thấy đơn hàng
-            </h3>
-
-
-            <p>
-                Vui lòng kiểm tra lại số điện thoại.
-            </p>
-
-        </div>
-
-    `;
-
-}
-
-
-// =========================================================
-// XÁC ĐỊNH BƯỚC TRẠNG THÁI
-// =========================================================
-
-function getStatusStep(status) {
-
-    const statusMap = {
-
-        "Đã tiếp nhận": 1,
-
-        "Đang chuẩn bị": 2,
-
-        "Đang giao": 3,
-
-        "Hoàn thành": 4,
-
-        "Đã hủy": 0
-
-    };
-
-
-    return statusMap[status] ?? 1;
-
-}
-
-
-// =========================================================
-// HIỂN THỊ ĐƠN HÀNG
-// =========================================================
-
-function renderOrder(order) {
-
-    const box =
-        document.getElementById(
-            "order-result"
-        );
-
-
-    const currentStep =
-        getStatusStep(
-            order.status
-        );
-
-
-    box.innerHTML = `   
-
-
-        <div class="order-card">
-
-
-            <!-- HEADER ĐƠN -->
-
-            <div class="order-heading">
-
-                <div>
-
-                    <p class="order-label">
-                        MÃ ĐƠN HÀNG
-                    </p>
-
-
-                    <h2>
-                        🧾 #${order.code}
-                    </h2>
-
-                </div>
-
-
-                <span class="status-badge">
-                    ${order.status}
-                </span>
-
-            </div>
-
-
-
-            <!-- TRẠNG THÁI -->
-
-            <div class="status-tracker">
-
-
-                ${createStatusStep(
-                    1,
-                    currentStep,
-                    "✓",
-                    "Đã tiếp nhận",
-                    "Quán đã nhận đơn"
-                )}
-
-
-                <div
-                    class="status-line ${
-                        currentStep >= 2
-                            ? "completed"
-                            : ""
-                    }"
-                ></div>
-
-
-                ${createStatusStep(
-                    2,
-                    currentStep,
-                    "🍜",
-                    "Đang chuẩn bị",
-                    "Món ăn đang được chuẩn bị"
-                )}
-
-
-                <div
-                    class="status-line ${
-                        currentStep >= 3
-                            ? "completed"
-                            : ""
-                    }"
-                ></div>
-
-
-                ${createStatusStep(
-                    3,
-                    currentStep,
-                    "🚚",
-                    "Đang giao",
-                    "Tài xế đang giao món"
-                )}
-
-
-                <div
-                    class="status-line ${
-                        currentStep >= 4
-                            ? "completed"
-                            : ""
-                    }"
-                ></div>
-
-
-                ${createStatusStep(
-                    4,
-                    currentStep,
-                    "✓",
-                    "Hoàn thành",
-                    "Đơn hàng đã giao"
-                )}
-
-            </div>
-
-
-
-            <!-- THÔNG TIN GIAO HÀNG -->
-
-            <div class="order-info">
-
-                <h3>
-                    👤 Thông tin giao hàng
-                </h3>
-
-
-                <div class="info-row">
-
-                    <span>
-                        Khách hàng
-                    </span>
-
-
-                    <strong>
-                        ${escapeHTML(
-                            order.name
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        Địa chỉ
-                    </span>
-
-
-                    <strong>
-                        ${escapeHTML(
-                            order.address
-                        )}
-                    </strong>
-
-                </div>
-
-
-                <div class="info-row">
-
-                    <span>
-                        Trạng thái
-                    </span>
-
-
-                    <strong class="status-text">
-                        ${escapeHTML(
-                            order.status
-                        )}
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- TỔNG TIỀN -->
-
-            <div class="order-total">
-
-                <span>
-                    Tổng thanh toán
-                </span>
-
-
-                <strong>
-                    ${formatMoney(
-                        order.total
-                    )}
-                </strong>
-
-            </div>
-
-
-
-            <!-- SHIPPER -->
-
-            ${renderDriverSection(order)}
-
-        </div>
-
-    `;
-
-
-    /*
-     * Nếu đang giao thì tạo map
-     */
-
-    if (
-        order.status === "Đang giao"
-    ) {
-
-        setTimeout(
-            function() {
-
-                initDriverMap(
-                    order
-                );
-
-            },
-            100
-        );
-
-    }
-
-}
-
-
-// =========================================================
-// TẠO STATUS
-// =========================================================
-
-function createStatusStep(
-    step,
-    currentStep,
-    icon,
-    title,
-    description
-) {
-
-    let className = "";
-
-
-    if (
-        step < currentStep
-    ) {
-
-        className =
-            "completed";
-
-    }
-
-
-    if (
-        step === currentStep
-    ) {
-
-        className =
-            "current";
-
-    }
-
-
-    return `
-
-        <div
-            class="status-step ${className}"
-        >
-
-            <div class="status-icon">
-
-                ${icon}
-
-            </div>
-
-
-            <div class="status-content">
-
-                <strong>
-                    ${title}
-                </strong>
-
-
-                <small>
-                    ${description}
-                </small>
-
-            </div>
-
-        </div>
-
-    `;
-
-}
-
-
-// =========================================================
-// PHẦN SHIPPER
-// =========================================================
-
-function renderDriverSection(order) {
-
-    if (order.status === "Đang giao") {
-
-        const driverName =
-            order.driver &&
-            order.driver.name
-                ? order.driver.name
-                : "Đang tìm tài xế";
+        }
 
 
         return `
-            <div class="driver active-driver">
 
-                <div class="driver-header">
+            <div
+                class="status-step ${className}"
+            >
 
-                    <div>
+                <div class="status-icon">
 
-                        <h3>
-                            🛵 Tài xế đang giao hàng
-                        </h3>
+                    ${icon}
 
-                        <p>
-                            ${driverName}
-                        </p>
+                </div>
+
+
+                <div class="status-content">
+
+                    <strong>
+                        ${title}
+                    </strong>
+
+
+                    <small>
+                        ${description}
+                    </small>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // =========================================================
+    // PHẦN SHIPPER
+    // =========================================================
+
+    function renderDriverSection(order) {
+
+        if (order.status === "Đang giao") {
+
+            const driverName =
+                order.driver &&
+                order.driver.name
+                    ? order.driver.name
+                    : "Đang tìm tài xế";
+
+
+            return `
+                <div class="driver active-driver">
+
+                    <div class="driver-header">
+
+                        <div>
+
+                            <h3>
+                                🛵 Tài xế đang giao hàng
+                            </h3>
+
+                            <p>
+                                ${driverName}
+                            </p>
+
+                        </div>
+
+                        <span class="delivery-live">
+                            ● Đang giao
+                        </span>
 
                     </div>
 
-                    <span class="delivery-live">
-                        ● Đang giao
-                    </span>
-
                 </div>
 
-            </div>
+
+                <div class="map-section">
+
+                    <h3>
+                        📍 Vị trí tài xế
+                    </h3>
+
+                    <p
+                        id="driver-location-text"
+                    >
+                        Đang lấy vị trí tài xế...
+                    </p>
 
 
-            <div class="map-section">
+                    <div
+                        id="driver-map"
+                        class="driver-map"
+                    >
+                    </div>
 
-                <h3>
-                    📍 Vị trí tài xế
-                </h3>
-
-                <p
-                    id="driver-location-text"
-                >
-                    Đang lấy vị trí tài xế...
-                </p>
-
-
-                <div
-                    id="driver-map"
-                    class="driver-map"
-                >
                 </div>
-
-            </div>
-        `;
-    }
+            `;
+        }
 
 
-    if (order.status === "Hoàn thành") {
+        if (order.status === "Hoàn thành") {
+
+            return `
+                <div class="driver completed-driver">
+
+                    <h3>
+                        ✅ Giao hàng thành công
+                    </h3>
+
+                    <p>
+                        Cảm ơn bạn đã đặt món
+                        tại Bún Chả Việt.
+                    </p>
+
+                </div>
+            `;
+        }
+
 
         return `
-            <div class="driver completed-driver">
+            <div class="driver">
 
                 <h3>
-                    ✅ Giao hàng thành công
+                    🛵 Tài xế giao hàng
                 </h3>
 
                 <p>
-                    Cảm ơn bạn đã đặt món
-                    tại Bún Chả Việt.
+                    Tài xế sẽ được phân công
+                    khi đơn hàng sẵn sàng.
                 </p>
 
             </div>
@@ -556,44 +585,36 @@ function renderDriverSection(order) {
     }
 
 
-    return `
-        <div class="driver">
-
-            <h3>
-                🛵 Tài xế giao hàng
-            </h3>
-
-            <p>
-                Tài xế sẽ được phân công
-                khi đơn hàng sẵn sàng.
-            </p>
-
-        </div>
-    `;
-}
-
-
-// =========================================================
-// KHỞI TẠO BẢN ĐỒ
-// =========================================================
+    // =========================================================
+    // KHỞI TẠO BẢN ĐỒ
+    // =========================================================
 
 function initDriverMap(order) {
 
+
+    const mapId =
+        "driver-map-" + order.code;
+
+
     const mapElement =
-        document.getElementById(
-            "driver-map"
-        );
+        document.getElementById(mapId);
+
 
 
     if (!mapElement) {
+
+        console.log(
+            "Không tìm thấy map:",
+            mapId
+        );
+
         return;
+
     }
 
 
-    /*
-     * Nếu map đã tồn tại
-     * thì xóa map cũ.
-     */
+
+    // Xóa map cũ nếu có
 
     if (driverMap) {
 
@@ -606,484 +627,601 @@ function initDriverMap(order) {
     }
 
 
-    /*
-     * Tọa độ mặc định.
-     *
-     * Nếu backend chưa có GPS
-     * sẽ dùng Hà Nội làm vị trí ban đầu.
-     */
 
-const SHOP_LAT = 21.0338;
-const SHOP_LNG = 105.8019;
-const defaultLatitude =
-    Number(order.latitude) || SHOP_LAT;
+    const SHOP_LAT = 21.0338;
+    const SHOP_LNG = 105.8019;
 
-const defaultLongitude =
-    Number(order.longitude) || SHOP_LNG;
+
+
+    const latitude =
+        Number(order.latitude)
+        || SHOP_LAT;
+
+
+    const longitude =
+        Number(order.longitude)
+        || SHOP_LNG;
+
+
+
+    // Tạo map
 
     driverMap =
         L.map(
-            "driver-map"
+            mapElement
         ).setView(
             [
-                defaultLatitude,
-                defaultLongitude
+                latitude,
+                longitude
             ],
             16
         );
 
 
-    /*
-     * OpenStreetMap
-     */
 
     L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
-            maxZoom: 19,
+
+            maxZoom:19,
 
             attribution:
-                "&copy; OpenStreetMap contributors"
+            "&copy; OpenStreetMap"
+
         }
+
     ).addTo(
         driverMap
     );
 
 
-    /*
-     * Tạo icon shipper
-     */
+
 
     const driverIcon =
         L.divIcon({
 
             className:
-                "custom-driver-icon",
+            "custom-driver-icon",
 
-            html: `
-                <div class="driver-marker">
-                    🛵
-                </div>
+            html:
+            `
+            <div class="driver-marker">
+                🛵
+            </div>
             `,
 
-            iconSize: [
+
+            iconSize:
+            [
                 58,
                 70
             ],
 
-            iconAnchor: [
+            iconAnchor:
+            [
                 29,
                 60
-            ],
-
-            popupAnchor: [
-                0,
-                -58
             ]
 
         });
 
 
-    /*
-     * Tạo marker
-     */
 
     driverMarker =
         L.marker(
             [
-                defaultLatitude,
-                defaultLongitude
+                latitude,
+                longitude
             ],
             {
-                icon: driverIcon
+                icon:
+                driverIcon
             }
-        ).addTo(
+        )
+        .addTo(
             driverMap
         );
 
 
-    /*
-     * Popup
-     */
 
-    const driverName =
-        order.driverName ||
-        "Shipper Bún Chả Việt";
+    driverMarker.bindPopup(
 
-
-    driverMarker.bindPopup(`
-
+        `
         <div class="driver-popup">
 
-            <div
-                class="driver-popup-name"
-            >
+            <div class="driver-popup-name">
+
                 🛵
-                ${escapeHTML(
-                    driverName
-                )}
+                ${order.driverName || "Shipper"}
+
             </div>
 
 
-            <div
-                class="driver-popup-status"
-            >
+            <div class="driver-popup-status">
+
                 ● Đang giao hàng
+
             </div>
 
         </div>
+        `
 
-    `);
+    );
 
-
-    /*
-     * Hiện marker
-     */
 
     driverMarker.openPopup();
 
 
-    /*
-     * Ẩn loading
-     */
 
-    const loading =
-        document.getElementById(
-            "map-loading"
-        );
+    // Fix lỗi map trắng khi render động
 
+    setTimeout(()=>{
 
-    if (loading) {
+        driverMap.invalidateSize();
 
-        loading.classList.add(
-            "hidden"
-        );
-
-    }
+    },500);
 
 
-    /*
-     * Nếu backend đã có tọa độ
-     * thì zoom vào shipper.
-     */
-
-    if (
-        order.latitude &&
-        order.longitude
-    ) {
-
-        driverMap.setView(
-            [
-                Number(
-                    order.latitude
-                ),
-                Number(
-                    order.longitude
-                )
-            ],
-            17
-        );
-
-    }
-
-
-    /*
-     * Bắt đầu lấy GPS liên tục
-     */
-
-    updateDriverLocation();
 
 }
 
 
-// =========================================================
-// LẤY VỊ TRÍ SHIPPER
-// =========================================================
+    // =========================================================
+    // LẤY VỊ TRÍ SHIPPER
+    // =========================================================
 
-async function updateDriverLocation() {
+async function updateDriverLocation(){
 
-    if (
+
+    if(
         !currentPhone ||
         !driverMap ||
         !driverMarker
-    ) {
+    ){
 
         return;
 
     }
 
 
-    try {
+
+    try{
+
 
         const response =
             await fetch(
-                "/api/orders/" +
+                "/api/orders/"
+                +
                 encodeURIComponent(
                     currentPhone
                 )
             );
 
 
-        if (!response.ok) {
 
-            return;
-
-        }
-
-
-        const order =
+        const orders =
             await response.json();
 
 
-        if (!order) {
+
+        if(!Array.isArray(orders)){
 
             return;
 
         }
 
 
-        /*
-         * Nếu đơn không còn đang giao
-         * thì dừng tracking.
-         */
 
-        if (
-            order.status !==
-            "Đang giao"
-        ) {
-
-            stopTracking();
-
-            renderOrder(
-                order
+        const order =
+            orders.find(
+                x =>
+                x.status === "Đang giao"
             );
+
+
+
+        if(!order){
 
             return;
 
         }
 
 
-        const latitude =
-            Number(
-                order.latitude
-            );
+
+        const lat =
+            Number(order.latitude);
 
 
-        const longitude =
-            Number(
-                order.longitude
-            );
+
+        const lng =
+            Number(order.longitude);
 
 
-        /*
-         * Chưa có GPS
-         */
 
-        if (
-            !latitude ||
-            !longitude
-        ) {
-
-            updateMapStatus(
-                "🟡 Đang chờ GPS của tài xế..."
-            );
+        if(
+            !lat ||
+            !lng
+        ){
 
             return;
 
         }
 
 
-        /*
-         * Vị trí mới
-         */
 
-        const newPosition =
-            [
-                latitude,
-                longitude
-            ];
+        const position =
+        [
+            lat,
+            lng
+        ];
 
 
-        /*
-         * Di chuyển marker
-         */
 
         driverMarker.setLatLng(
-            newPosition
+            position
         );
 
-
-        /*
-         * Bản đồ đi theo shipper
-         */
 
         driverMap.panTo(
-            newPosition,
-            {
-                animate: true,
-                duration: 1
-            }
+            position
         );
 
 
-        updateMapStatus(
-            "🟢 Tài xế đang trực tuyến"
-        );
 
+    }
 
-    } catch (error) {
+    catch(error){
 
         console.error(
-            "Lỗi cập nhật GPS:",
+            "GPS lỗi:",
             error
         );
 
-
-        updateMapStatus(
-            "🔴 Không thể cập nhật vị trí"
-        );
-
-    }
-
-}
-
-
-// =========================================================
-// BẮT ĐẦU TRACKING
-// =========================================================
-
-function startTracking() {
-
-    stopTracking();
-
-
-    /*
-     * Cập nhật ngay lập tức
-     */
-
-    updateDriverLocation();
-
-
-    /*
-     * Sau đó cứ 5 giây cập nhật
-     */
-
-    trackingTimer =
-        setInterval(
-            updateDriverLocation,
-            5000
-        );
-
-}
-
-
-// =========================================================
-// DỪNG TRACKING
-// =========================================================
-
-function stopTracking() {
-
-    if (trackingTimer) {
-
-        clearInterval(
-            trackingTimer
-        );
-
-        trackingTimer = null;
-
-    }
-
-}
-
-
-// =========================================================
-// STATUS MAP
-// =========================================================
-
-function updateMapStatus(
-    text
-) {
-
-    const element =
-        document.getElementById(
-            "map-live-status"
-        );
-
-
-    if (!element) {
-        return;
     }
 
 
-    element.innerHTML =
-        text;
-
 }
 
 
-// =========================================================
-// FORMAT TIỀN
-// =========================================================
+    // =========================================================
+    // BẮT ĐẦU TRACKING
+    // =========================================================
 
-function formatMoney(price) {
-
-    return Number(price)
-        .toLocaleString("vi-VN")
-        + " ₫";
-
-}
-
-
-// =========================================================
-// CHỐNG HTML INJECTION
-// =========================================================
-
-function escapeHTML(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return "";
-
-    }
-
-
-    return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-// =========================================================
-// DỪNG TRACKING KHI RỜI TRANG
-// =========================================================
-
-window.addEventListener(
-    "beforeunload",
-    function() {
+    function startTracking() {
 
         stopTracking();
 
+
+        /*
+        * Cập nhật ngay lập tức
+        */
+
+        updateDriverLocation();
+
+
+        /*
+        * Sau đó cứ 5 giây cập nhật
+        */
+
+        trackingTimer =
+            setInterval(
+                updateDriverLocation,
+                5000
+            );
+
     }
-);
+
+
+    // =========================================================
+    // DỪNG TRACKING
+    // =========================================================
+
+    function stopTracking() {
+
+        if (trackingTimer) {
+
+            clearInterval(
+                trackingTimer
+            );
+
+            trackingTimer = null;
+
+        }
+
+    }
+
+
+    // =========================================================
+    // STATUS MAP
+    // =========================================================
+
+    function updateMapStatus(
+        text
+    ) {
+
+        const element =
+            document.getElementById(
+                "map-live-status"
+            );
+
+
+        if (!element) {
+            return;
+        }
+
+
+        element.innerHTML =
+            text;
+
+    }
+
+
+    // =========================================================
+    // FORMAT TIỀN
+    // =========================================================
+
+    function formatMoney(price) {
+
+        return Number(price)
+            .toLocaleString("vi-VN")
+            + " ₫";
+
+    }
+
+
+    // =========================================================
+    // CHỐNG HTML INJECTION
+    // =========================================================
+
+    function escapeHTML(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+
+            return "";
+
+        }
+
+
+        return String(value)
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+
+    // =========================================================
+    // DỪNG TRACKING KHI RỜI TRANG
+    // =========================================================
+
+    window.addEventListener(
+        "beforeunload",
+        function() {
+
+            stopTracking();
+
+        }
+    );
+
+    function renderOrders(orders) {
+
+
+        const box =
+            document.getElementById(
+                "order-result"
+            );
+
+
+        box.innerHTML = "";
+
+
+        orders.forEach(order => {
+
+
+            box.innerHTML += `
+
+            <div class="order-history">
+
+
+                <div class="order-heading">
+
+                    <div>
+
+                        <p class="order-label">
+                            MÃ ĐƠN HÀNG
+                        </p>
+
+                        <h2>
+                            🧾 #${order.code}
+                        </h2>
+
+                    </div>
+
+
+                    <span class="status-badge">
+
+                        ${order.status}
+
+                    </span>
+
+                </div>
+
+
+
+                <div class="info-row">
+
+                    <span>
+                        Ngày đặt
+                    </span>
+
+
+                    <strong>
+                        ${order.createdAt}
+                    </strong>
+
+                </div>
+
+
+
+                <div class="info-row">
+
+                    <span>
+                        Khách hàng
+                    </span>
+
+
+                    <strong>
+                        ${escapeHTML(order.name)}
+                    </strong>
+
+                </div>
+
+
+
+                <div class="info-row">
+
+                    <span>
+                        Địa chỉ
+                    </span>
+
+
+                    <strong>
+                        ${escapeHTML(order.address)}
+                    </strong>
+
+                </div>
+
+
+
+                <div class="info-row">
+
+                    <span>
+                        Trạng thái
+                    </span>
+
+
+                    <strong class="status-text">
+
+                        ${order.status}
+
+                    </strong>
+
+                </div>
+
+
+
+                <div class="order-total">
+
+
+                    <p>
+                        Tiền món:
+                        ${formatMoney(order.foodTotal)}
+                    </p>
+
+
+                    <p>
+                        Phí giao hàng:
+                        ${formatMoney(order.shippingFee)}
+                    </p>
+
+
+                    <strong>
+                        ${formatMoney(order.total)}
+                    </strong>
+
+
+                </div>
+
+
+                ${
+                    order.status === "Đang giao"
+
+                    ?
+
+                    `
+
+                    <div class="driver">
+
+                        <h3>
+                            🛵 Tài xế đang giao hàng
+                        </h3>
+
+
+                        <p>
+                            ${
+                                order.driverName ||
+                                "Đang tìm tài xế"
+                            }
+                        </p>
+
+
+                    </div>
+
+
+                    <div class="map-section">
+
+                        <h3>
+                            📍 Vị trí tài xế
+                        </h3>
+
+
+                        <div
+                            id="driver-map-${order.code}"
+                            class="driver-map"
+                        ></div>
+
+                    </div>
+
+                    `
+
+                    :
+
+                    ""
+
+                }
+
+
+            </div>
+
+
+            `;
+
+
+
+            // tạo map cho đơn đang giao
+
+            if(order.status === "Đang giao"){
+
+                setTimeout(()=>{
+
+                    initDriverMap(order);
+
+                },200);
+
+            }
+
+
+        });
+
+
+    }

@@ -8,6 +8,7 @@ from flask import (
     session,
     jsonify
 )
+from decimal import Decimal
 import time
 from routes.product import product_bp
 from database import get_connection
@@ -218,56 +219,64 @@ def track_order():
 
 @app.route("/api/orders", methods=["POST"])
 def create_order():
+
     data = request.json
 
     conn = get_connection()
 
     cursor = conn.cursor()
 
+
     order_code = "BCV" + str(
         int(time.time())
     )[-6:]
+
+
+    total_money = sum(
+        x["price"] * x["quantity"]
+        for x in data["products"]
+    )
+
 
     cursor.execute("""
 
     INSERT INTO Orders
     (
-    OrderCode,
-    CustomerName,
-    Phone,
-    Province,
-    District,
-    Ward,
-    Address,
-    Note,
-    TotalMoney,
-    Status
+        OrderCode,
+        CustomerName,
+        Phone,
+        Address,
+        Latitude,
+        Longitude,
+        Note,
+        TotalMoney,
+        ShippingFee,
+        Status
     )
 
     VALUES(?,?,?,?,?,?,?,?,?,?)
 
     """,
 
-                   (
-                       order_code,
-                       data["customerName"],
-                       data["phone"],
-                       data["province"],
-                       data["district"],
-                       data["ward"],
-                       data["address"],
-                       data["note"],
-                       sum(
-                           x["price"] * x["quantity"]
-                           for x in data["products"]
-                       ),
-                       "Đã tiếp nhận"
-                   ))
+    (
+        order_code,
+        data["customerName"],
+        data["phone"],
+        data["address"],
+        data["latitude"],
+        data["longitude"],
+        data["note"],
+        total_money,
+        data["shippingFee"],
+        "Đã tiếp nhận"
+    ))
+
 
     conn.commit()
 
     cursor.close()
     conn.close()
+
 
     return jsonify({
 
@@ -277,8 +286,9 @@ def create_order():
 
     })
 
+
 @app.route("/api/orders/<phone>")
-def get_order(phone):
+def get_orders(phone):
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -286,135 +296,127 @@ def get_order(phone):
     try:
 
         cursor.execute("""
-            SELECT TOP 1
+            SELECT
+
                 o.OrderID,
                 o.OrderCode,
                 o.CustomerName,
                 o.Phone,
-                o.Province,
-                o.District,
-                o.Ward,
                 o.Address,
-                o.Note,
+
+                o.Latitude,
+                o.Longitude,
+
                 o.TotalMoney,
+                o.ShippingFee,
+
                 o.Status,
+
+                o.CreatedAt,
+
                 o.DriverID,
 
-                u.FullName AS DriverName,
-                u.Username AS DriverUsername
+                u.FullName AS DriverName
+
 
             FROM Orders o
 
+
             LEFT JOIN Users u
-                ON o.DriverID = u.UserID
+
+            ON o.DriverID = u.UserID
+
 
             WHERE o.Phone = ?
 
+
             ORDER BY o.OrderID DESC
-        """, (phone,))
 
-        order = cursor.fetchone()
-
-        if not order:
-            return jsonify(None)
+        """,
+                       (phone,))
 
 
-        # ==========================================
-        # LẤY VỊ TRÍ GPS MỚI NHẤT CỦA SHIPPER
-        # ==========================================
-
-        latitude = None
-        longitude = None
-        updated_at = None
+        orders = cursor.fetchall()
 
 
-        if order.DriverID:
+        result = []
 
-            cursor.execute("""
-                SELECT TOP 1
-                    Latitude,
-                    Longitude,
-                    UpdatedAt
+        for order in orders:
+            food_total = Decimal(order.TotalMoney or 0)
 
-                FROM DriverLocations
+            shipping_fee = Decimal(order.ShippingFee or 0)
 
-                WHERE DriverID = ?
+            result.append({
 
-                ORDER BY UpdatedAt DESC
-            """, (order.DriverID,))
+                "code":
+                    order.OrderCode,
+
+                "name":
+                    order.CustomerName,
+
+                "address":
+                    order.Address,
+
+                "foodTotal":
+                    float(food_total),
+
+                "shippingFee":
+                    float(shipping_fee),
+
+                "total":
+                    float(
+                        food_total + shipping_fee
+                    ),
+
+                "status":
+                    order.Status,
+
+                "createdAt":
+
+                    order.CreatedAt.strftime(
+                        "%d/%m/%Y %H:%M"
+                    )
+                    if order.CreatedAt
+                    else "",
+                "latitude":
+                    order.Latitude,
+
+                "longitude":
+                    order.Longitude,
+
+                "driverName":
+                    order.DriverName
+
+            })
 
 
-            location = cursor.fetchone()
+        return jsonify(result)
 
-
-            if location:
-
-                latitude = location.Latitude
-                longitude = location.Longitude
-                updated_at = location.UpdatedAt
-
-
-        # ==========================================
-        # TRẢ DỮ LIỆU CHO KHÁCH
-        # ==========================================
-
-        return jsonify({
-
-            "code": order.OrderCode,
-
-            "name": order.CustomerName,
-
-            "phone": order.Phone,
-
-            "province": order.Province,
-
-            "district": order.District,
-
-            "ward": order.Ward,
-
-            "address": order.Address,
-
-            "note": order.Note,
-
-            "status": order.Status,
-
-            "total": order.TotalMoney,
-
-            "driverId": order.DriverID,
-
-            "driverName": order.DriverName,
-
-            "driverPhone": None,
-
-            "latitude": latitude,
-
-            "longitude": longitude,
-
-            "locationUpdatedAt": str(updated_at)
-                if updated_at
-                else None
-
-        })
 
 
     except Exception as e:
 
         print(
-            "LỖI GET ORDER:",
+            "LỖI TRA CỨU ĐƠN:",
             e
         )
 
         return jsonify({
-            "success": False,
-            "message": "Không thể lấy thông tin đơn hàng!"
-        }), 500
+
+            "success":False,
+
+            "message":
+            str(e)
+
+        }),500
+
 
 
     finally:
 
         cursor.close()
-        conn.close()
 
+        conn.close()
 
 @app.route(
 "/api/admin/orders/update/<int:id>",
@@ -564,9 +566,8 @@ def update_driver_location():
 # =========================================================
 
 if __name__ == "__main__":
-
     app.run(
         debug=True,
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=5000
     )
