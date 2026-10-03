@@ -413,9 +413,24 @@
 
                                 <option
                                     value="{{ s.UserID }}"
-                                    {% if o.DriverID == s.UserID %}selected{% endif %}
+
+                                    {% if o.DriverID == s.UserID %}
+                                        selected
+                                    {% endif %}
+
+                                    {% if s.IsWorking != 1 %}
+                                        disabled
+                                    {% endif %}
                                 >
+
                                     {{ s.FullName }}
+
+                                    {% if s.IsWorking == 1 %}
+                                        — Đang nhận đơn
+                                    {% else %}
+                                        — Nghỉ ca
+                                    {% endif %}
+
                                 </option>
 
                                 {% endfor %}

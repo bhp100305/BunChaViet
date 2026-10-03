@@ -484,12 +484,21 @@ def orders():
     orders = cursor.fetchall()
 
     cursor.execute("""
-        SELECT UserID, FullName
+        SELECT
+            UserID,
+            FullName,
+            IsWorking
+
         FROM Users
+
         WHERE Role = 'Shipper'
           AND IsActive = 1
-        ORDER BY FullName
+
+        ORDER BY
+            IsWorking DESC,
+            FullName
     """)
+
 
     shippers = cursor.fetchall()
 
@@ -521,66 +530,161 @@ def orders():
     )
 
 @admin_bp.route(
-"/orders/assign",
-methods=["POST"]
+    "/orders/assign",
+    methods=["POST"]
 )
 def assign_shipper():
 
-
     if not check_admin():
+        return jsonify({
+            "success": False,
+            "message": "Không có quyền!"
+        }), 403
+
+    data = request.get_json() or {}
+
+    order_id = data.get("orderId")
+    driver_id = data.get("driverId")
+
+    if not order_id or not driver_id:
+        return jsonify({
+            "success": False,
+            "message": "Thiếu thông tin đơn hàng hoặc shipper!"
+        }), 400
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # ==========================================
+    # KIỂM TRA SHIPPER
+    # ==========================================
+
+    cursor.execute("""
+        SELECT
+            UserID,
+            FullName,
+            IsActive,
+            IsWorking
+
+        FROM Users
+
+        WHERE UserID = ?
+          AND Role = 'Shipper'
+    """, (
+        driver_id,
+    ))
+
+    shipper = cursor.fetchone()
+
+    if not shipper:
+
+        cursor.close()
+        conn.close()
 
         return jsonify({
-            "success":False
-        })
+            "success": False,
+            "message": "Không tìm thấy shipper!"
+        }), 404
 
 
+    # Tài khoản bị khóa
+    if shipper.IsActive != 1:
 
-    data=request.json
+        cursor.close()
+        conn.close()
 
-
-
-    order_id=data.get("orderId")
-
-    driver_id=data.get("driverId")
-
-
-
-    conn=get_connection()
-
-    cursor=conn.cursor()
+        return jsonify({
+            "success": False,
+            "message": "Tài khoản shipper đã bị khóa!"
+        }), 400
 
 
+    # Shipper đang nghỉ ca
+    if shipper.IsWorking != 1:
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message": (
+                f"{shipper.FullName} đang nghỉ ca, "
+                "không thể giao đơn!"
+            )
+        }), 400
+
+
+    # ==========================================
+    # KIỂM TRA ĐƠN HÀNG
+    # ==========================================
+
+    cursor.execute("""
+        SELECT
+            OrderID,
+            Status
+
+        FROM Orders
+
+        WHERE OrderID = ?
+    """, (
+        order_id,
+    ))
+
+    order = cursor.fetchone()
+
+    if not order:
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message": "Không tìm thấy đơn hàng!"
+        }), 404
+
+
+    if order.Status in (
+        "Hoàn thành",
+        "Đã hủy"
+    ):
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message": (
+                "Không thể giao shipper cho đơn "
+                "đã hoàn thành hoặc đã hủy!"
+            )
+        }), 400
+
+
+    # ==========================================
+    # GIAO ĐƠN
+    # ==========================================
 
     cursor.execute("""
         UPDATE Orders
 
         SET
-        DriverID=?,
-        Status='Đã giao shipper'
+            DriverID = ?,
+            Status = N'Đã giao shipper'
 
-        WHERE OrderID=?
-
-    """,
-    (
+        WHERE OrderID = ?
+    """, (
         driver_id,
         order_id
     ))
 
-
-
     conn.commit()
 
-
     cursor.close()
-
     conn.close()
 
-
-
     return jsonify({
-
-        "success":True
-
+        "success": True,
+        "message": "Giao đơn cho shipper thành công!"
     })
 
 # =========================================================
@@ -602,18 +706,34 @@ def shippers():
             u.FullName,
             u.Phone,
             u.IsActive,
-            COUNT(o.OrderID) AS ActiveOrders
+            u.IsWorking,
+
+            COUNT(
+                CASE
+                    WHEN o.Status IN (
+                        N'Đã giao shipper',
+                        N'Đang chuẩn bị',
+                        N'Đang giao'
+                    )
+                    THEN 1
+                END
+            ) AS ActiveOrders
+
         FROM Users u
+
         LEFT JOIN Orders o
             ON o.DriverID = u.UserID
-            AND o.Status = 'Đang giao'
+
         WHERE u.Role = 'Shipper'
+
         GROUP BY
             u.UserID,
             u.Username,
             u.FullName,
             u.Phone,
-            u.IsActive
+            u.IsActive,
+            u.IsWorking
+
         ORDER BY u.UserID DESC
     """)
 
@@ -626,7 +746,6 @@ def shippers():
         "admin/shippers.html",
         shippers=shippers
     )
-
 
 # =========================================================
 # THÊM SHIPPER

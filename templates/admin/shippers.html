@@ -94,19 +94,25 @@
 
                     <td>
 
-                        {% if s.IsActive == 1 %}
+                        {% if s.IsActive == 0 %}
 
-                        <span class="status active">
-                            ● Đang hoạt động
-                        </span>
+                            <span class="status inactive">
+                                ● Đã khóa
+                            </span>
 
-                        {% else %}
+                            {% elif s.IsWorking == 1 %}
 
-                        <span class="status inactive">
-                            ● Đã khóa
-                        </span>
+                            <span class="status working">
+                                ● Đang nhận đơn
+                            </span>
 
-                        {% endif %}
+                            {% else %}
+
+                            <span class="status resting">
+                                ● Nghỉ ca
+                            </span>
+
+                            {% endif %}
 
                     </td>
 

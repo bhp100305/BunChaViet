@@ -271,3 +271,17 @@ tbody tr:hover {
         flex-direction: column;
     }
 }
+.status.working {
+    color: #15803d;
+    font-weight: 700;
+}
+
+.status.resting {
+    color: #d97706;
+    font-weight: 700;
+}
+
+.status.inactive {
+    color: #9ca3af;
+    font-weight: 700;
+}
