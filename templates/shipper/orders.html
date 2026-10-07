@@ -2,22 +2,33 @@
 <html lang="vi">
 
 <head>
+
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Shipper Dashboard - Bún Chả Việt</title>
+    <title>
+        Shipper Dashboard | Bún Chả Việt
+    </title>
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/shipper.css') }}">
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/shipper.css') }}"
+    >
+
 </head>
+
+
+{% set current_section = request.args.get('section', 'overview') %}
 
 
 <body data-working="{{ 1 if is_working else 0 }}">
 
 
-<div class="shipper-layout">
+<div class="shipper-app">
 
 
     <!-- =====================================================
@@ -27,43 +38,68 @@
     <aside class="sidebar">
 
 
-        <div class="profile">
+        <div class="sidebar-brand">
 
-            <div class="avatar">
-                <span>👤</span>
+            <div class="brand-logo">
+                BCV
             </div>
 
-            <div class="profile-info">
+
+            <div class="brand-content">
 
                 <strong>
-                    Shipper Profile
+                    Bún Chả Việt
                 </strong>
 
                 <span>
-                    {{ username }}
+                    Shipper Center
                 </span>
-
-                <small>
-                    Shipper
-                </small>
 
             </div>
 
         </div>
 
 
-        <div class="sidebar-divider"></div>
+
+        <div class="shipper-profile">
 
 
-        <nav class="sidebar-nav">
+            <div class="profile-avatar">
+
+                {{ (username or 'S')[0] | upper }}
+
+            </div>
+
+
+            <div class="profile-info">
+
+                <strong>
+                    {{ username or 'Shipper' }}
+                </strong>
+
+                <span>
+                    Nhân viên giao hàng
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+
+        <nav class="sidebar-menu">
 
 
             <button
                 type="button"
-                class="nav-item active"
-                data-section="overview">
+                class="menu-item {% if current_section == 'overview' %}active{% endif %}"
+                data-target="overview"
+            >
 
-                <span class="nav-icon">⌂</span>
+                <span class="menu-icon">
+                    ⌂
+                </span>
 
                 <span>
                     Tổng quan
@@ -72,45 +108,67 @@
             </button>
 
 
-            <div class="nav-title">
-                Quản lý đơn hàng
+
+            <div class="menu-label">
+                ĐƠN HÀNG
             </div>
 
 
+
             <button
                 type="button"
-                class="nav-item"
-                data-section="active-orders">
+                class="menu-item {% if current_section == 'active-orders' %}active{% endif %}"
+                data-target="active-orders"
+            >
 
-                <span class="nav-icon">▣</span>
+                <span class="menu-icon">
+                    ▣
+                </span>
 
                 <span>
-                    Đơn hàng đang giao
+                    Đơn đang xử lý
+                </span>
+
+                <span
+                    class="menu-count"
+                    id="activeOrderCount"
+                >
+
+                    {{ active_order_count or 0 }}
+
                 </span>
 
             </button>
 
 
+
             <button
                 type="button"
-                class="nav-item"
-                data-section="completed-orders">
+                class="menu-item {% if current_section == 'completed-orders' %}active{% endif %}"
+                data-target="completed-orders"
+            >
 
-                <span class="nav-icon">✓</span>
+                <span class="menu-icon">
+                    ✓
+                </span>
 
                 <span>
-                    Đơn hàng hoàn thành
+                    Đã hoàn thành
                 </span>
 
             </button>
 
 
+
             <button
                 type="button"
-                class="nav-item"
-                data-section="cancelled-orders">
+                class="menu-item {% if current_section == 'failed-orders' %}active{% endif %}"
+                data-target="failed-orders"
+            >
 
-                <span class="nav-icon">×</span>
+                <span class="menu-icon">
+                    ×
+                </span>
 
                 <span>
                     Không giao được
@@ -119,12 +177,22 @@
             </button>
 
 
+
+            <div class="menu-label">
+                BÁO CÁO
+            </div>
+
+
+
             <button
                 type="button"
-                class="nav-item"
-                data-section="statistics">
+                class="menu-item {% if current_section == 'statistics' %}active{% endif %}"
+                data-target="statistics"
+            >
 
-                <span class="nav-icon">▥</span>
+                <span class="menu-icon">
+                    ▥
+                </span>
 
                 <span>
                     Thống kê
@@ -136,16 +204,25 @@
         </nav>
 
 
-        <div class="sidebar-bottom">
 
-            <a href="/logout"
-               class="logout-btn">
+        <div class="sidebar-footer">
 
-                <span>↪</span>
 
-                Đăng xuất
+            <a
+                href="/logout"
+                class="logout-link"
+            >
+
+                <span>
+                    ↪
+                </span>
+
+                <span>
+                    Đăng xuất
+                </span>
 
             </a>
+
 
         </div>
 
@@ -166,46 +243,75 @@
         ================================================== -->
 
         <section
-            class="page-section active"
-            id="section-overview">
+            class="content-section {% if current_section == 'overview' %}active{% endif %}"
+            id="overview"
+        >
 
 
-            <!-- TOP HEADER -->
-
-            <div class="dashboard-header">
+            <header class="dashboard-header">
 
 
-                <div>
+                <div class="header-title">
+
+
+                    <p class="eyebrow">
+                        TRUNG TÂM GIAO HÀNG
+                    </p>
+
 
                     <h1>
-                        Xin chào {{ username }}
+
+                        Xin chào,
+                        {{ username or 'Shipper' }}
+
                     </h1>
 
+
                     <p>
-                        Quản lý hoạt động giao hàng hôm nay
+
+                        Theo dõi đơn hàng và
+                        quản lý ca làm việc của bạn.
+
                     </p>
+
 
                 </div>
 
 
-                <div class="working-area">
+
+                <div class="shift-control">
 
 
                     {% if is_working %}
 
-                    <div class="working-status working">
+
+                    <div class="shift-status online">
+
 
                         <span class="status-dot"></span>
 
-                        Đang nhận đơn
+
+                        <div>
+
+                            <small>
+                                TRẠNG THÁI
+                            </small>
+
+                            <strong>
+                                Đang nhận đơn
+                            </strong>
+
+                        </div>
+
 
                     </div>
 
 
                     <button
                         type="button"
-                        class="work-btn stop"
-                        id="toggleWorkBtn">
+                        id="toggleWorkBtn"
+                        class="shift-button stop"
+                    >
 
                         Nghỉ ca
 
@@ -214,23 +320,39 @@
 
                     {% else %}
 
-                    <div class="working-status resting">
+
+                    <div class="shift-status offline">
+
 
                         <span class="status-dot"></span>
 
-                        Đang nghỉ ca
+
+                        <div>
+
+                            <small>
+                                TRẠNG THÁI
+                            </small>
+
+                            <strong>
+                                Đang nghỉ ca
+                            </strong>
+
+                        </div>
+
 
                     </div>
 
 
                     <button
                         type="button"
-                        class="work-btn start"
-                        id="toggleWorkBtn">
+                        id="toggleWorkBtn"
+                        class="shift-button start"
+                    >
 
-                        Bật nhận đơn
+                        Bắt đầu nhận đơn
 
                     </button>
+
 
                     {% endif %}
 
@@ -238,891 +360,165 @@
                 </div>
 
 
+            </header>
+
+
+
+            <!-- =================================================
+                 KPI
+            ================================================== -->
+
+            <div class="stats-grid">
+
+
+                <article class="stat-card">
+
+
+                    <div class="stat-icon blue">
+                        ✓
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Đã giao hôm nay
+                        </span>
+
+                        <strong>
+                            {{ today_done or 0 }}
+                        </strong>
+
+                        <small>
+                            đơn thành công
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+
+                <article class="stat-card">
+
+
+                    <div class="stat-icon green">
+                        ▣
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Tháng này
+                        </span>
+
+                        <strong>
+                            {{ month_done or 0 }}
+                        </strong>
+
+                        <small>
+                            đơn hoàn thành
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+
+                <article class="stat-card">
+
+
+                    <div class="stat-icon purple">
+                        ↑
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Tổng đã giao
+                        </span>
+
+                        <strong>
+                            {{ total_done or 0 }}
+                        </strong>
+
+                        <small>
+                            tất cả thời gian
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+
+                <article class="stat-card">
+
+
+                    <div class="stat-icon orange">
+                        🛵
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Đang xử lý
+                        </span>
+
+                        <strong class="active-orders-total">
+
+                            {{ active_order_count or 0 }}
+
+                        </strong>
+
+                        <small>
+                            đơn hiện tại
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
             </div>
 
 
 
-            <!-- STAT CARDS -->
+            <!-- =================================================
+                 ORDERS
+            ================================================== -->
 
-            <div class="stat-grid">
+            <div class="section-heading">
 
-
-                <div class="stat-box">
-
-                    <span class="stat-label">
-                        Hôm nay
-                    </span>
-
-                    <strong>
-                        {{ today_done }}
-                    </strong>
-
-                    <span class="stat-description">
-                        Đơn hoàn thành
-                    </span>
-
-                </div>
-
-
-                <div class="stat-box">
-
-                    <span class="stat-label">
-                        Tháng này
-                    </span>
-
-                    <strong>
-                        {{ month_done }}
-                    </strong>
-
-                    <span class="stat-description">
-                        Đơn đã giao
-                    </span>
-
-                </div>
-
-
-                <div class="stat-box">
-
-                    <span class="stat-label">
-                        Tổng cộng
-                    </span>
-
-                    <strong>
-                        {{ total_done }}
-                    </strong>
-
-                    <span class="stat-description">
-                        Đơn hoàn thành
-                    </span>
-
-                </div>
-
-
-            </div>
-
-
-
-            <!-- CURRENT ORDERS -->
-
-            <div class="content-heading">
 
                 <div>
 
                     <h2>
-                        Đơn hàng của tôi
+                        Đơn hàng gần đây
                     </h2>
 
                     <p>
-                        Các đơn hàng gần đây được giao cho bạn
+                        Theo dõi các đơn được phân công cho bạn.
                     </p>
-
-                </div>
-
-            </div>
-
-
-
-            <div class="order-list">
-
-
-                {% set ns = namespace(has_order=false) %}
-
-
-                {% for order in orders %}
-
-                {% if order[9] != 'Đã hủy' %}
-
-                {% set ns.has_order = true %}
-
-
-                <article class="order-card">
-
-
-                    <div class="order-card-header">
-
-
-                        <div>
-
-                            <span class="order-code">
-                                #{{ order[1] }}
-                            </span>
-
-                            <span class="order-time">
-                                {{ order[10] }}
-                            </span>
-
-                        </div>
-
-
-                        <span class="
-                            order-status
-                            {% if order[9] == 'Hoàn thành' %}
-                                status-completed
-                            {% elif order[9] == 'Đang giao' %}
-                                status-delivering
-                            {% elif order[9] == 'Đang chuẩn bị' %}
-                                status-preparing
-                            {% else %}
-                                status-assigned
-                            {% endif %}
-                        ">
-
-                            {{ order[9] }}
-
-                        </span>
-
-
-                    </div>
-
-
-
-                    <div class="order-info-grid">
-
-
-                        <div class="order-info-block">
-
-                            <span class="info-label">
-                                Khách hàng
-                            </span>
-
-                            <strong>
-                                {{ order[2] or 'Không có tên' }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="order-info-block">
-
-                            <span class="info-label">
-                                Số điện thoại
-                            </span>
-
-                            <a href="tel:{{ order[3] }}">
-
-                                {{ order[3] or 'Không có' }}
-
-                            </a>
-
-                        </div>
-
-
-                        <div class="order-info-block full">
-
-                            <span class="info-label">
-                                Địa chỉ giao hàng
-                            </span>
-
-                            <strong>
-                                {{ order[4] or 'Không có địa chỉ' }}
-                            </strong>
-
-                        </div>
-
-
-                        {% if order[5] %}
-
-                        <div class="order-info-block full">
-
-                            <span class="info-label">
-                                Ghi chú
-                            </span>
-
-                            <span>
-                                {{ order[5] }}
-                            </span>
-
-                        </div>
-
-                        {% endif %}
-
-
-                        <div class="order-info-block">
-
-                            <span class="info-label">
-                                Tổng tiền cần thu
-                            </span>
-
-                            <strong class="money">
-
-                                {{ "{:,.0f}".format(order[8] or 0) }}
-
-                                ₫
-
-                            </strong>
-
-                        </div>
-
-
-                    </div>
-
-
-
-                    <!-- ACTION -->
-
-                    <div class="order-actions">
-
-
-                        {% if order[9] not in ['Hoàn thành', 'Đã hủy', 'Không giao được'] %}
-
-
-                            {% if order[9] not in ['Đang chuẩn bị', 'Đang giao'] %}
-
-                            <button
-                                type="button"
-                                class="order-btn primary status-btn"
-                                data-id="{{ order[0] }}"
-                                data-status="Đang chuẩn bị">
-
-                                Đã lấy món
-
-                            </button>
-
-                            {% endif %}
-
-
-
-                            {% if order[9] == 'Đang chuẩn bị' %}
-
-                            <button
-                                type="button"
-                                class="order-btn primary status-btn"
-                                data-id="{{ order[0] }}"
-                                data-status="Đang giao">
-
-                                Bắt đầu giao
-
-                            </button>
-
-                            {% endif %}
-
-
-
-                            {% if order[9] == 'Đang giao' %}
-
-                            <button
-                                type="button"
-                                class="order-btn success status-btn"
-                                data-id="{{ order[0] }}"
-                                data-status="Hoàn thành">
-
-                                Hoàn thành
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="order-btn cancel cancel-order-btn"
-                                data-id="{{ order[0] }}"
-                                data-code="{{ order[1] }}">
-
-                                Không giao được
-
-                            </button>
-
-                            {% endif %}
-
-
-                        {% else %}
-
-                        <span class="finished-message">
-
-                            Đơn hàng đã kết thúc
-
-                        </span>
-
-                        {% endif %}
-
-
-                    </div>
-
-
-                </article>
-
-
-                {% endif %}
-
-                {% endfor %}
-
-
-
-                {% if not ns.has_order %}
-
-                <div class="empty-state">
-
-                    <div class="empty-icon">
-                        📦
-                    </div>
-
-                    <h3>
-                        Chưa có đơn hàng
-                    </h3>
-
-                    <p>
-                        Các đơn được phân công sẽ xuất hiện tại đây.
-                    </p>
-
-                </div>
-
-                {% endif %}
-
-
-            </div>
-
-
-        </section>
-
-
-
-
-        <!-- =================================================
-             ACTIVE ORDERS
-        ================================================== -->
-
-        <section
-            class="page-section"
-            id="section-active-orders">
-
-
-            <div class="page-title">
-
-                <h1>
-                    Đơn hàng đang giao
-                </h1>
-
-                <p>
-                    Các đơn bạn đang xử lý
-                </p>
-
-            </div>
-
-
-            <div class="order-list">
-
-
-                {% set active = namespace(count=0) %}
-
-
-                {% for order in orders %}
-
-                {% if order[9] in [
-                    'Đã giao shipper',
-                    'Đang chuẩn bị',
-                    'Đang giao'
-                ] %}
-
-
-                {% set active.count = active.count + 1 %}
-
-
-                <article class="order-card">
-
-
-                    <div class="order-card-header">
-
-
-                        <span class="order-code">
-
-                            #{{ order[1] }}
-
-                        </span>
-
-
-                        <span class="order-status status-delivering">
-
-                            {{ order[9] }}
-
-                        </span>
-
-
-                    </div>
-
-
-                    <div class="order-info-grid">
-
-
-                        <div class="order-info-block">
-
-                            <span class="info-label">
-                                Khách hàng
-                            </span>
-
-                            <strong>
-                                {{ order[2] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="order-info-block">
-
-                            <span class="info-label">
-                                Điện thoại
-                            </span>
-
-                            <a href="tel:{{ order[3] }}">
-                                {{ order[3] }}
-                            </a>
-
-                        </div>
-
-
-                        <div class="order-info-block full">
-
-                            <span class="info-label">
-                                Địa chỉ
-                            </span>
-
-                            <strong>
-                                {{ order[4] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div class="order-info-block">
-
-                            <span class="info-label">
-                                Tiền cần thu
-                            </span>
-
-                            <strong class="money">
-
-                                {{ "{:,.0f}".format(order[8] or 0) }} ₫
-
-                            </strong>
-
-                        </div>
-
-
-                    </div>
-
-
-                    <div class="order-actions">
-
-
-                        {% if order[9] == 'Đã giao shipper' %}
-
-                        <button
-                            class="order-btn primary status-btn"
-                            data-id="{{ order[0] }}"
-                            data-status="Đang chuẩn bị">
-
-                            Đã lấy món
-
-                        </button>
-
-                        {% endif %}
-
-
-
-                        {% if order[9] == 'Đang chuẩn bị' %}
-
-                        <button
-                            class="order-btn primary status-btn"
-                            data-id="{{ order[0] }}"
-                            data-status="Đang giao">
-
-                            Bắt đầu giao
-
-                        </button>
-
-                        {% endif %}
-
-
-
-                        {% if order[9] == 'Đang giao' %}
-
-                        <button
-                            class="order-btn success status-btn"
-                            data-id="{{ order[0] }}"
-                            data-status="Hoàn thành">
-
-                            Hoàn thành
-
-                        </button>
-
-
-                        <button
-                            class="order-btn cancel cancel-order-btn"
-                            data-id="{{ order[0] }}"
-                            data-code="{{ order[1] }}">
-
-                            Không giao được
-
-                        </button>
-
-                        {% endif %}
-
-
-                    </div>
-
-
-                </article>
-
-
-                {% endif %}
-
-                {% endfor %}
-
-
-
-                {% if active.count == 0 %}
-
-                <div class="empty-state">
-
-                    <div class="empty-icon">
-                        🛵
-                    </div>
-
-                    <h3>
-                        Không có đơn đang giao
-                    </h3>
-
-                    <p>
-                        Bạn hiện không có đơn nào cần xử lý.
-                    </p>
-
-                </div>
-
-                {% endif %}
-
-
-            </div>
-
-
-        </section>
-
-
-
-
-        <!-- =================================================
-             COMPLETED
-        ================================================== -->
-
-        <section
-            class="page-section"
-            id="section-completed-orders">
-
-
-            <div class="page-title">
-
-                <h1>
-                    Đơn hàng hoàn thành
-                </h1>
-
-                <p>
-                    Lịch sử các đơn đã giao thành công
-                </p>
-
-            </div>
-
-
-            <div class="order-list">
-
-
-                {% set complete = namespace(count=0) %}
-
-
-                {% for order in orders %}
-
-                {% if order[9] == 'Hoàn thành' %}
-
-
-                {% set complete.count = complete.count + 1 %}
-
-
-                <article class="order-card compact">
-
-
-                    <div class="order-card-header">
-
-
-                        <div>
-
-                            <span class="order-code">
-                                #{{ order[1] }}
-                            </span>
-
-                            <span class="order-time">
-                                {{ order[10] }}
-                            </span>
-
-                        </div>
-
-
-                        <span class="order-status status-completed">
-
-                            Hoàn thành
-
-                        </span>
-
-
-                    </div>
-
-
-                    <div class="history-row">
-
-
-                        <div>
-
-                            <span>
-                                Khách hàng
-                            </span>
-
-                            <strong>
-                                {{ order[2] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <span>
-                                Tổng thu
-                            </span>
-
-                            <strong class="money">
-
-                                {{ "{:,.0f}".format(order[8] or 0) }} ₫
-
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <span>
-                                Địa chỉ
-                            </span>
-
-                            <strong>
-                                {{ order[4] }}
-                            </strong>
-
-                        </div>
-
-
-                    </div>
-
-
-                </article>
-
-
-                {% endif %}
-
-                {% endfor %}
-
-
-
-                {% if complete.count == 0 %}
-
-                <div class="empty-state">
-
-                    <h3>
-                        Chưa có đơn hoàn thành
-                    </h3>
-
-                </div>
-
-                {% endif %}
-
-
-            </div>
-
-
-        </section>
-
-
-
-
-        <!-- =================================================
-             CANCELLED
-        ================================================== -->
-
-        <section
-            class="page-section"
-            id="section-cancelled-orders">
-
-
-            <div class="page-title">
-
-                <h1>
-                    Đơn không giao được
-                </h1>
-
-                <p>
-                    Các đơn khách không nhận hoặc giao thất bại
-                </p>
-
-            </div>
-
-
-            <div class="order-list">
-
-
-                {% set cancelled = namespace(count=0) %}
-
-
-                {% for order in orders %}
-
-                {% if order[9] in ['Đã hủy', 'Không giao được'] %}
-
-
-                {% set cancelled.count = cancelled.count + 1 %}
-
-
-                <article class="order-card compact">
-
-
-                    <div class="order-card-header">
-
-
-                        <span class="order-code">
-
-                            #{{ order[1] }}
-
-                        </span>
-
-
-                        <span class="order-status status-cancelled">
-
-                            Không giao được
-
-                        </span>
-
-
-                    </div>
-
-
-                    <div class="history-row">
-
-
-                        <div>
-
-                            <span>
-                                Khách hàng
-                            </span>
-
-                            <strong>
-                                {{ order[2] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <span>
-                                Điện thoại
-                            </span>
-
-                            <strong>
-                                {{ order[3] }}
-                            </strong>
-
-                        </div>
-
-
-                        <div>
-
-                            <span>
-                                Địa chỉ
-                            </span>
-
-                            <strong>
-                                {{ order[4] }}
-                            </strong>
-
-                        </div>
-
-
-                    </div>
-
-
-                </article>
-
-
-                {% endif %}
-
-                {% endfor %}
-
-
-
-                {% if cancelled.count == 0 %}
-
-                <div class="empty-state">
-
-                    <h3>
-                        Không có đơn giao thất bại
-                    </h3>
-
-                    <p>
-                        Khá hiếm khi một danh sách trống lại là tin tốt.
-                    </p>
-
-                </div>
-
-                {% endif %}
-
-
-            </div>
-
-
-        </section>
-
-
-
-
-        <!-- =================================================
-             STATISTICS
-        ================================================== -->
-
-        <section
-            class="page-section"
-            id="section-statistics">
-
-
-            <div class="page-title">
-
-                <h1>
-                    Thống kê giao hàng
-                </h1>
-
-                <p>
-                    Xem chi tiết các đơn đã giao theo từng ngày
-                </p>
-
-            </div>
-
-
-
-            <div class="statistics-filter">
-
-
-                <div>
-
-                    <label for="statsDate">
-                        Chọn ngày
-                    </label>
-
-
-                    <input
-                        type="date"
-                        id="statsDate"
-                        value="{{ selected_date | default('') }}">
 
                 </div>
 
 
                 <button
                     type="button"
-                    id="viewStatisticsBtn">
+                    class="text-button"
+                    data-open-section="active-orders"
+                >
 
-                    Xem thống kê
+                    Xem đơn đang xử lý →
 
                 </button>
 
@@ -1131,47 +527,528 @@
 
 
 
-            <div class="daily-summary">
+            <div class="orders-container">
 
 
-                <div class="daily-card">
+                {% if orders|length == 0 %}
 
-                    <span>
-                        Tổng đơn đã giao
-                    </span>
 
-                    <strong>
+                <div class="empty-state">
 
-                        {{ daily_count | default(0) }}
 
-                    </strong>
+                    <div class="empty-icon">
+                        📦
+                    </div>
 
-                    <small>
-                        đơn
-                    </small>
+
+                    <h3>
+                        Chưa có đơn hàng
+                    </h3>
+
+
+                    <p>
+
+                        Khi Admin giao đơn,
+                        đơn hàng sẽ xuất hiện tại đây.
+
+                    </p>
+
 
                 </div>
 
 
-                <div class="daily-card money-card">
+                {% endif %}
 
-                    <span>
-                        Tổng tiền đã thu từ khách
+
+
+                {% for order in orders %}
+
+
+                <article
+                    class="order-card"
+                    data-order-status="{{ order[9] }}"
+                >
+
+
+                    <div class="order-header">
+
+
+                        <div class="order-identity">
+
+
+                            <span class="order-number">
+
+                                #{{ order[1] }}
+
+                            </span>
+
+
+                            <span class="order-created">
+
+                                {{ order[10] or '' }}
+
+                            </span>
+
+
+                        </div>
+
+
+
+                        <span
+                            class="
+                                order-badge
+
+                                {% if order[9] == 'Hoàn thành' %}
+                                    completed
+
+                                {% elif order[9] == 'Đang giao' %}
+                                    delivering
+
+                                {% elif order[9] == 'Đang chuẩn bị' %}
+                                    preparing
+
+                                {% elif order[9] in ['Không giao được', 'Đã hủy'] %}
+                                    failed
+
+                                {% else %}
+                                    assigned
+
+                                {% endif %}
+                            "
+                        >
+
+                            {{ order[9] }}
+
+                        </span>
+
+
+                    </div>
+
+
+
+                    <div class="order-body">
+
+
+                        <div class="customer-column">
+
+
+                            <div class="info-row">
+
+
+                                <span class="info-icon">
+                                    👤
+                                </span>
+
+
+                                <div>
+
+                                    <span class="info-label">
+                                        Khách hàng
+                                    </span>
+
+                                    <strong>
+
+                                        {{ order[2] or 'Chưa cập nhật' }}
+
+                                    </strong>
+
+                                </div>
+
+
+                            </div>
+
+
+
+                            <div class="info-row">
+
+
+                                <span class="info-icon">
+                                    ☎
+                                </span>
+
+
+                                <div>
+
+                                    <span class="info-label">
+                                        Số điện thoại
+                                    </span>
+
+
+                                    {% if order[3] %}
+
+                                    <a
+                                        href="tel:{{ order[3] }}"
+                                        class="phone-link"
+                                    >
+
+                                        {{ order[3] }}
+
+                                    </a>
+
+
+                                    {% else %}
+
+                                    <strong>
+                                        Chưa cập nhật
+                                    </strong>
+
+                                    {% endif %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+
+
+                        <div class="address-column">
+
+
+                            <span class="info-label">
+                                Địa chỉ giao hàng
+                            </span>
+
+
+                            <strong class="delivery-address">
+
+                                {{ order[4] or 'Chưa cập nhật địa chỉ' }}
+
+                            </strong>
+
+
+                            {% if order[5] %}
+
+
+                            <div class="customer-note">
+
+                                <span>
+                                    Ghi chú:
+                                </span>
+
+                                {{ order[5] }}
+
+                            </div>
+
+
+                            {% endif %}
+
+
+                        </div>
+
+
+
+                        <div class="payment-column">
+
+
+                            <span class="info-label">
+                                Tiền cần thu
+                            </span>
+
+
+                            <strong class="order-money">
+
+                                {{ "{:,.0f}".format(order[8] or 0) }}
+
+                                ₫
+
+                            </strong>
+
+
+                            <small>
+                                Thu từ khách hàng
+                            </small>
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="order-actions">
+
+
+                        {% if order[9] == 'Đã giao shipper' %}
+
+
+                        <button
+                            type="button"
+                            class="action-button primary status-btn"
+                            data-id="{{ order[0] }}"
+                            data-status="Đang chuẩn bị"
+                        >
+
+                            ✓ Đã lấy món
+
+                        </button>
+
+
+                        {% elif order[9] == 'Đang chuẩn bị' %}
+
+
+                        <button
+                            type="button"
+                            class="action-button primary status-btn"
+                            data-id="{{ order[0] }}"
+                            data-status="Đang giao"
+                        >
+
+                            🛵 Bắt đầu giao
+
+                        </button>
+
+
+                        {% elif order[9] == 'Đang giao' %}
+
+
+                        <button
+                            type="button"
+                            class="action-button success status-btn"
+                            data-id="{{ order[0] }}"
+                            data-status="Hoàn thành"
+                        >
+
+                            ✓ Đã giao thành công
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="action-button danger-outline failed-order-btn"
+                            data-id="{{ order[0] }}"
+                            data-code="{{ order[1] }}"
+                        >
+
+                            × Không giao được
+
+                        </button>
+
+
+                        {% elif order[9] == 'Hoàn thành' %}
+
+
+                        <div class="order-finished completed">
+
+                            ✓ Đơn hàng đã giao thành công
+
+                        </div>
+
+
+                        {% elif order[9] in ['Không giao được', 'Đã hủy'] %}
+
+
+                        <div class="order-finished failed">
+
+                            ! Đơn hàng không giao được
+
+                        </div>
+
+
+                        {% else %}
+
+
+                        <div class="order-finished waiting">
+
+                            Đang chờ xử lý
+
+                        </div>
+
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                </article>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             ACTIVE
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'active-orders' %}active{% endif %}"
+            id="active-orders"
+        >
+
+
+            <div class="page-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        ĐƠN HÀNG
+                    </p>
+
+                    <h1>
+                        Đơn đang xử lý
+                    </h1>
+
+                    <p>
+                        Các đơn bạn cần lấy món hoặc đang giao.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                class="filtered-orders"
+                data-filter-section="active"
+            >
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             COMPLETED
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'completed-orders' %}active{% endif %}"
+            id="completed-orders"
+        >
+
+
+            <div class="page-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        LỊCH SỬ
+                    </p>
+
+                    <h1>
+                        Đơn đã hoàn thành
+                    </h1>
+
+                    <p>
+                        Các đơn bạn đã giao thành công.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                class="filtered-orders"
+                data-filter-section="completed"
+            >
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             FAILED
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'failed-orders' %}active{% endif %}"
+            id="failed-orders"
+        >
+
+
+            <div class="page-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        LỊCH SỬ
+                    </p>
+
+                    <h1>
+                        Không giao được
+                    </h1>
+
+                    <p>
+                        Các đơn khách từ chối nhận hoặc giao thất bại.
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    <span class="order-badge failed">
+
+                        {{ failed_order_count or 0 }}
+                        đơn
+
                     </span>
 
-                    <strong>
+                </div>
 
-                        {{ "{:,.0f}".format(
-                            daily_total | default(0) or 0
-                        ) }}
 
-                        ₫
+            </div>
 
-                    </strong>
 
-                    <small>
-                        trong ngày đã chọn
-                    </small>
+            <div
+                class="filtered-orders"
+                data-filter-section="failed"
+            >
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             STATISTICS
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'statistics' %}active{% endif %}"
+            id="statistics"
+        >
+
+
+            <div class="page-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        BÁO CÁO
+                    </p>
+
+                    <h1>
+                        Thống kê giao hàng
+                    </h1>
+
+                    <p>
+                        Xem số đơn đã giao và tiền đã thu từ khách hàng.
+                    </p>
 
                 </div>
 
@@ -1180,22 +1057,190 @@
 
 
 
-            <div class="daily-orders">
+            <form
+                class="statistics-filter"
+                method="GET"
+                action="{{ url_for('shipper.orders') }}"
+            >
 
 
-                <div class="table-header">
+                <input
+                    type="hidden"
+                    name="section"
+                    value="statistics"
+                >
 
-                    <h2>
-                        Các đơn đã giao
-                    </h2>
+
+                <div class="date-field">
+
+
+                    <label for="fromDate">
+                        Từ ngày
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="fromDate"
+                        name="from_date"
+                        value="{{ from_date }}"
+                        required
+                    >
+
 
                 </div>
 
 
-                <div class="table-wrapper">
+
+                <div class="date-field">
 
 
-                    <table>
+                    <label for="toDate">
+                        Đến ngày
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="toDate"
+                        name="to_date"
+                        value="{{ to_date }}"
+                        required
+                    >
+
+
+                </div>
+
+
+
+                <button
+                    type="submit"
+                    class="statistics-submit"
+                >
+
+                    Xem thống kê
+
+                </button>
+
+
+            </form>
+
+
+
+            <div class="statistics-summary">
+
+
+                <article class="report-card">
+
+
+                    <div class="report-icon blue">
+                        ✓
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Đơn giao thành công
+                        </span>
+
+                        <strong>
+
+                            {{ range_completed_count or 0 }}
+
+                        </strong>
+
+                        <small>
+                            trong khoảng đã chọn
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+
+                <article class="report-card money-report">
+
+
+                    <div class="report-icon green">
+                        ₫
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Tổng tiền đã thu
+                        </span>
+
+                        <strong>
+
+                            {{ "{:,.0f}".format(
+                                range_collected_total or 0
+                            ) }}
+
+                            ₫
+
+                        </strong>
+
+                        <small>
+                            tiền thu từ khách hàng
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+            </div>
+
+
+
+            <div class="statistics-table-card">
+
+
+                <div class="statistics-table-header">
+
+
+                    <div>
+
+                        <h2>
+                            Chi tiết đơn đã giao
+                        </h2>
+
+                        <p>
+
+                            {{ from_date }}
+
+                            đến
+
+                            {{ to_date }}
+
+                        </p>
+
+                    </div>
+
+
+                    <div class="report-total">
+
+                        {{ statistic_orders|length }}
+
+                        đơn
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="table-responsive">
+
+
+                    <table class="statistics-table">
 
 
                         <thead>
@@ -1227,44 +1272,88 @@
                         </thead>
 
 
+
                         <tbody>
 
 
-                            {% if daily_orders is defined
-                                  and daily_orders %}
+                            {% if statistic_orders %}
 
 
-                                {% for order in daily_orders %}
+                                {% for item in statistic_orders %}
+
 
                                 <tr>
 
-                                    <td>
-                                        #{{ order.OrderCode }}
-                                    </td>
 
                                     <td>
-                                        {{ order.CustomerName }}
+
+                                        <strong class="table-order-code">
+
+                                            #{{ item[1] }}
+
+                                        </strong>
+
                                     </td>
+
 
                                     <td>
-                                        {{ order.Address }}
+
+
+                                        <div class="table-customer">
+
+                                            <strong>
+
+                                                {{ item[2] or 'Không có tên' }}
+
+                                            </strong>
+
+                                            <span>
+
+                                                {{ item[3] or '' }}
+
+                                            </span>
+
+                                        </div>
+
+
                                     </td>
+
 
                                     <td>
-                                        {{ order.DeliveredAt }}
-                                    </td>
 
-                                    <td class="table-money">
+                                        <div class="table-address">
 
-                                        {{ "{:,.0f}".format(
-                                            order.FinalMoney or 0
-                                        ) }}
+                                            {{ item[4] or '' }}
 
-                                        ₫
+                                        </div>
 
                                     </td>
+
+
+                                    <td>
+
+                                        {{ item[6] or '' }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <strong class="table-money">
+
+                                            {{ "{:,.0f}".format(
+                                                item[5] or 0
+                                            ) }}
+
+                                            ₫
+
+                                        </strong>
+
+                                    </td>
+
 
                                 </tr>
+
 
                                 {% endfor %}
 
@@ -1274,14 +1363,39 @@
 
                             <tr>
 
+
                                 <td
                                     colspan="5"
-                                    class="no-data">
+                                    class="empty-table"
+                                >
 
-                                    Chọn ngày để xem các đơn
-                                    đã giao trong ngày đó
+
+                                    <div>
+
+
+                                        <span class="empty-table-icon">
+                                            📦
+                                        </span>
+
+
+                                        <strong>
+                                            Không có đơn hoàn thành
+                                        </strong>
+
+
+                                        <p>
+
+                                            Không tìm thấy đơn đã giao
+                                            trong khoảng thời gian này.
+
+                                        </p>
+
+
+                                    </div>
+
 
                                 </td>
+
 
                             </tr>
 
@@ -1311,17 +1425,17 @@
 
 
 
-
 <!-- =====================================================
-     CANCEL ORDER MODAL
+     FAILED DELIVERY MODAL
 ====================================================== -->
 
 <div
     class="modal-overlay"
-    id="cancelModal">
+    id="failedDeliveryModal"
+>
 
 
-    <div class="modal">
+    <div class="modal-card">
 
 
         <div class="modal-header">
@@ -1329,11 +1443,15 @@
 
             <div>
 
+                <span class="modal-eyebrow">
+                    XỬ LÝ ĐƠN HÀNG
+                </span>
+
                 <h2>
                     Không giao được
                 </h2>
 
-                <p id="cancelOrderCode">
+                <p id="failedOrderCode">
                     Đơn hàng
                 </p>
 
@@ -1343,7 +1461,8 @@
             <button
                 type="button"
                 class="modal-close"
-                id="closeCancelModal">
+                id="closeFailedModal"
+            >
 
                 ×
 
@@ -1357,12 +1476,12 @@
         <div class="modal-body">
 
 
-            <label>
-                Lý do không giao được
+            <label for="failedReason">
+                Lý do
             </label>
 
 
-            <select id="cancelReason">
+            <select id="failedReason">
 
                 <option value="">
                     Chọn lý do
@@ -1392,15 +1511,33 @@
 
 
 
-            <label for="cancelNote">
+            <label for="failedNote">
                 Ghi chú thêm
             </label>
 
 
             <textarea
-                id="cancelNote"
+                id="failedNote"
                 rows="4"
-                placeholder="Nhập ghi chú nếu cần..."></textarea>
+                placeholder="Ví dụ: Đã gọi khách 3 lần nhưng không liên lạc được."
+            ></textarea>
+
+
+
+            <div class="modal-warning">
+
+                <strong>
+                    Lưu ý
+                </strong>
+
+                <p>
+
+                    Chỉ xác nhận khi bạn thực sự
+                    không thể hoàn thành việc giao hàng.
+
+                </p>
+
+            </div>
 
 
         </div>
@@ -1412,8 +1549,9 @@
 
             <button
                 type="button"
-                class="modal-btn secondary"
-                id="cancelModalBack">
+                class="modal-button secondary"
+                id="cancelFailedModal"
+            >
 
                 Quay lại
 
@@ -1422,8 +1560,9 @@
 
             <button
                 type="button"
-                class="modal-btn danger"
-                id="confirmCancelOrder">
+                class="modal-button danger"
+                id="confirmFailedDelivery"
+            >
 
                 Xác nhận không giao được
 
@@ -1440,8 +1579,10 @@
 
 
 
-
-<script src="{{ url_for('static', filename='js/shipper.js') }}"></script>
+<script
+    src="{{ url_for('static', filename='js/shipper.js') }}"
+>
+</script>
 
 
 </body>

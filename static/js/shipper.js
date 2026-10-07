@@ -1,110 +1,446 @@
-let selectedCancelOrderId = null;
+// =========================================================
+// GLOBAL STATE
+// =========================================================
 
+let selectedFailedOrderId = null;
+let selectedFailedOrderCode = null;
 let locationWatcherId = null;
 
 
+// =========================================================
+// INIT
+// =========================================================
 
 document.addEventListener(
     "DOMContentLoaded",
     function () {
 
-        setupNavigation();
+        setupSidebarNavigation();
+
+        setupSectionLinks();
 
         setupWorkButton();
 
-        setupOrderButtons();
+        setupOrderActions();
 
-        setupCancelModal();
+        setupFailedDeliveryModal();
 
-        setupStatistics();
+        buildFilteredOrderSections();
+
+        updateActiveOrderCount();
 
         setupGPS();
-
     }
 );
 
 
-
 // =========================================================
-// SIDEBAR
+// SIDEBAR NAVIGATION
 // =========================================================
 
-function setupNavigation() {
+function setupSidebarNavigation() {
 
-    const navigationButtons =
+    const menuItems =
         document.querySelectorAll(
-            ".nav-item[data-section]"
+            ".menu-item[data-target]"
+        );
+
+    menuItems.forEach(
+        function (item) {
+
+            item.addEventListener(
+                "click",
+                function () {
+
+                    const target =
+                        this.dataset.target;
+
+                    openSection(target);
+                }
+            );
+        }
+    );
+}
+
+
+function openSection(sectionId) {
+
+    if (!sectionId) {
+        return;
+    }
+
+
+    const menuItems =
+        document.querySelectorAll(
+            ".menu-item[data-target]"
         );
 
 
     const sections =
         document.querySelectorAll(
-            ".page-section"
+            ".content-section"
         );
 
 
-    navigationButtons.forEach(
-        button => {
+    menuItems.forEach(
+        function (item) {
+
+            item.classList.remove(
+                "active"
+            );
+
+
+            if (
+                item.dataset.target ===
+                sectionId
+            ) {
+
+                item.classList.add(
+                    "active"
+                );
+            }
+        }
+    );
+
+
+    sections.forEach(
+        function (section) {
+
+            section.classList.remove(
+                "active"
+            );
+        }
+    );
+
+
+    const targetSection =
+        document.getElementById(
+            sectionId
+        );
+
+
+    if (targetSection) {
+
+        targetSection.classList.add(
+            "active"
+        );
+    }
+
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+
+// =========================================================
+// LINKS INSIDE CONTENT
+// =========================================================
+
+function setupSectionLinks() {
+
+    const buttons =
+        document.querySelectorAll(
+            "[data-open-section]"
+        );
+
+
+    buttons.forEach(
+        function (button) {
 
             button.addEventListener(
                 "click",
                 function () {
 
-                    const sectionName =
-                        this.dataset.section;
-
-
-                    navigationButtons
-                        .forEach(item =>
-                            item.classList.remove(
-                                "active"
-                            )
-                        );
-
-
-                    this.classList.add(
-                        "active"
+                    openSection(
+                        this.dataset.openSection
                     );
-
-
-                    sections.forEach(
-                        section => {
-
-                            section.classList.remove(
-                                "active"
-                            );
-
-                        }
-                    );
-
-
-                    const target =
-                        document.getElementById(
-                            "section-" +
-                            sectionName
-                        );
-
-
-                    if (target) {
-
-                        target.classList.add(
-                            "active"
-                        );
-
-                    }
-
                 }
             );
-
         }
     );
-
 }
 
 
+// =========================================================
+// BUILD FILTERED SECTIONS
+// =========================================================
+
+function buildFilteredOrderSections() {
+
+    const sourceCards =
+        document.querySelectorAll(
+            "#overview .order-card"
+        );
+
+
+    const activeContainer =
+        document.querySelector(
+            '[data-filter-section="active"]'
+        );
+
+
+    const completedContainer =
+        document.querySelector(
+            '[data-filter-section="completed"]'
+        );
+
+
+    const failedContainer =
+        document.querySelector(
+            '[data-filter-section="failed"]'
+        );
+
+
+    if (activeContainer) {
+        activeContainer.innerHTML = "";
+    }
+
+    if (completedContainer) {
+        completedContainer.innerHTML = "";
+    }
+
+    if (failedContainer) {
+        failedContainer.innerHTML = "";
+    }
+
+
+    let activeCount = 0;
+    let completedCount = 0;
+    let failedCount = 0;
+
+
+    sourceCards.forEach(
+        function (card) {
+
+            const status =
+                (
+                    card.dataset.orderStatus ||
+                    ""
+                ).trim();
+
+
+            if (
+                isActiveOrderStatus(status)
+            ) {
+
+                activeCount++;
+
+                appendCardClone(
+                    activeContainer,
+                    card
+                );
+            }
+
+
+            if (
+                status ===
+                "Hoàn thành"
+            ) {
+
+                completedCount++;
+
+                appendCardClone(
+                    completedContainer,
+                    card
+                );
+            }
+
+
+            if (
+                isFailedOrderStatus(status)
+            ) {
+
+                failedCount++;
+
+                appendCardClone(
+                    failedContainer,
+                    card
+                );
+            }
+        }
+    );
+
+
+    if (
+        activeContainer &&
+        activeCount === 0
+    ) {
+
+        activeContainer.innerHTML =
+            createEmptyState(
+                "🛵",
+                "Không có đơn đang xử lý",
+                "Bạn hiện không có đơn nào cần giao."
+            );
+    }
+
+
+    if (
+        completedContainer &&
+        completedCount === 0
+    ) {
+
+        completedContainer.innerHTML =
+            createEmptyState(
+                "✓",
+                "Chưa có đơn hoàn thành",
+                "Các đơn giao thành công sẽ xuất hiện tại đây."
+            );
+    }
+
+
+    if (
+        failedContainer &&
+        failedCount === 0
+    ) {
+
+        failedContainer.innerHTML =
+            createEmptyState(
+                "📦",
+                "Không có đơn giao thất bại",
+                "Hiện chưa có đơn nào được ghi nhận là không giao được."
+            );
+    }
+}
+
+
+function appendCardClone(
+    container,
+    card
+) {
+
+    if (!container) {
+        return;
+    }
+
+
+    const clonedCard =
+        card.cloneNode(true);
+
+
+    container.appendChild(
+        clonedCard
+    );
+}
+
+
+function createEmptyState(
+    icon,
+    title,
+    description
+) {
+
+    return `
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                ${icon}
+            </div>
+
+            <h3>
+                ${title}
+            </h3>
+
+            <p>
+                ${description}
+            </p>
+
+        </div>
+    `;
+}
+
 
 // =========================================================
-// WORKING STATUS
+// STATUS HELPERS
+// =========================================================
+
+function isActiveOrderStatus(status) {
+
+    return [
+        "Đã giao shipper",
+        "Đang chuẩn bị",
+        "Đang giao"
+    ].includes(status);
+}
+
+
+function isFailedOrderStatus(status) {
+
+    return [
+        "Không giao được",
+        "Đã hủy"
+    ].includes(status);
+}
+
+
+// =========================================================
+// ACTIVE ORDER COUNT
+// =========================================================
+
+function updateActiveOrderCount() {
+
+    const cards =
+        document.querySelectorAll(
+            "#overview .order-card"
+        );
+
+
+    let count = 0;
+
+
+    cards.forEach(
+        function (card) {
+
+            const status =
+                (
+                    card.dataset.orderStatus ||
+                    ""
+                ).trim();
+
+
+            if (
+                isActiveOrderStatus(status)
+            ) {
+
+                count++;
+            }
+        }
+    );
+
+
+    const menuCount =
+        document.getElementById(
+            "activeOrderCount"
+        );
+
+
+    if (menuCount) {
+
+        menuCount.textContent =
+            count;
+    }
+
+
+    const statTotals =
+        document.querySelectorAll(
+            ".active-orders-total"
+        );
+
+
+    statTotals.forEach(
+        function (element) {
+
+            element.textContent =
+                count;
+        }
+    );
+}
+
+
+// =========================================================
+// WORK SHIFT
 // =========================================================
 
 function setupWorkButton() {
@@ -116,9 +452,7 @@ function setupWorkButton() {
 
 
     if (!button) {
-
         return;
-
     }
 
 
@@ -126,7 +460,20 @@ function setupWorkButton() {
         "click",
         async function () {
 
+            if (button.disabled) {
+                return;
+            }
+
+
             button.disabled = true;
+
+
+            const oldText =
+                button.textContent;
+
+
+            button.textContent =
+                "Đang xử lý...";
 
 
             try {
@@ -141,320 +488,501 @@ function setupWorkButton() {
 
 
                 const data =
-                    await response.json();
+                    await readJsonResponse(
+                        response
+                    );
 
 
-                if (!data.success) {
+                if (
+                    !response.ok ||
+                    !data.success
+                ) {
 
                     alert(
                         data.message ||
-                        "Không thể thay đổi trạng thái."
+                        "Không thể thay đổi trạng thái ca."
                     );
 
                     button.disabled = false;
 
-                    return;
+                    button.textContent =
+                        oldText;
 
+                    return;
                 }
 
 
-                location.reload();
+                window.location.reload();
 
             }
             catch (error) {
 
-                console.error(error);
+                console.error(
+                    "Toggle work error:",
+                    error
+                );
+
 
                 alert(
-                    "Không thể kết nối đến máy chủ."
+                    "Không thể kết nối tới máy chủ."
                 );
+
 
                 button.disabled = false;
 
+                button.textContent =
+                    oldText;
             }
-
         }
     );
-
 }
 
 
+// =========================================================
+// ORDER ACTIONS
+// =========================================================
+
+function setupOrderActions() {
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            const statusButton =
+                event.target.closest(
+                    ".status-btn"
+                );
+
+
+            if (statusButton) {
+
+                event.preventDefault();
+
+
+                await updateOrderStatus(
+                    statusButton
+                );
+
+
+                return;
+            }
+
+
+            const failedButton =
+                event.target.closest(
+                    ".failed-order-btn"
+                );
+
+
+            if (failedButton) {
+
+                event.preventDefault();
+
+
+                openFailedDeliveryModal(
+                    failedButton
+                );
+            }
+        }
+    );
+}
+
 
 // =========================================================
-// ORDER STATUS
+// UPDATE ORDER STATUS
 // =========================================================
 
-function setupOrderButtons() {
+async function updateOrderStatus(
+    button
+) {
 
-    const buttons =
-        document.querySelectorAll(
-            ".status-btn"
-        );
-
-
-    buttons.forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                async function () {
-
-                    const orderId =
-                        this.dataset.id;
+    const orderId =
+        button.dataset.id;
 
 
-                    const status =
-                        this.dataset.status;
+    const newStatus =
+        button.dataset.status;
 
 
-                    if (!orderId || !status) {
+    if (
+        !orderId ||
+        !newStatus
+    ) {
 
-                        return;
-
-                    }
-
-
-                    this.disabled = true;
-
-
-                    try {
-
-                        const response =
-                            await fetch(
-                                "/shipper/update/" +
-                                orderId,
-                                {
-
-                                    method: "POST",
-
-                                    headers: {
-
-                                        "Content-Type":
-                                            "application/json"
-
-                                    },
-
-                                    body:
-                                        JSON.stringify(
-                                            {
-                                                status: status
-                                            }
-                                        )
-
-                                }
-                            );
+        return;
+    }
 
 
-                        const data =
-                            await response.json();
+    let confirmMessage = null;
 
 
-                        if (!data.success) {
+    if (
+        newStatus ===
+        "Đang chuẩn bị"
+    ) {
 
-                            alert(
-                                data.message ||
-                                "Không thể cập nhật đơn."
-                            );
-
-                            this.disabled = false;
-
-                            return;
-
-                        }
+        confirmMessage =
+            "Xác nhận bạn đã nhận món cho đơn này?";
+    }
 
 
-                        location.reload();
+    if (
+        newStatus ===
+        "Đang giao"
+    ) {
 
-                    }
-                    catch (error) {
+        confirmMessage =
+            "Xác nhận bắt đầu giao đơn hàng?";
+    }
 
-                        console.error(error);
 
-                        alert(
-                            "Lỗi kết nối server."
-                        );
+    if (
+        newStatus ===
+        "Hoàn thành"
+    ) {
 
-                        this.disabled = false;
+        confirmMessage =
+            "Xác nhận khách đã nhận hàng và bạn đã thu tiền?";
+    }
 
-                    }
 
+    if (
+        confirmMessage &&
+        !window.confirm(confirmMessage)
+    ) {
+
+        return;
+    }
+
+
+    button.disabled = true;
+
+
+    const oldContent =
+        button.innerHTML;
+
+
+    button.innerHTML =
+        "Đang cập nhật...";
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/shipper/update/" +
+                encodeURIComponent(
+                    orderId
+                ),
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            status:
+                                newStatus
+                        })
                 }
             );
 
-        }
-    );
 
+        const data =
+            await readJsonResponse(
+                response
+            );
+
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            alert(
+                data.message ||
+                "Không thể cập nhật trạng thái đơn."
+            );
+
+
+            button.disabled = false;
+
+            button.innerHTML =
+                oldContent;
+
+            return;
+        }
+
+
+        window.location.reload();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Update order error:",
+            error
+        );
+
+
+        alert(
+            "Không thể kết nối tới máy chủ."
+        );
+
+
+        button.disabled = false;
+
+        button.innerHTML =
+            oldContent;
+    }
 }
 
 
-
 // =========================================================
-// CANCEL DELIVERY MODAL
+// FAILED DELIVERY MODAL
 // =========================================================
 
-function setupCancelModal() {
-
-    const modal =
-        document.getElementById(
-            "cancelModal"
-        );
-
-
-    const buttons =
-        document.querySelectorAll(
-            ".cancel-order-btn"
-        );
-
+function setupFailedDeliveryModal() {
 
     const closeButton =
         document.getElementById(
-            "closeCancelModal"
+            "closeFailedModal"
         );
 
 
-    const backButton =
+    const cancelButton =
         document.getElementById(
-            "cancelModalBack"
+            "cancelFailedModal"
         );
 
 
     const confirmButton =
         document.getElementById(
-            "confirmCancelOrder"
+            "confirmFailedDelivery"
         );
 
 
-    buttons.forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                function () {
-
-                    selectedCancelOrderId =
-                        this.dataset.id;
-
-
-                    const orderCode =
-                        this.dataset.code;
-
-
-                    document
-                        .getElementById(
-                            "cancelOrderCode"
-                        )
-                        .textContent =
-                        "Đơn #" + orderCode;
-
-
-                    modal.classList.add(
-                        "show"
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-    function closeModal() {
-
-        modal.classList.remove(
-            "show"
+    const modal =
+        document.getElementById(
+            "failedDeliveryModal"
         );
-
-
-        selectedCancelOrderId =
-            null;
-
-
-        document
-            .getElementById(
-                "cancelReason"
-            )
-            .value = "";
-
-
-        document
-            .getElementById(
-                "cancelNote"
-            )
-            .value = "";
-
-    }
 
 
     if (closeButton) {
 
         closeButton.addEventListener(
             "click",
-            closeModal
+            closeFailedDeliveryModal
         );
-
     }
 
 
-    if (backButton) {
+    if (cancelButton) {
 
-        backButton.addEventListener(
+        cancelButton.addEventListener(
             "click",
-            closeModal
+            closeFailedDeliveryModal
         );
-
     }
-
-
-    modal.addEventListener(
-        "click",
-        function (event) {
-
-            if (event.target === modal) {
-
-                closeModal();
-
-            }
-
-        }
-    );
 
 
     if (confirmButton) {
 
         confirmButton.addEventListener(
             "click",
-            submitCancelOrder
+            submitFailedDelivery
         );
-
     }
 
+
+    if (modal) {
+
+        modal.addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    event.target === modal
+                ) {
+
+                    closeFailedDeliveryModal();
+                }
+            }
+        );
+    }
+
+
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeFailedDeliveryModal();
+            }
+        }
+    );
 }
 
 
-
 // =========================================================
-// SUBMIT CANCEL ORDER
+// OPEN FAILED MODAL
 // =========================================================
 
-async function submitCancelOrder() {
+function openFailedDeliveryModal(
+    button
+) {
 
-    if (!selectedCancelOrderId) {
+    const modal =
+        document.getElementById(
+            "failedDeliveryModal"
+        );
 
+
+    if (!modal) {
         return;
+    }
 
+
+    selectedFailedOrderId =
+        button.dataset.id;
+
+
+    selectedFailedOrderCode =
+        button.dataset.code;
+
+
+    const codeElement =
+        document.getElementById(
+            "failedOrderCode"
+        );
+
+
+    if (codeElement) {
+
+        codeElement.textContent =
+            "Đơn #" +
+            (
+                selectedFailedOrderCode ||
+                selectedFailedOrderId
+            );
     }
 
 
     const reason =
         document.getElementById(
-            "cancelReason"
-        ).value;
+            "failedReason"
+        );
 
 
     const note =
         document.getElementById(
-            "cancelNote"
-        ).value.trim();
+            "failedNote"
+        );
+
+
+    if (reason) {
+        reason.value = "";
+    }
+
+
+    if (note) {
+        note.value = "";
+    }
+
+
+    modal.classList.add(
+        "show"
+    );
+
+
+    document.body.style.overflow =
+        "hidden";
+}
+
+
+// =========================================================
+// CLOSE FAILED MODAL
+// =========================================================
+
+function closeFailedDeliveryModal() {
+
+    const modal =
+        document.getElementById(
+            "failedDeliveryModal"
+        );
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.classList.remove(
+        "show"
+    );
+
+
+    document.body.style.overflow =
+        "";
+
+
+    selectedFailedOrderId =
+        null;
+
+
+    selectedFailedOrderCode =
+        null;
+}
+
+
+// =========================================================
+// SUBMIT FAILED DELIVERY
+// =========================================================
+
+async function submitFailedDelivery() {
+
+    if (!selectedFailedOrderId) {
+
+        return;
+    }
+
+
+    const reasonElement =
+        document.getElementById(
+            "failedReason"
+        );
+
+
+    const noteElement =
+        document.getElementById(
+            "failedNote"
+        );
+
+
+    const confirmButton =
+        document.getElementById(
+            "confirmFailedDelivery"
+        );
+
+
+    const reason =
+        reasonElement
+            ? reasonElement.value.trim()
+            : "";
+
+
+    const note =
+        noteElement
+            ? noteElement.value.trim()
+            : "";
 
 
     if (!reason) {
@@ -463,18 +991,34 @@ async function submitCancelOrder() {
             "Bạn cần chọn lý do không giao được."
         );
 
-        return;
 
+        if (reasonElement) {
+            reasonElement.focus();
+        }
+
+
+        return;
     }
 
 
-    const button =
-        document.getElementById(
-            "confirmCancelOrder"
-        );
+    if (
+        !window.confirm(
+            "Xác nhận đơn hàng này không thể giao?"
+        )
+    ) {
+
+        return;
+    }
 
 
-    button.disabled = true;
+    if (confirmButton) {
+
+        confirmButton.disabled =
+            true;
+
+        confirmButton.textContent =
+            "Đang lưu...";
+    }
 
 
     try {
@@ -482,168 +1026,84 @@ async function submitCancelOrder() {
         const response =
             await fetch(
                 "/shipper/cancel/" +
-                selectedCancelOrderId,
+                encodeURIComponent(
+                    selectedFailedOrderId
+                ),
                 {
 
                     method: "POST",
 
                     headers: {
-
                         "Content-Type":
                             "application/json"
-
                     },
 
                     body:
-                        JSON.stringify(
-                            {
-
-                                reason: reason,
-
-                                note: note
-
-                            }
-                        )
-
+                        JSON.stringify({
+                            reason: reason,
+                            note: note
+                        })
                 }
             );
 
 
         const data =
-            await response.json();
+            await readJsonResponse(
+                response
+            );
 
 
-        if (!data.success) {
+        if (
+            !response.ok ||
+            !data.success
+        ) {
 
             alert(
                 data.message ||
-                "Không thể cập nhật đơn."
+                "Không thể ghi nhận đơn giao thất bại."
             );
 
-            button.disabled = false;
+
+            if (confirmButton) {
+
+                confirmButton.disabled =
+                    false;
+
+                confirmButton.textContent =
+                    "Xác nhận không giao được";
+            }
+
 
             return;
-
         }
 
 
-        location.reload();
+        window.location.reload();
 
     }
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "Failed delivery error:",
+            error
+        );
 
 
         alert(
-            "Chức năng này cần nối API hủy đơn ở backend."
+            "Backend chưa xử lý API không giao được hoặc server đang lỗi."
         );
 
 
-        button.disabled = false;
+        if (confirmButton) {
 
-    }
+            confirmButton.disabled =
+                false;
 
-}
-
-
-
-// =========================================================
-// STATISTICS BY DATE
-// =========================================================
-
-function setupStatistics() {
-
-    const button =
-        document.getElementById(
-            "viewStatisticsBtn"
-        );
-
-
-    const dateInput =
-        document.getElementById(
-            "statsDate"
-        );
-
-
-    if (!button || !dateInput) {
-
-        return;
-
-    }
-
-
-    button.addEventListener(
-        "click",
-        function () {
-
-            const selectedDate =
-                dateInput.value;
-
-
-            if (!selectedDate) {
-
-                alert(
-                    "Hãy chọn ngày cần xem."
-                );
-
-                return;
-
-            }
-
-
-            const url =
-                new URL(
-                    window.location.href
-                );
-
-
-            url.searchParams.set(
-                "date",
-                selectedDate
-            );
-
-
-            url.searchParams.set(
-                "section",
-                "statistics"
-            );
-
-
-            window.location.href =
-                url.toString();
-
+            confirmButton.textContent =
+                "Xác nhận không giao được";
         }
-    );
-
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-
-    if (
-        params.get("section") ===
-        "statistics"
-    ) {
-
-        const statisticsButton =
-            document.querySelector(
-                '[data-section="statistics"]'
-            );
-
-
-        if (statisticsButton) {
-
-            statisticsButton.click();
-
-        }
-
     }
-
 }
-
 
 
 // =========================================================
@@ -660,22 +1120,22 @@ function setupGPS() {
     if (!isWorking) {
 
         console.log(
-            "Shipper đang nghỉ ca, GPS không gửi."
+            "Shipper đang nghỉ ca. GPS không được gửi."
         );
 
         return;
-
     }
 
 
-    if (!navigator.geolocation) {
+    if (
+        !navigator.geolocation
+    ) {
 
         console.warn(
-            "Thiết bị không hỗ trợ GPS."
+            "Trình duyệt không hỗ trợ GPS."
         );
 
         return;
-
     }
 
 
@@ -684,22 +1144,17 @@ function setupGPS() {
 
             sendLocation,
 
-            locationError,
+            handleLocationError,
 
             {
-
                 enableHighAccuracy: true,
 
                 maximumAge: 10000,
 
                 timeout: 15000
-
             }
-
         );
-
 }
-
 
 
 // =========================================================
@@ -728,67 +1183,132 @@ async function sendLocation(
                     method: "POST",
 
                     headers: {
-
                         "Content-Type":
                             "application/json"
-
                     },
 
                     body:
-                        JSON.stringify(
-                            {
+                        JSON.stringify({
+                            latitude:
+                                latitude,
 
-                                latitude:
-                                    latitude,
-
-                                longitude:
-                                    longitude
-
-                            }
-                        )
-
+                            longitude:
+                                longitude
+                        })
                 }
             );
 
 
+        if (!response.ok) {
+
+            console.warn(
+                "Server từ chối cập nhật GPS."
+            );
+
+
+            return;
+        }
+
+
         const data =
-            await response.json();
+            await readJsonResponse(
+                response
+            );
 
 
         if (!data.success) {
 
             console.warn(
                 data.message ||
-                "GPS không được cập nhật."
+                "Không thể cập nhật GPS."
             );
-
         }
 
     }
     catch (error) {
 
         console.error(
-            "Lỗi gửi GPS:",
+            "GPS request error:",
             error
         );
-
     }
-
 }
-
 
 
 // =========================================================
 // GPS ERROR
 // =========================================================
 
-function locationError(
+function handleLocationError(
     error
 ) {
 
-    console.warn(
-        "Không lấy được vị trí GPS:",
-        error.message
-    );
+    switch (
+        error.code
+    ) {
 
+        case error.PERMISSION_DENIED:
+
+            console.warn(
+                "Người dùng chưa cấp quyền vị trí."
+            );
+
+            break;
+
+
+        case error.POSITION_UNAVAILABLE:
+
+            console.warn(
+                "Không xác định được vị trí."
+            );
+
+            break;
+
+
+        case error.TIMEOUT:
+
+            console.warn(
+                "Lấy vị trí quá thời gian."
+            );
+
+            break;
+
+
+        default:
+
+            console.warn(
+                "Lỗi GPS:",
+                error.message
+            );
+    }
+}
+
+
+// =========================================================
+// SAFE JSON
+// =========================================================
+
+async function readJsonResponse(
+    response
+) {
+
+    try {
+
+        return await response.json();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Response không phải JSON:",
+            error
+        );
+
+
+        return {
+            success: false,
+            message:
+                "Server trả về dữ liệu không hợp lệ."
+        };
+    }
 }

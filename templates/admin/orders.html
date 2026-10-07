@@ -2,67 +2,365 @@
 <html lang="vi">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Quản lý đơn hàng - Bún Chả Việt</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>
+        Quản lý đơn hàng | Bún Chả Việt
+    </title>
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap"
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap"
         rel="stylesheet"
     >
 
-    <link rel="stylesheet" href="/static/css/orders.css">
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/orders.css') }}"
+    >
+
 </head>
+
 
 <body>
 
+
+{% set summary = namespace(
+    pending=0,
+    active=0,
+    completed=0,
+    failed=0,
+    collected=0
+) %}
+
+
+{% for order in orders %}
+
+    {% if order.Status in ['Đã tiếp nhận'] %}
+
+        {% set summary.pending = summary.pending + 1 %}
+
+    {% endif %}
+
+
+    {% if order.Status in [
+        'Đã giao shipper',
+        'Đang chuẩn bị',
+        'Đang giao'
+    ] %}
+
+        {% set summary.active = summary.active + 1 %}
+
+    {% endif %}
+
+
+    {% if order.Status == 'Hoàn thành' %}
+
+        {% set summary.completed = summary.completed + 1 %}
+
+        {% set summary.collected =
+            summary.collected
+            +
+            (order.FinalMoney or 0)
+        %}
+
+    {% endif %}
+
+
+    {% if order.Status in [
+        'Không giao được',
+        'Đã hủy'
+    ] %}
+
+        {% set summary.failed = summary.failed + 1 %}
+
+    {% endif %}
+
+{% endfor %}
+
+
+
 <div class="page">
 
-    <!-- HEADER -->
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
     <header class="page-header">
 
+
         <div class="header-left">
 
+
+            <p class="header-eyebrow">
+                QUẢN LÝ VẬN HÀNH
+            </p>
+
+
             <h1>
-                🛒 Quản lý đơn hàng
+                Quản lý đơn hàng
             </h1>
 
+
             <p>
-                Theo dõi, lọc và xử lý đơn khách hàng
+                Theo dõi đơn, phân công shipper và kiểm soát quá trình giao hàng.
             </p>
+
 
         </div>
 
-        <a
-            href="/admin/dashboard"
-            class="back-btn"
-        >
-            ← Quay về Trang Quản lý
-        </a>
+
+
+        <div class="header-actions">
+
+
+            <a
+                href="{{ url_for('admin.shippers') }}"
+                class="secondary-header-btn"
+            >
+                Quản lý shipper
+            </a>
+
+
+            <a
+                href="{{ url_for('admin.dashboard') }}"
+                class="back-btn"
+            >
+                ← Dashboard
+            </a>
+
+
+        </div>
+
 
     </header>
 
 
-    <!-- BỘ LỌC -->
+
+    <!-- =====================================================
+         SUMMARY
+    ====================================================== -->
+
+    <section class="order-summary-grid">
+
+
+        <article class="summary-card">
+
+
+            <div class="summary-icon pending">
+                ◷
+            </div>
+
+
+            <div>
+
+                <span>
+                    Chờ xử lý
+                </span>
+
+                <strong>
+                    {{ summary.pending }}
+                </strong>
+
+                <small>
+                    đơn
+                </small>
+
+            </div>
+
+
+        </article>
+
+
+
+        <article class="summary-card">
+
+
+            <div class="summary-icon delivering">
+                ▣
+            </div>
+
+
+            <div>
+
+                <span>
+                    Đang giao
+                </span>
+
+                <strong>
+                    {{ summary.active }}
+                </strong>
+
+                <small>
+                    đơn đang xử lý
+                </small>
+
+            </div>
+
+
+        </article>
+
+
+
+        <article class="summary-card">
+
+
+            <div class="summary-icon completed">
+                ✓
+            </div>
+
+
+            <div>
+
+                <span>
+                    Hoàn thành
+                </span>
+
+                <strong>
+                    {{ summary.completed }}
+                </strong>
+
+                <small>
+                    đơn trong kết quả lọc
+                </small>
+
+            </div>
+
+
+        </article>
+
+
+
+        <article class="summary-card">
+
+
+            <div class="summary-icon failed">
+                ×
+            </div>
+
+
+            <div>
+
+                <span>
+                    Không thành công
+                </span>
+
+                <strong>
+                    {{ summary.failed }}
+                </strong>
+
+                <small>
+                    hủy hoặc giao thất bại
+                </small>
+
+            </div>
+
+
+        </article>
+
+
+
+        <article class="summary-card money-card">
+
+
+            <div class="summary-icon money">
+                ₫
+            </div>
+
+
+            <div>
+
+                <span>
+                    Tiền đơn hoàn thành
+                </span>
+
+                <strong>
+
+                    {{ "{:,.0f}".format(
+                        summary.collected or 0
+                    ) }}
+
+                    ₫
+
+                </strong>
+
+                <small>
+                    trong kết quả lọc
+                </small>
+
+            </div>
+
+
+        </article>
+
+
+    </section>
+
+
+
+    <!-- =====================================================
+         FILTER
+    ====================================================== -->
 
     <section class="filter-box">
 
-        <div class="filter-title">
-            🔎 Tra cứu đơn hàng
+
+        <div class="filter-header">
+
+
+            <div>
+
+                <h2>
+                    Tra cứu đơn hàng
+                </h2>
+
+                <p>
+                    Lọc theo ngày, tháng hoặc trạng thái đơn.
+                </p>
+
+            </div>
+
+
+            <div class="filter-result">
+
+                {{ orders|length }}
+
+                đơn hàng
+
+            </div>
+
+
         </div>
+
+
 
         <div class="filter-row">
 
+
             <div class="filter-group">
 
+
                 <label for="filter-date">
-                    Tra cứu theo ngày
+                    Theo ngày
                 </label>
+
 
                 <input
                     type="date"
@@ -70,14 +368,18 @@
                     value="{{ selected_date }}"
                 >
 
+
             </div>
+
 
 
             <div class="filter-group">
 
+
                 <label for="filter-month">
-                    Tra cứu theo tháng
+                    Theo tháng
                 </label>
+
 
                 <input
                     type="month"
@@ -85,428 +387,834 @@
                     value="{{ selected_month }}"
                 >
 
+
             </div>
 
 
-            <div class="filter-group">
+
+            <div class="filter-group status-filter">
+
 
                 <label for="filter-status">
                     Trạng thái
                 </label>
 
+
                 <select id="filter-status">
+
 
                     <option value="">
                         Tất cả trạng thái
                     </option>
 
+
                     <option
                         value="Đã tiếp nhận"
-                        {% if selected_status == "Đã tiếp nhận" %}selected{% endif %}
+                        {% if selected_status == 'Đã tiếp nhận' %}
+                            selected
+                        {% endif %}
                     >
-                        🟡 Đã tiếp nhận
+                        Đã tiếp nhận
                     </option>
+
+
+                    <option
+                        value="Đã giao shipper"
+                        {% if selected_status == 'Đã giao shipper' %}
+                            selected
+                        {% endif %}
+                    >
+                        Đã giao shipper
+                    </option>
+
 
                     <option
                         value="Đang chuẩn bị"
-                        {% if selected_status == "Đang chuẩn bị" %}selected{% endif %}
+                        {% if selected_status == 'Đang chuẩn bị' %}
+                            selected
+                        {% endif %}
                     >
-                        🔵 Đang chuẩn bị
+                        Đang chuẩn bị
                     </option>
+
 
                     <option
                         value="Đang giao"
-                        {% if selected_status == "Đang giao" %}selected{% endif %}
+                        {% if selected_status == 'Đang giao' %}
+                            selected
+                        {% endif %}
                     >
-                        🚚 Đang giao
+                        Đang giao
                     </option>
+
 
                     <option
                         value="Hoàn thành"
-                        {% if selected_status == "Hoàn thành" %}selected{% endif %}
+                        {% if selected_status == 'Hoàn thành' %}
+                            selected
+                        {% endif %}
                     >
-                        🟢 Hoàn thành
+                        Hoàn thành
                     </option>
+
+
+                    <option
+                        value="Không giao được"
+                        {% if selected_status == 'Không giao được' %}
+                            selected
+                        {% endif %}
+                    >
+                        Không giao được
+                    </option>
+
 
                     <option
                         value="Đã hủy"
-                        {% if selected_status == "Đã hủy" %}selected{% endif %}
+                        {% if selected_status == 'Đã hủy' %}
+                            selected
+                        {% endif %}
                     >
-                        🔴 Đã hủy
+                        Đã hủy
                     </option>
+
 
                 </select>
 
+
             </div>
+
 
 
             <div class="filter-buttons">
 
+
                 <button
                     type="button"
                     class="filter-btn"
-                    onclick="filterOrders()"
+                    id="filterOrdersBtn"
                 >
-                    🔎 Lọc
+                    Lọc đơn
                 </button>
+
 
                 <button
                     type="button"
                     class="reset-btn"
-                    onclick="resetFilter()"
+                    id="resetFilterBtn"
                 >
-                    ↻ Tất cả
+                    Xóa bộ lọc
                 </button>
+
 
             </div>
 
-        </div>
-
-
-        <div class="filter-hint">
-
-            Chọn ngày cụ thể hoặc tháng để xem lịch sử đơn hàng.
 
         </div>
+
 
     </section>
 
 
 
-
-    <!-- DANH SÁCH ĐƠN -->
+    <!-- =====================================================
+         ORDERS TABLE
+    ====================================================== -->
 
     <section class="order-table">
 
+
         <div class="table-header">
+
 
             <div>
 
                 <h2>
-                    📋 Danh sách đơn hàng
+                    Danh sách đơn hàng
                 </h2>
 
                 <p>
-                    Các đơn hàng mới nhất được hiển thị ở trên
+                    Đơn mới nhất được hiển thị trước.
                 </p>
 
             </div>
 
+
             <div class="order-count">
 
-                {{ orders|length }} đơn hàng
+                {{ orders|length }}
+
+                đơn
 
             </div>
 
+
         </div>
+
 
 
         <div class="table-wrapper">
 
-            <table>
+
+            <table class="orders-table">
+
 
                 <thead>
 
-                <tr>
 
-                    <th>
-                        Mã đơn
-                    </th>
+                    <tr>
 
-                    <th>
-                        Thời gian
-                    </th>
+                        <th>
+                            Đơn hàng
+                        </th>
 
-                    <th>
-                        Khách hàng
-                    </th>
+                        <th>
+                            Khách hàng
+                        </th>
 
-                    <th>
-                        SĐT
-                    </th>
+                        <th>
+                            Giao hàng
+                        </th>
 
-                    <th>
-                        Địa chỉ
-                    </th>
+                        <th>
+                            Thanh toán
+                        </th>
 
-                    <th>
-                        Tổng tiền
-                    </th>
+                        <th>
+                            Trạng thái
+                        </th>
 
-                    <th>
-                        Trạng thái
-                    </th>
+                        <th>
+                            Shipper
+                        </th>
 
-                    <th>
-                        Giao shipper
-                    </th>
+                        <th>
+                            Thao tác
+                        </th>
 
-                    <th>
-                        Cập nhật
-                    </th>
+                    </tr>
 
-                </tr>
 
                 </thead>
 
 
+
                 <tbody>
 
-                {% for o in orders %}
 
-                <tr>
-
-                    <!-- MÃ ĐƠN -->
-
-                    <td class="order-code">
-
-                        <strong>
-                            {{ o.OrderCode }}
-                        </strong>
-
-                    </td>
+                    {% for o in orders %}
 
 
-                    <!-- THỜI GIAN -->
+                    {% set assigned = namespace(
+                        name='Chưa giao shipper'
+                    ) %}
 
-                    <td class="order-time">
 
-                        {% if o.CreatedAt %}
+                    {% for shipper in shippers %}
 
-                            <strong>
-                                {{ o.CreatedAt.strftime("%d/%m/%Y") }}
-                            </strong>
+                        {% if shipper.UserID == o.DriverID %}
 
-                            <small>
-                                {{ o.CreatedAt.strftime("%H:%M") }}
-                            </small>
-
-                        {% else %}
-
-                            <span>
-                                —
-                            </span>
+                            {% set assigned.name =
+                                shipper.FullName
+                            %}
 
                         {% endif %}
 
-                    </td>
+                    {% endfor %}
 
 
-                    <!-- KHÁCH HÀNG -->
 
-                    <td class="customer">
-
-                        <strong>
-                            {{ o.CustomerName }}
-                        </strong>
-
-                    </td>
-
-
-                    <!-- SỐ ĐIỆN THOẠI -->
-
-                    <td>
-
-                        <a
-                            href="tel:{{ o.Phone }}"
-                            class="phone-link"
-                        >
-                            {{ o.Phone }}
-                        </a>
-
-                    </td>
-
-
-                    <!-- ĐỊA CHỈ -->
-
-                    <td class="address">
-
-                        <div>
-                            {{ o.Address }}
-                        </div>
-
-                        <small>
-
-                            {{ o.Ward }},
-                            {{ o.District }},
-                            {{ o.Province }}
-
-                        </small>
-
-                    </td>
-
-
-                    <!-- TỔNG TIỀN -->
-
-                    <td class="price">
-
-                        {{ "{:,.0f}".format(o.TotalMoney) }} đ
-
-                    </td>
-
-
-                    <!-- TRẠNG THÁI -->
-
-                    <td>
-
-                        <select
-                            id="status-{{ o.OrderID }}"
-                            class="status-select"
-                        >
-
-                            <option
-                                value="Đã tiếp nhận"
-                                {% if o.Status == "Đã tiếp nhận" %}selected{% endif %}
-                            >
-                                🟡 Đã tiếp nhận
-                            </option>
-
-                            <option
-                                value="Đang chuẩn bị"
-                                {% if o.Status == "Đang chuẩn bị" %}selected{% endif %}
-                            >
-                                🔵 Đang chuẩn bị
-                            </option>
-
-                            <option
-                                value="Đang giao"
-                                {% if o.Status == "Đang giao" %}selected{% endif %}
-                            >
-                                🚚 Đang giao
-                            </option>
-
-                            <option
-                                value="Hoàn thành"
-                                {% if o.Status == "Hoàn thành" %}selected{% endif %}
-                            >
-                                🟢 Hoàn thành
-                            </option>
-
-                            <option
-                                value="Đã hủy"
-                                {% if o.Status == "Đã hủy" %}selected{% endif %}
-                            >
-                                🔴 Đã hủy
-                            </option>
-
-                        </select>
-
-                    </td>
-
-
-                    <!-- SHIPPER -->
-
-                    <td>
-
-                        <div class="shipper-action">
-
-                            <select
-                                class="shipper-select"
-                                data-order="{{ o.OrderID }}"
-                            >
-
-                                <option value="">
-                                    Chọn shipper
-                                </option>
-
-                                {% for s in shippers %}
-
-                                <option
-                                    value="{{ s.UserID }}"
-
-                                    {% if o.DriverID == s.UserID %}
-                                        selected
-                                    {% endif %}
-
-                                    {% if s.IsWorking != 1 %}
-                                        disabled
-                                    {% endif %}
-                                >
-
-                                    {{ s.FullName }}
-
-                                    {% if s.IsWorking == 1 %}
-                                        — Đang nhận đơn
-                                    {% else %}
-                                        — Nghỉ ca
-                                    {% endif %}
-
-                                </option>
-
-                                {% endfor %}
-
-                            </select>
-
-
-                            <button
-                                type="button"
-                                class="assign-btn"
-                                data-id="{{ o.OrderID }}"
-                            >
-                                🚚 Giao
-                            </button>
-
-                        </div>
-
-                    </td>
-
-
-                    <!-- CẬP NHẬT -->
-
-                    <td>
-
-                        <button
-                            type="button"
-                            class="save-btn update-order-btn"
-                            data-id="{{ o.OrderID }}"
-                        >
-                            💾 Lưu
-                        </button>
-
-                    </td>
-
-                </tr>
-
-
-                {% else %}
-
-                <tr>
-
-                    <td
-                        colspan="9"
-                        class="empty"
+                    <tr
+                        class="order-row"
+                        data-status="{{ o.Status }}"
                     >
 
-                        <div class="empty-icon">
-                            📭
-                        </div>
 
-                        <strong>
-                            Không có đơn hàng
-                        </strong>
+                        <!-- =================================
+                             ORDER
+                        ================================== -->
 
-                        <p>
-                            Không có đơn hàng phù hợp với bộ lọc hiện tại.
-                        </p>
+                        <td class="order-main-cell">
 
-                    </td>
 
-                </tr>
+                            <div class="order-code">
 
-                {% endfor %}
+                                #{{ o.OrderCode }}
+
+                            </div>
+
+
+                            <div class="order-id">
+
+                                ID {{ o.OrderID }}
+
+                            </div>
+
+
+                            {% if o.CreatedAt %}
+
+                            <div class="order-date">
+
+                                {{ o.CreatedAt }}
+
+                            </div>
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+                        <!-- =================================
+                             CUSTOMER
+                        ================================== -->
+
+                        <td class="customer-cell">
+
+
+                            <strong>
+                                {{ o.CustomerName or 'Không có tên' }}
+                            </strong>
+
+
+                            {% if o.Phone %}
+
+                            <a
+                                href="tel:{{ o.Phone }}"
+                                class="phone-link"
+                            >
+
+                                {{ o.Phone }}
+
+                            </a>
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+                        <!-- =================================
+                             ADDRESS
+                        ================================== -->
+
+                        <td class="delivery-cell">
+
+
+                            <div class="address">
+
+                                {{ o.Address or 'Chưa có địa chỉ' }}
+
+                            </div>
+
+
+                            {% if o.Note %}
+
+                            <details class="order-note">
+
+
+                                <summary>
+                                    Xem ghi chú
+                                </summary>
+
+
+                                <p>
+                                    {{ o.Note }}
+                                </p>
+
+
+                            </details>
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+                        <!-- =================================
+                             MONEY
+                        ================================== -->
+
+                        <td class="money-cell">
+
+
+                            <div class="final-money">
+
+                                {{ "{:,.0f}".format(
+                                    o.FinalMoney or 0
+                                ) }}
+
+                                ₫
+
+                            </div>
+
+
+                            <div class="money-breakdown">
+
+                                <span>
+                                    Món:
+                                </span>
+
+                                {{ "{:,.0f}".format(
+                                    o.TotalMoney or 0
+                                ) }}
+
+                                ₫
+
+                            </div>
+
+
+                            <div class="money-breakdown">
+
+                                <span>
+                                    Ship:
+                                </span>
+
+                                {{ "{:,.0f}".format(
+                                    o.ShippingFee or 0
+                                ) }}
+
+                                ₫
+
+                            </div>
+
+
+                        </td>
+
+
+
+                        <!-- =================================
+                             STATUS
+                        ================================== -->
+
+                        <td class="status-cell">
+
+
+                            {% if o.Status == 'Đã tiếp nhận' %}
+
+
+                            <span class="status-badge received">
+
+                                Đã tiếp nhận
+
+                            </span>
+
+
+                            {% elif o.Status == 'Đã giao shipper' %}
+
+
+                            <span class="status-badge assigned">
+
+                                Đã giao shipper
+
+                            </span>
+
+
+                            {% elif o.Status == 'Đang chuẩn bị' %}
+
+
+                            <span class="status-badge preparing">
+
+                                Đang chuẩn bị
+
+                            </span>
+
+
+                            {% elif o.Status == 'Đang giao' %}
+
+
+                            <span class="status-badge delivering">
+
+                                Đang giao
+
+                            </span>
+
+
+                            {% elif o.Status == 'Hoàn thành' %}
+
+
+                            <span class="status-badge completed">
+
+                                Hoàn thành
+
+                            </span>
+
+
+                            {% elif o.Status == 'Không giao được' %}
+
+
+                            <span class="status-badge failed">
+
+                                Không giao được
+
+                            </span>
+
+
+                            {% elif o.Status == 'Đã hủy' %}
+
+
+                            <span class="status-badge cancelled">
+
+                                Đã hủy
+
+                            </span>
+
+
+                            {% else %}
+
+
+                            <span class="status-badge neutral">
+
+                                {{ o.Status }}
+
+                            </span>
+
+
+                            {% endif %}
+
+
+
+                            {% if o.Status == 'Hoàn thành'
+                                  and o.DeliveredAt %}
+
+                            <div class="delivered-time">
+
+                                Giao lúc:
+
+                                {{ o.DeliveredAt }}
+
+                            </div>
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+                        <!-- =================================
+                             SHIPPER
+                        ================================== -->
+
+                        <td class="shipper-cell">
+
+
+                            <div class="current-shipper">
+
+                                <span>
+                                    Hiện tại
+                                </span>
+
+                                <strong>
+                                    {{ assigned.name }}
+                                </strong>
+
+                            </div>
+
+
+
+                            {% if o.Status not in [
+                                'Hoàn thành',
+                                'Không giao được',
+                                'Đã hủy',
+                                'Đang giao'
+                            ] %}
+
+
+                            <div class="shipper-action">
+
+
+                                <select
+                                    class="shipper-select"
+                                    data-order="{{ o.OrderID }}"
+                                >
+
+
+                                    <option value="">
+                                        Chọn shipper
+                                    </option>
+
+
+
+                                    {% for s in shippers %}
+
+
+                                    <option
+                                        value="{{ s.UserID }}"
+
+                                        {% if o.DriverID == s.UserID %}
+                                            selected
+                                        {% endif %}
+
+                                        {% if s.IsActive != 1
+                                              or s.IsWorking != 1 %}
+                                            disabled
+                                        {% endif %}
+                                    >
+
+
+                                        {{ s.FullName }}
+
+
+                                        {% if s.IsActive != 1 %}
+
+                                            • Đã khóa
+
+                                        {% elif s.IsWorking == 1 %}
+
+                                            • Online
+                                            • {{ s.ActiveOrders or 0 }} đơn
+
+                                        {% else %}
+
+                                            • Nghỉ ca
+
+                                        {% endif %}
+
+
+                                    </option>
+
+
+                                    {% endfor %}
+
+
+                                </select>
+
+
+                                <button
+                                    type="button"
+                                    class="assign-btn"
+                                    data-id="{{ o.OrderID }}"
+                                >
+
+                                    {% if o.DriverID %}
+                                        Đổi
+                                    {% else %}
+                                        Giao
+                                    {% endif %}
+
+                                </button>
+
+
+                            </div>
+
+
+                            {% elif o.Status == 'Đang giao' %}
+
+
+                            <div class="shipper-locked-message">
+
+                                Shipper đang giao đơn
+
+                            </div>
+
+
+                            {% else %}
+
+
+                            <div class="shipper-locked-message">
+
+                                Đơn đã kết thúc
+
+                            </div>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+                        <!-- =================================
+                             ACTION
+                        ================================== -->
+
+                        <td class="action-cell">
+
+
+                            {% if o.Status in [
+                                'Đã tiếp nhận',
+                                'Đang chuẩn bị'
+                            ] %}
+
+
+                            <div class="admin-status-control">
+
+
+                                <select
+                                    id="status-{{ o.OrderID }}"
+                                    class="admin-status-select"
+                                >
+
+
+                                    <option
+                                        value="Đã tiếp nhận"
+
+                                        {% if o.Status == 'Đã tiếp nhận' %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Đã tiếp nhận
+                                    </option>
+
+
+                                    <option
+                                        value="Đang chuẩn bị"
+
+                                        {% if o.Status == 'Đang chuẩn bị' %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        Đang chuẩn bị
+                                    </option>
+
+
+                                    <option value="Đã hủy">
+                                        Đã hủy
+                                    </option>
+
+
+                                </select>
+
+
+
+                                <button
+                                    type="button"
+                                    class="save-btn update-order-btn"
+                                    data-id="{{ o.OrderID }}"
+                                >
+
+                                    Lưu
+
+                                </button>
+
+
+                            </div>
+
+
+                            {% elif o.Status == 'Đã giao shipper' %}
+
+
+                            <div class="role-message">
+
+                                Chờ shipper nhận món
+
+                            </div>
+
+
+                            {% elif o.Status == 'Đang giao' %}
+
+
+                            <div class="role-message active">
+
+                                Shipper đang giao
+
+                            </div>
+
+
+                            {% elif o.Status == 'Hoàn thành' %}
+
+
+                            <div class="role-message success">
+
+                                Đã hoàn tất
+
+                            </div>
+
+
+                            {% elif o.Status == 'Không giao được' %}
+
+
+                            <div class="role-message danger">
+
+                                Kiểm tra lý do giao thất bại
+
+                            </div>
+
+
+                            {% elif o.Status == 'Đã hủy' %}
+
+
+                            <div class="role-message muted">
+
+                                Đã hủy
+
+                            </div>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+                    </tr>
+
+
+
+                    {% else %}
+
+
+                    <tr>
+
+
+                        <td
+                            colspan="7"
+                            class="empty"
+                        >
+
+
+                            <div class="empty-icon">
+                                📭
+                            </div>
+
+
+                            <strong>
+                                Không có đơn hàng
+                            </strong>
+
+
+                            <p>
+
+                                Không tìm thấy đơn phù hợp
+                                với bộ lọc hiện tại.
+
+                            </p>
+
+
+                        </td>
+
+
+                    </tr>
+
+
+                    {% endfor %}
+
 
                 </tbody>
 
+
             </table>
+
 
         </div>
 
+
     </section>
+
 
 </div>
 
 
-<script src="/static/js/orders.js"></script>
+
+<script
+    src="{{ url_for('static', filename='js/orders.js') }}"
+>
+</script>
+
 
 </body>
 

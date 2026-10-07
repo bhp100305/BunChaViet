@@ -2,12 +2,13 @@ from datetime import datetime
 
 from flask import (
     Blueprint,
-    render_template,
-    session,
-    redirect,
-    url_for,
+    Response,
     jsonify,
-    request
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
 )
 
 from database import get_connection
@@ -16,7 +17,7 @@ from database import get_connection
 shipper_bp = Blueprint(
     "shipper",
     __name__,
-    url_prefix="/shipper"
+    url_prefix="/shipper",
 )
 
 
@@ -24,8 +25,34 @@ shipper_bp = Blueprint(
 # CHECK ROLE
 # =====================================================
 
-def check_shipper():
+def check_shipper() -> bool:
+    """Kiểm tra người dùng hiện tại có phải shipper hay không."""
     return session.get("role") == "Shipper"
+
+
+# =====================================================
+# NORMALIZE DATE
+# =====================================================
+
+def normalize_date(
+    value: str | None,
+    default_value: str,
+) -> str:
+    """Chuẩn hóa ngày theo định dạng YYYY-MM-DD."""
+
+    if not value:
+        return default_value
+
+    try:
+        datetime.strptime(
+            value,
+            "%Y-%m-%d",
+        )
+
+        return value
+
+    except ValueError:
+        return default_value
 
 
 # =====================================================
@@ -33,7 +60,7 @@ def check_shipper():
 # =====================================================
 
 @shipper_bp.route("/orders")
-def orders():
+def orders() -> str | Response:
 
     if not check_shipper():
         return redirect(
@@ -42,75 +69,81 @@ def orders():
 
     user_id = session.get("user_id")
 
+    today = datetime.now().strftime(
+        "%Y-%m-%d"
+    )
 
     # =================================================
-    # NGÀY THỐNG KÊ
-    # QUAN TRỌNG:
-    # luôn giữ dưới dạng STRING YYYY-MM-DD
-    # không truyền object date vào pyodbc
+    # HỖ TRỢ URL CŨ
+    #
+    # ?date=2026-09-30
+    #
+    # VÀ URL MỚI
+    #
+    # ?from_date=2026-09-01&to_date=2026-09-30
     # =================================================
 
-    selected_date = request.args.get("date")
+    old_date = request.args.get(
+        "date"
+    )
 
-    if selected_date:
+    from_date = normalize_date(
+        request.args.get("from_date")
+        or old_date,
+        today,
+    )
 
-        try:
+    to_date = normalize_date(
+        request.args.get("to_date")
+        or old_date
+        or from_date,
+        from_date,
+    )
 
-            datetime.strptime(
-                selected_date,
-                "%Y-%m-%d"
-            )
-
-        except ValueError:
-
-            selected_date = (
-                datetime.now()
-                .strftime("%Y-%m-%d")
-            )
-
-    else:
-
-        selected_date = (
-            datetime.now()
-            .strftime("%Y-%m-%d")
+    if from_date > to_date:
+        from_date, to_date = (
+            to_date,
+            from_date,
         )
 
-
     conn = get_connection()
-
     cursor = conn.cursor()
-
 
     try:
 
         # =================================================
-        # LẤY TRẠNG THÁI LÀM VIỆC
+        # THÔNG TIN SHIPPER
         # =================================================
 
         cursor.execute(
             """
-            SELECT IsWorking
+            SELECT
+                IsWorking,
+                IsActive
 
             FROM Users
 
             WHERE UserID = ?
+              AND Role = 'Shipper'
             """,
             (
                 user_id,
-            )
+            ),
         )
 
+        shipper = cursor.fetchone()
 
-        working = cursor.fetchone()
+        if not shipper:
+            session.clear()
 
+            return redirect(
+                url_for("login")
+            )
 
-        is_working = 0
-
-
-        if working:
-
-            is_working = working[0]
-
+        is_working = (
+            shipper[0]
+            or 0
+        )
 
         # =================================================
         # THỐNG KÊ TỔNG QUAN
@@ -131,9 +164,10 @@ def orders():
                                 CreatedAt
                             )
                         AS DATE)
-
                         =
-                        CAST(GETDATE() AS DATE)
+                        CAST(
+                            GETDATE()
+                        AS DATE)
 
                         THEN 1
 
@@ -145,18 +179,7 @@ def orders():
                 SUM(
                     CASE
 
-                        WHEN MONTH(
-                            ISNULL(
-                                DeliveredAt,
-                                CreatedAt
-                            )
-                        )
-                        =
-                        MONTH(GETDATE())
-
-                        AND
-
-                        YEAR(
+                        WHEN YEAR(
                             ISNULL(
                                 DeliveredAt,
                                 CreatedAt
@@ -164,6 +187,17 @@ def orders():
                         )
                         =
                         YEAR(GETDATE())
+
+                        AND
+
+                        MONTH(
+                            ISNULL(
+                                DeliveredAt,
+                                CreatedAt
+                            )
+                        )
+                        =
+                        MONTH(GETDATE())
 
                         THEN 1
 
@@ -176,26 +210,65 @@ def orders():
 
             WHERE DriverID = ?
 
-            AND Status = N'Hoàn thành'
+              AND Status = N'Hoàn thành'
             """,
             (
                 user_id,
-            )
+            ),
         )
-
 
         statistic = cursor.fetchone()
 
+        total_done = (
+            statistic[0]
+            or 0
+        )
 
-        total_done = statistic[0] or 0
+        today_done = (
+            statistic[1]
+            or 0
+        )
 
-        today_done = statistic[1] or 0
-
-        month_done = statistic[2] or 0
-
+        month_done = (
+            statistic[2]
+            or 0
+        )
 
         # =================================================
-        # LẤY TOÀN BỘ ĐƠN CỦA SHIPPER
+        # ĐƠN ĐANG XỬ LÝ
+        # =================================================
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+
+            FROM Orders
+
+            WHERE DriverID = ?
+
+              AND Status IN
+              (
+                  N'Đã giao shipper',
+                  N'Đang chuẩn bị',
+                  N'Đang giao'
+              )
+            """,
+            (
+                user_id,
+            ),
+        )
+
+        active_order_count = (
+            cursor.fetchone()[0]
+            or 0
+        )
+
+        # =================================================
+        # TẤT CẢ ĐƠN CỦA SHIPPER
+        #
+        # QUAN TRỌNG:
+        # CreatedAt được convert thành STRING ngay trong SQL.
+        # HTML không gọi .strftime() nữa.
         # =================================================
 
         cursor.execute(
@@ -238,37 +311,48 @@ def orders():
 
                 Status,
 
-                CreatedAt
+                (
+                    CONVERT(
+                        VARCHAR(10),
+                        CreatedAt,
+                        103
+                    )
+                    +
+                    ' '
+                    +
+                    LEFT(
+                        CONVERT(
+                            VARCHAR(8),
+                            CreatedAt,
+                            108
+                        ),
+                        5
+                    )
+                ) AS CreatedTime
 
             FROM Orders
 
             WHERE DriverID = ?
 
-            ORDER BY OrderID DESC
+            ORDER BY
+                OrderID DESC
             """,
             (
                 user_id,
-            )
+            ),
         )
-
 
         orders = cursor.fetchall()
 
-
         # =================================================
-        # THỐNG KÊ THEO NGÀY
-        #
-        # selected_date là STRING
-        # ví dụ "2026-09-30"
-        #
-        # SQL Server tự convert STRING -> DATE
+        # THỐNG KÊ TRONG KHOẢNG NGÀY
         # =================================================
 
         cursor.execute(
             """
             SELECT
 
-                COUNT(*) AS DailyCount,
+                COUNT(*) AS CompletedCount,
 
                 ISNULL(
                     SUM(
@@ -283,45 +367,63 @@ def orders():
                         )
                     ),
                     0
-                ) AS DailyTotal
+                ) AS CollectedMoney
 
             FROM Orders
 
             WHERE DriverID = ?
 
-            AND Status = N'Hoàn thành'
+              AND Status = N'Hoàn thành'
 
-            AND CAST(
-                ISNULL(
-                    DeliveredAt,
-                    CreatedAt
-                )
-            AS DATE)
+              AND CAST(
+                    ISNULL(
+                        DeliveredAt,
+                        CreatedAt
+                    )
+                  AS DATE)
 
-            =
-            CONVERT(
-                DATE,
-                ?,
-                23
-            )
+                  BETWEEN
+
+                  CONVERT(
+                      DATE,
+                      ?,
+                      23
+                  )
+
+                  AND
+
+                  CONVERT(
+                      DATE,
+                      ?,
+                      23
+                  )
             """,
             (
                 user_id,
-                selected_date
-            )
+                from_date,
+                to_date,
+            ),
         )
 
+        range_statistic = (
+            cursor.fetchone()
+        )
 
-        daily_stat = cursor.fetchone()
+        range_completed_count = (
+            range_statistic[0]
+            or 0
+        )
 
-
-        daily_count = daily_stat[0] or 0
-
-        daily_total = daily_stat[1] or 0
-
+        range_collected_total = (
+            range_statistic[1]
+            or 0
+        )
 
         # =================================================
-        # DANH SÁCH ĐƠN ĐÃ GIAO TRONG NGÀY
+        # DANH SÁCH ĐƠN HOÀN THÀNH
+        # TRONG KHOẢNG NGÀY
+        #
+        # CompletedAt cũng được convert thành STRING.
         # =================================================
 
         cursor.execute(
@@ -350,62 +452,120 @@ def orders():
                     )
                 ) AS FinalMoney,
 
-                ISNULL(
-                    DeliveredAt,
-                    CreatedAt
-                ) AS DeliveredTime
+                (
+                    CONVERT(
+                        VARCHAR(10),
+                        ISNULL(
+                            DeliveredAt,
+                            CreatedAt
+                        ),
+                        103
+                    )
+                    +
+                    ' '
+                    +
+                    LEFT(
+                        CONVERT(
+                            VARCHAR(8),
+                            ISNULL(
+                                DeliveredAt,
+                                CreatedAt
+                            ),
+                            108
+                        ),
+                        5
+                    )
+                ) AS CompletedTime
 
             FROM Orders
 
             WHERE DriverID = ?
 
-            AND Status = N'Hoàn thành'
+              AND Status = N'Hoàn thành'
 
-            AND CAST(
-                ISNULL(
-                    DeliveredAt,
-                    CreatedAt
-                )
-            AS DATE)
+              AND CAST(
+                    ISNULL(
+                        DeliveredAt,
+                        CreatedAt
+                    )
+                  AS DATE)
 
-            =
-            CONVERT(
-                DATE,
-                ?,
-                23
-            )
+                  BETWEEN
+
+                  CONVERT(
+                      DATE,
+                      ?,
+                      23
+                  )
+
+                  AND
+
+                  CONVERT(
+                      DATE,
+                      ?,
+                      23
+                  )
 
             ORDER BY
+
                 ISNULL(
                     DeliveredAt,
                     CreatedAt
                 )
+
             DESC
             """,
             (
                 user_id,
-                selected_date
-            )
+                from_date,
+                to_date,
+            ),
         )
 
+        statistic_orders = (
+            cursor.fetchall()
+        )
 
-        daily_orders = cursor.fetchall()
+        # =================================================
+        # ĐƠN KHÔNG GIAO ĐƯỢC
+        # =================================================
 
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+
+            FROM Orders
+
+            WHERE DriverID = ?
+
+              AND Status IN
+              (
+                  N'Không giao được',
+                  N'Đã hủy'
+              )
+            """,
+            (
+                user_id,
+            ),
+        )
+
+        failed_order_count = (
+            cursor.fetchone()[0]
+            or 0
+        )
 
     finally:
-
         cursor.close()
-
         conn.close()
 
-
     return render_template(
-
         "shipper/orders.html",
 
         orders=orders,
 
-        username=session.get("fullname"),
+        username=session.get(
+            "fullname"
+        ),
 
         is_working=is_working,
 
@@ -415,80 +575,107 @@ def orders():
 
         month_done=month_done,
 
-        selected_date=selected_date,
+        active_order_count=(
+            active_order_count
+        ),
 
-        daily_count=daily_count,
+        failed_order_count=(
+            failed_order_count
+        ),
 
-        daily_total=daily_total,
+        from_date=from_date,
 
-        daily_orders=daily_orders
+        to_date=to_date,
 
+        range_completed_count=(
+            range_completed_count
+        ),
+
+        range_collected_total=(
+            range_collected_total
+        ),
+
+        statistic_orders=(
+            statistic_orders
+        ),
     )
 
 
 # =====================================================
-# BẬT / TẮT NHẬN ĐƠN
+# BẬT / TẮT CA
 # =====================================================
 
 @shipper_bp.route(
     "/toggle-work",
-    methods=["POST"]
+    methods=["POST"],
 )
-def toggle_work():
+def toggle_work() -> Response | tuple[Response, int]:
 
     if not check_shipper():
 
         return jsonify({
             "success": False,
-            "message": "Không có quyền"
+            "message": "Không có quyền.",
         }), 403
 
-
-    user_id = session.get("user_id")
-
+    user_id = session.get(
+        "user_id"
+    )
 
     conn = get_connection()
-
     cursor = conn.cursor()
-
 
     try:
 
         cursor.execute(
             """
-            SELECT IsWorking
+            SELECT
+                IsWorking,
+                IsActive
 
             FROM Users
 
             WHERE UserID = ?
+              AND Role = 'Shipper'
             """,
             (
                 user_id,
-            )
+            ),
         )
 
+        shipper = cursor.fetchone()
 
-        current = cursor.fetchone()
-
-
-        if not current:
+        if not shipper:
 
             return jsonify({
                 "success": False,
-                "message": "Không tìm thấy shipper"
+                "message":
+                    "Không tìm thấy shipper.",
             }), 404
 
+        is_working = (
+            shipper[0]
+            or 0
+        )
 
-        current_status = current[0]
+        is_active = (
+            shipper[1]
+            or 0
+        )
 
+        if is_active != 1:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Tài khoản của bạn đã bị khóa.",
+            }), 403
 
         # =============================================
-        # Nếu đang làm -> muốn nghỉ ca
-        #
-        # Không cho nghỉ nếu vẫn còn đơn
+        # ĐANG LÀM -> MUỐN NGHỈ
         # =============================================
 
-        if current_status == 1:
+        if is_working == 1:
 
             cursor.execute(
                 """
@@ -498,38 +685,38 @@ def toggle_work():
 
                 WHERE DriverID = ?
 
-                AND Status IN
-                (
-                    N'Đã giao shipper',
-                    N'Đang chuẩn bị',
-                    N'Đang giao'
-                )
+                  AND Status IN
+                  (
+                      N'Đã giao shipper',
+                      N'Đang chuẩn bị',
+                      N'Đang giao'
+                  )
                 """,
                 (
                     user_id,
-                )
+                ),
             )
 
+            unfinished = (
+                cursor.fetchone()[0]
+                or 0
+            )
 
-            active_orders = cursor.fetchone()[0]
-
-
-            if active_orders > 0:
+            if unfinished > 0:
 
                 return jsonify({
                     "success": False,
                     "message":
-                        "Bạn còn đơn chưa hoàn thành. "
-                        "Hãy hoàn thành hoặc xử lý đơn trước khi nghỉ ca."
+                        f"Bạn còn {unfinished} đơn "
+                        "chưa xử lý xong. "
+                        "Hãy xử lý đơn trước khi nghỉ ca.",
                 }), 400
-
 
         new_status = (
             0
-            if current_status == 1
+            if is_working == 1
             else 1
         )
-
 
         cursor.execute(
             """
@@ -541,24 +728,19 @@ def toggle_work():
             """,
             (
                 new_status,
-                user_id
-            )
+                user_id,
+            ),
         )
-
 
         conn.commit()
 
-
         return jsonify({
             "success": True,
-            "working": new_status
+            "working": new_status,
         })
 
-
     finally:
-
         cursor.close()
-
         conn.close()
 
 
@@ -568,129 +750,129 @@ def toggle_work():
 
 @shipper_bp.route(
     "/update/<int:id>",
-    methods=["POST"]
+    methods=["POST"],
 )
-def update_status(id):
+def update_status(
+    id: int,
+) -> Response | tuple[Response, int]:
 
     if not check_shipper():
 
         return jsonify({
             "success": False,
-            "message": "Không có quyền"
+            "message": "Không có quyền.",
         }), 403
 
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
 
-    data = request.get_json() or {}
+    new_status = data.get(
+        "status"
+    )
 
-
-    status = data.get("status")
-
-
-    allowed_status = [
-
-        "Đang chuẩn bị",
-
-        "Đang giao",
-
-        "Hoàn thành"
-
-    ]
-
-
-    if status not in allowed_status:
-
-        return jsonify({
-            "success": False,
-            "message": "Trạng thái không hợp lệ"
-        }), 400
-
-
-    user_id = session.get("user_id")
-
+    user_id = session.get(
+        "user_id"
+    )
 
     conn = get_connection()
-
     cursor = conn.cursor()
-
 
     try:
 
-        # =============================================
-        # KIỂM TRA ĐƠN CÓ THUỘC SHIPPER KHÔNG
-        # =============================================
-
         cursor.execute(
             """
-            SELECT
-                OrderID,
-                Status
+            SELECT Status
 
             FROM Orders
 
             WHERE OrderID = ?
 
-            AND DriverID = ?
+              AND DriverID = ?
             """,
             (
                 id,
-                user_id
-            )
+                user_id,
+            ),
         )
 
-
         order = cursor.fetchone()
-
 
         if not order:
 
             return jsonify({
                 "success": False,
                 "message":
-                    "Không tìm thấy đơn hàng "
-                    "hoặc đơn không thuộc về bạn"
+                    "Không tìm thấy đơn hoặc đơn "
+                    "không thuộc về bạn.",
             }), 404
 
+        current_status = order[0]
 
-        old_status = order[1]
+        allowed_transitions = {
+            "Đã giao shipper":
+                "Đang chuẩn bị",
 
+            "Đang chuẩn bị":
+                "Đang giao",
 
-        if old_status in (
-            "Hoàn thành",
-            "Không giao được",
-            "Đã hủy"
+            "Đang giao":
+                "Hoàn thành",
+        }
+
+        expected_status = (
+            allowed_transitions.get(
+                current_status
+            )
+        )
+
+        if not expected_status:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Đơn hàng này không thể "
+                    "thay đổi trạng thái.",
+            }), 400
+
+        if (
+            new_status
+            != expected_status
         ):
 
             return jsonify({
                 "success": False,
-                "message": "Đơn hàng này đã kết thúc"
+                "message":
+                    f"Không thể chuyển từ "
+                    f"'{current_status}' sang "
+                    f"'{new_status}'.",
             }), 400
 
-
-        # =============================================
-        # HOÀN THÀNH
-        # =============================================
-
-        if status == "Hoàn thành":
+        if new_status == "Hoàn thành":
 
             cursor.execute(
                 """
                 UPDATE Orders
 
                 SET
-                    Status = N'Hoàn thành',
+                    Status =
+                        N'Hoàn thành',
 
-                    DeliveredAt = GETDATE()
+                    DeliveredAt =
+                        GETDATE()
 
                 WHERE OrderID = ?
 
-                AND DriverID = ?
+                  AND DriverID = ?
                 """,
                 (
                     id,
-                    user_id
-                )
+                    user_id,
+                ),
             )
-
 
         else:
 
@@ -702,29 +884,25 @@ def update_status(id):
 
                 WHERE OrderID = ?
 
-                AND DriverID = ?
+                  AND DriverID = ?
                 """,
                 (
-                    status,
+                    new_status,
                     id,
-                    user_id
-                )
+                    user_id,
+                ),
             )
-
 
         conn.commit()
 
-
         return jsonify({
             "success": True,
-            "message": "Cập nhật thành công"
+            "message":
+                "Cập nhật trạng thái thành công.",
         })
 
-
     finally:
-
         cursor.close()
-
         conn.close()
 
 
@@ -734,49 +912,51 @@ def update_status(id):
 
 @shipper_bp.route(
     "/cancel/<int:id>",
-    methods=["POST"]
+    methods=["POST"],
 )
-def cancel_order(id):
+def cancel_order(
+    id: int,
+) -> Response | tuple[Response, int]:
 
     if not check_shipper():
 
         return jsonify({
             "success": False,
-            "message": "Không có quyền"
+            "message": "Không có quyền.",
         }), 403
 
-
-    data = request.get_json() or {}
-
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
 
     reason = (
         data.get("reason")
         or ""
     ).strip()
 
-
-    note = (
+    shipper_note = (
         data.get("note")
         or ""
     ).strip()
-
 
     if not reason:
 
         return jsonify({
             "success": False,
             "message":
-                "Bạn cần chọn lý do không giao được"
+                "Bạn cần chọn lý do "
+                "không giao được.",
         }), 400
 
-
-    user_id = session.get("user_id")
-
+    user_id = session.get(
+        "user_id"
+    )
 
     conn = get_connection()
-
     cursor = conn.cursor()
-
 
     try:
 
@@ -790,30 +970,30 @@ def cancel_order(id):
 
             WHERE OrderID = ?
 
-            AND DriverID = ?
+              AND DriverID = ?
             """,
             (
                 id,
-                user_id
-            )
+                user_id,
+            ),
         )
 
-
         order = cursor.fetchone()
-
 
         if not order:
 
             return jsonify({
                 "success": False,
-                "message": "Không tìm thấy đơn hàng"
+                "message":
+                    "Không tìm thấy đơn hàng.",
             }), 404
-
 
         current_status = order[0]
 
-        old_note = order[1] or ""
-
+        old_note = (
+            order[1]
+            or ""
+        )
 
         if current_status != "Đang giao":
 
@@ -821,72 +1001,66 @@ def cancel_order(id):
                 "success": False,
                 "message":
                     "Chỉ đơn đang giao mới có thể "
-                    "báo không giao được"
+                    "báo không giao được.",
             }), 400
 
-
-        cancel_text = (
-            "Không giao được - "
+        failure_text = (
+            "Không giao được: "
             + reason
         )
 
+        if shipper_note:
 
-        if note:
-
-            cancel_text += (
-                " - Ghi chú: "
-                + note
+            failure_text += (
+                ". Ghi chú shipper: "
+                + shipper_note
             )
-
 
         if old_note:
 
-            new_note = (
+            updated_note = (
                 old_note
                 + " | "
-                + cancel_text
+                + failure_text
             )
 
         else:
 
-            new_note = cancel_text
-
+            updated_note = (
+                failure_text
+            )
 
         cursor.execute(
             """
             UPDATE Orders
 
             SET
-                Status = N'Không giao được',
+                Status =
+                    N'Không giao được',
 
                 Note = ?
 
             WHERE OrderID = ?
 
-            AND DriverID = ?
+              AND DriverID = ?
             """,
             (
-                new_note,
+                updated_note,
                 id,
-                user_id
-            )
+                user_id,
+            ),
         )
 
-
         conn.commit()
-
 
         return jsonify({
             "success": True,
             "message":
-                "Đã ghi nhận đơn không giao được"
+                "Đã ghi nhận đơn không giao được.",
         })
 
-
     finally:
-
         cursor.close()
-
         conn.close()
 
 
@@ -896,47 +1070,57 @@ def cancel_order(id):
 
 @shipper_bp.route(
     "/location",
-    methods=["POST"]
+    methods=["POST"],
 )
-def update_location():
+def update_location() -> Response | tuple[Response, int]:
 
     if not check_shipper():
 
         return jsonify({
             "success": False,
-            "message": "Không có quyền"
+            "message": "Không có quyền.",
         }), 403
 
+    data = (
+        request.get_json(
+            silent=True
+        )
+        or {}
+    )
 
-    user_id = session.get("user_id")
+    latitude = data.get(
+        "latitude"
+    )
 
+    longitude = data.get(
+        "longitude"
+    )
 
-    data = request.get_json() or {}
-
-
-    latitude = data.get("latitude")
-
-    longitude = data.get("longitude")
-
-
-    if latitude is None or longitude is None:
+    if (
+        latitude is None
+        or longitude is None
+    ):
 
         return jsonify({
             "success": False,
-            "message": "Thiếu thông tin GPS"
+            "message":
+                "Thiếu dữ liệu GPS.",
         }), 400
 
+    user_id = session.get(
+        "user_id"
+    )
 
     conn = get_connection()
-
     cursor = conn.cursor()
-
 
     try:
 
         cursor.execute(
             """
-            SELECT IsWorking
+            SELECT
+                IsWorking,
+                IsActive
 
             FROM Users
 
@@ -944,23 +1128,34 @@ def update_location():
             """,
             (
                 user_id,
-            )
+            ),
         )
 
+        shipper = cursor.fetchone()
 
-        working = cursor.fetchone()
-
-
-        if (
-            not working
-            or working[0] == 0
-        ):
+        if not shipper:
 
             return jsonify({
                 "success": False,
-                "message": "Shipper đang nghỉ ca"
-            }), 400
+                "message":
+                    "Không tìm thấy shipper.",
+            }), 404
 
+        if shipper[1] != 1:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Tài khoản shipper đã bị khóa.",
+            }), 403
+
+        if shipper[0] != 1:
+
+            return jsonify({
+                "success": False,
+                "message":
+                    "Shipper đang nghỉ ca.",
+            }), 400
 
         cursor.execute(
             """
@@ -983,21 +1178,16 @@ def update_location():
             (
                 user_id,
                 latitude,
-                longitude
-            )
+                longitude,
+            ),
         )
-
 
         conn.commit()
 
-
         return jsonify({
-            "success": True
+            "success": True,
         })
 
-
     finally:
-
         cursor.close()
-
         conn.close()

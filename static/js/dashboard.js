@@ -1,370 +1,456 @@
-// =====================================================
-// ADMIN DASHBOARD JAVASCRIPT
-// BÚN CHẢ VIỆT
-// =====================================================
-
+// =========================================================
+// ADMIN DASHBOARD
+// BUN CHA VIET
+// =========================================================
 
 
 document.addEventListener(
     "DOMContentLoaded",
-    function(){
+    function () {
 
+        setupClock();
 
-        console.log(
-            "Admin JS Loaded"
-        );
+        setupRefreshButton();
 
+        setupMobileSidebar();
 
-        loadDashboard();
-
-
+        setupRecentOrderRows();
 
     }
 );
 
 
-function loadDashboard(){
+// =========================================================
+// CLOCK
+// =========================================================
+
+function setupClock() {
+
+    updateClock();
+
+    window.setInterval(
+        updateClock,
+        1000
+    );
+
+}
 
 
-    fetch("/admin/api/dashboard")
+// =========================================================
+// UPDATE CLOCK
+// =========================================================
 
-    .then(
-        response => response.json()
-    )
+function updateClock() {
 
-
-    .then(
-        data => {
-
-
-            console.log(
-                data
-            );
+    const clock =
+        document.getElementById(
+            "dashboardClock"
+        );
 
 
-            if(data.success){
+    const dateElement =
+        document.getElementById(
+            "dashboardDate"
+        );
 
 
-                updateDashboard(
-                    data
-                );
+    if (
+        !clock ||
+        !dateElement
+    ) {
 
+        return;
+
+    }
+
+
+    const now =
+        new Date();
+
+
+    clock.textContent =
+        formatTwoDigits(
+            now.getHours()
+        )
+        +
+        ":"
+        +
+        formatTwoDigits(
+            now.getMinutes()
+        );
+
+
+    dateElement.textContent =
+        formatTwoDigits(
+            now.getDate()
+        )
+        +
+        "/"
+        +
+        formatTwoDigits(
+            now.getMonth() + 1
+        )
+        +
+        "/"
+        +
+        now.getFullYear();
+
+}
+
+
+// =========================================================
+// TWO DIGITS
+// =========================================================
+
+function formatTwoDigits(
+    value
+) {
+
+    return String(
+        value
+    ).padStart(
+        2,
+        "0"
+    );
+
+}
+
+
+// =========================================================
+// REFRESH BUTTON
+// =========================================================
+
+function setupRefreshButton() {
+
+    const button =
+        document.getElementById(
+            "refreshDashboardBtn"
+        );
+
+
+    if (!button) {
+
+        return;
+
+    }
+
+
+    button.addEventListener(
+        "click",
+        function () {
+
+            if (
+                button.classList.contains(
+                    "loading"
+                )
+            ) {
+
+                return;
 
             }
 
 
-        }
+            button.classList.add(
+                "loading"
+            );
 
-    )
+
+            button.disabled =
+                true;
 
 
-    .catch(
+            const text =
+                button.querySelector(
+                    "span:last-child"
+                );
 
-        error => {
 
-            console.error(
-                "Dashboard error:",
-                error
+            if (text) {
+
+                text.textContent =
+                    "Đang tải...";
+
+            }
+
+
+            setTimeout(
+                function () {
+
+                    window.location.reload();
+
+                },
+                250
             );
 
         }
+    );
 
+}
+
+
+// =========================================================
+// MOBILE SIDEBAR
+// =========================================================
+
+function setupMobileSidebar() {
+
+    const sidebar =
+        document.getElementById(
+            "adminSidebar"
+        );
+
+
+    const button =
+        document.getElementById(
+            "mobileMenuBtn"
+        );
+
+
+    const overlay =
+        document.getElementById(
+            "sidebarOverlay"
+        );
+
+
+    if (
+        !sidebar ||
+        !button ||
+        !overlay
+    ) {
+
+        return;
+
+    }
+
+
+    button.addEventListener(
+        "click",
+        function () {
+
+            openSidebar(
+                sidebar,
+                overlay
+            );
+
+        }
     );
 
 
-}
+    overlay.addEventListener(
+        "click",
+        function () {
 
+            closeSidebar(
+                sidebar,
+                overlay
+            );
 
-function updateDashboard(data){
-
-
-
-    const productCount =
-    document.getElementById(
-        "product-count"
+        }
     );
 
 
+    const links =
+        sidebar.querySelectorAll(
+            "a"
+        );
 
-    const orderCount =
-    document.getElementById(
-        "order-count"
+
+    links.forEach(
+        function (link) {
+
+            link.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        window.innerWidth
+                        <=
+                        980
+                    ) {
+
+                        closeSidebar(
+                            sidebar,
+                            overlay
+                        );
+
+                    }
+
+                }
+            );
+
+        }
     );
 
 
+    document.addEventListener(
+        "keydown",
+        function (event) {
 
-    const userCount =
-    document.getElementById(
-        "user-count"
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeSidebar(
+                    sidebar,
+                    overlay
+                );
+
+            }
+
+        }
     );
 
 
+    window.addEventListener(
+        "resize",
+        function () {
 
-    const categoryCount =
-    document.getElementById(
-        "category-count"
+            if (
+                window.innerWidth
+                >
+                980
+            ) {
+
+                closeSidebar(
+                    sidebar,
+                    overlay
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+// =========================================================
+// OPEN SIDEBAR
+// =========================================================
+
+function openSidebar(
+    sidebar,
+    overlay
+) {
+
+    sidebar.classList.add(
+        "mobile-open"
     );
 
 
-
-
-
-    if(productCount)
-        productCount.innerHTML =
-        data.products;
-
-
-
-
-    if(orderCount)
-        orderCount.innerHTML =
-        data.orders;
-
-
-
-
-    if(userCount)
-        userCount.innerHTML =
-        data.users;
-
-
-
-
-    if(categoryCount)
-        categoryCount.innerHTML =
-        data.categories;
-
-
-
-}
-
-function loadProducts(){
-
-
-
-fetch("/admin/api/products")
-
-
-.then(
-
-response =>
-response.json()
-
-)
-
-
-.then(
-
-data => {
-
-
-    renderProducts(
-        data
+    overlay.classList.add(
+        "show"
     );
 
 
-}
-
-
-)
-
-.catch(
-
-error =>
-console.log(error)
-
-);
-
+    document.body.style.overflow =
+        "hidden";
 
 }
 
 
+// =========================================================
+// CLOSE SIDEBAR
+// =========================================================
+
+function closeSidebar(
+    sidebar,
+    overlay
+) {
+
+    sidebar.classList.remove(
+        "mobile-open"
+    );
 
 
+    overlay.classList.remove(
+        "show"
+    );
 
 
-function renderProducts(products){
-
-
-const box =
-document.getElementById(
-    "product-table"
-);
-
-
-
-if(!box)
-return;
-
-
-
-box.innerHTML="";
-
-
-
-products.forEach(
-
-product => {
-
-
-
-box.innerHTML += `
-
-
-<tr>
-
-
-<td>
-${product.id}
-</td>
-
-
-<td>
-
-<img 
-src="${product.image}"
-width="60">
-
-</td>
-
-
-<td>
-${product.name}
-</td>
-
-
-<td>
-${product.price} đ
-</td>
-
-
-<td>
-
-<button 
-onclick="editProduct(${product.id})">
-
-Sửa
-
-</button>
-
-
-<button
-onclick="deleteProduct(${product.id})">
-
-Xóa
-
-</button>
-
-
-</td>
-
-
-
-</tr>
-
-
-`;
-
-
+    document.body.style.overflow =
+        "";
 
 }
 
 
-);
+// =========================================================
+// RECENT ORDER ROW
+// =========================================================
+
+function setupRecentOrderRows() {
+
+    const rows =
+        document.querySelectorAll(
+            ".recent-order-row"
+        );
 
 
+    rows.forEach(
+        function (row) {
 
-}
+            row.addEventListener(
+                "click",
+                function () {
 
-
-
-function deleteProduct(id){
-
-
-
-if(
-!confirm(
-"Bạn có chắc muốn xóa món này?"
-)
-
-)
-
-return;
-
-fetch(
-
-"/admin/api/products/" + id,
-
-{
-
-method:"DELETE"
-
-}
-
-)
+                    const orderId =
+                        row.dataset.orderId;
 
 
-.then(
+                    if (!orderId) {
 
-response =>
-response.json()
+                        window.location.href =
+                            "/admin/orders";
 
-)
+                        return;
 
-
-.then(
-
-data => {
+                    }
 
 
-alert(
-data.message
-);
+                    /*
+                     * Hiện tại trang Orders chưa có
+                     * route detail riêng.
+                     *
+                     * Vì vậy click sẽ mở danh sách
+                     * quản lý đơn thay vì dựng URL
+                     * giả rồi nhận 404 như một số
+                     * dự án rất nhiệt tình vẫn làm.
+                     */
+
+                    window.location.href =
+                        "/admin/orders";
+
+                }
+            );
 
 
-loadProducts();
+            row.setAttribute(
+                "tabindex",
+                "0"
+            );
 
 
-}
+            row.addEventListener(
+                "keydown",
+                function (event) {
 
+                    if (
+                        event.key === "Enter"
+                        ||
+                        event.key === " "
+                    ) {
 
-)
+                        event.preventDefault();
 
+                        row.click();
 
+                    }
 
+                }
+            );
 
-
-}
-
-
-function editProduct(id){
-
-
-window.location.href =
-
-"/admin/products/edit/" + id;
-
-}
-
-
-
-function logout(){
-
-
-if(
-confirm(
-"Bạn muốn đăng xuất?"
-)
-
-)
-
-{
-
-window.location.href="/logout";
-
-
-}
-
-
+        }
+    );
 
 }

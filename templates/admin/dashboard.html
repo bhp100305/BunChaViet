@@ -5,34 +5,37 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Admin Dashboard - Bún Chả Việt</title>
+    <title>
+        Admin Dashboard | Bún Chả Việt
+    </title>
 
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
 
-    <!-- GOOGLE FONT -->
-
-    <link rel="preconnect"
-          href="https://fonts.googleapis.com">
-
-    <link rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossorigin>
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
 
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap"
         rel="stylesheet"
     >
 
-
-    <!-- CSS -->
-
-    <link rel="stylesheet"
-          href="/static/css/dashboard.css">
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/dashboard.css') }}"
+    >
 
 </head>
-
 
 
 <body>
@@ -41,24 +44,29 @@
 <div class="admin-layout">
 
 
-
     <!-- =====================================================
          SIDEBAR
     ====================================================== -->
 
-    <aside class="sidebar">
+    <aside
+        class="sidebar"
+        id="adminSidebar"
+    >
 
-
-        <!-- BRAND -->
 
         <div class="brand">
 
-            <a href="/admin/dashboard"
-               class="brand-link">
+
+            <a
+                href="{{ url_for('admin.dashboard') }}"
+                class="brand-link"
+            >
+
 
                 <div class="brand-logo">
-                    🍜
+                    BCV
                 </div>
+
 
                 <div class="brand-text">
 
@@ -72,13 +80,13 @@
 
                 </div>
 
+
             </a>
+
 
         </div>
 
 
-
-        <!-- MENU LABEL -->
 
         <div class="menu-label">
             QUẢN LÝ
@@ -86,81 +94,103 @@
 
 
 
-        <!-- NAVIGATION -->
-
         <nav class="sidebar-nav">
 
 
-            <a class="nav-item active"
-               href="/admin/dashboard">
+            <a
+                class="nav-item active"
+                href="{{ url_for('admin.dashboard') }}"
+            >
 
                 <span class="nav-icon">
-                    🏠
+                    ⌂
                 </span>
 
                 <span class="nav-text">
-                    Trang quản lý
+                    Tổng quan
                 </span>
 
             </a>
 
 
 
-            <a class="nav-item"
-               href="/admin/products">
+            <a
+                class="nav-item"
+                href="{{ url_for('admin.products') }}"
+            >
 
                 <span class="nav-icon">
-                    🍜
+                    ◫
                 </span>
 
                 <span class="nav-text">
-                    Quản lý sản phẩm
+                    Sản phẩm
                 </span>
 
             </a>
 
 
 
-            <a class="nav-item"
-               href="/admin/orders">
+            <a
+                class="nav-item"
+                href="{{ url_for('admin.orders') }}"
+            >
 
                 <span class="nav-icon">
-                    🛒
+                    ▣
                 </span>
 
                 <span class="nav-text">
-                    Quản lý đơn hàng
+                    Đơn hàng
+                </span>
+
+                {% if pending_orders > 0 %}
+
+                <span class="nav-count">
+                    {{ pending_orders }}
+                </span>
+
+                {% endif %}
+
+            </a>
+
+
+
+            <a
+                class="nav-item"
+                href="{{ url_for('admin.users') }}"
+            >
+
+                <span class="nav-icon">
+                    ◉
+                </span>
+
+                <span class="nav-text">
+                    Nhân viên
                 </span>
 
             </a>
 
 
 
-            <a class="nav-item"
-               href="/admin/users">
+            <a
+                class="nav-item"
+                href="{{ url_for('admin.shippers') }}"
+            >
 
                 <span class="nav-icon">
-                    👨‍🍳
+                    ⇢
                 </span>
 
                 <span class="nav-text">
-                    Quản lý nhân viên
+                    Shipper
                 </span>
 
-            </a>
+                {% if online_shippers > 0 %}
 
+                <span class="online-indicator"></span>
 
-
-            <a class="nav-item"
-               href="/admin/shippers">
-
-                <span class="nav-icon">
-                    🛵
-                </span>
-
-                <span class="nav-text">
-                    Quản lý Shipper
-                </span>
+                {% endif %}
 
             </a>
 
@@ -168,8 +198,6 @@
         </nav>
 
 
-
-        <!-- SECOND MENU -->
 
         <div class="menu-label second-label">
             HỆ THỐNG
@@ -179,32 +207,36 @@
 
         <nav class="sidebar-nav">
 
-            <a class="nav-item"
-               href="/">
+
+            <a
+                class="nav-item"
+                href="/"
+            >
 
                 <span class="nav-icon">
-                    🌐
+                    ↗
                 </span>
 
                 <span class="nav-text">
-                    Xem trang bán hàng
+                    Xem cửa hàng
                 </span>
 
             </a>
+
 
         </nav>
 
 
 
-        <!-- SIDEBAR FOOTER -->
-
         <div class="sidebar-footer">
+
 
             <div class="sidebar-user">
 
+
                 <div class="sidebar-avatar">
 
-                    {{ username[0]|upper }}
+                    {{ (username or 'A')[0] | upper }}
 
                 </div>
 
@@ -212,7 +244,7 @@
                 <div class="sidebar-user-info">
 
                     <strong>
-                        {{ username }}
+                        {{ username or 'Admin' }}
                     </strong>
 
                     <span>
@@ -221,20 +253,26 @@
 
                 </div>
 
+
             </div>
 
 
 
-            <a href="/logout"
-               class="logout-btn">
+            <a
+                href="/logout"
+                class="logout-btn"
+            >
 
                 <span>
-                    🚪
+                    ↪
                 </span>
 
-                Đăng xuất
+                <span class="logout-text">
+                    Đăng xuất
+                </span>
 
             </a>
+
 
         </div>
 
@@ -243,14 +281,22 @@
 
 
 
+    <!-- =====================================================
+         SIDEBAR OVERLAY MOBILE
+    ====================================================== -->
+
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+    ></div>
+
 
 
     <!-- =====================================================
-         MAIN CONTENT
+         MAIN
     ====================================================== -->
 
     <main class="content">
-
 
 
         <!-- =================================================
@@ -260,27 +306,47 @@
         <header class="topbar">
 
 
-            <div class="topbar-title">
+            <div class="topbar-left">
 
-                <p class="breadcrumb">
-                    Admin / Dashboard
-                </p>
 
-                <h1>
-                    Trang quản lý
-                </h1>
+                <button
+                    type="button"
+                    class="mobile-menu-btn"
+                    id="mobileMenuBtn"
+                    aria-label="Mở menu"
+                >
+                    ☰
+                </button>
 
-                <p class="welcome-text">
 
-                    Xin chào,
+                <div class="topbar-title">
 
-                    <strong>
-                        {{ username }}
-                    </strong>
 
-                    👋 Chúc bạn một ngày làm việc hiệu quả.
+                    <p class="breadcrumb">
+                        ADMIN / TỔNG QUAN
+                    </p>
 
-                </p>
+
+                    <h1>
+                        Trang quản lý
+                    </h1>
+
+
+                    <p class="welcome-text">
+
+                        Xin chào,
+
+                        <strong>
+                            {{ username or 'Admin' }}
+                        </strong>.
+
+                        Đây là tình hình vận hành hiện tại của cửa hàng.
+
+                    </p>
+
+
+                </div>
+
 
             </div>
 
@@ -289,40 +355,50 @@
             <div class="topbar-actions">
 
 
-                <a href="/"
-                   class="store-btn">
+                <div class="current-time-box">
 
                     <span>
-                        🌐
+                        THỜI GIAN
                     </span>
 
-                    Xem cửa hàng
+                    <strong id="dashboardClock">
+                        --:--
+                    </strong>
 
-                </a>
-
-
-                <div class="admin-profile">
-
-                    <div class="avatar">
-
-                        {{ username[0]|upper }}
-
-                    </div>
-
-
-                    <div class="profile-info">
-
-                        <strong>
-                            {{ username }}
-                        </strong>
-
-                        <span>
-                            Administrator
-                        </span>
-
-                    </div>
+                    <small id="dashboardDate">
+                        --/--/----
+                    </small>
 
                 </div>
+
+
+
+                <button
+                    type="button"
+                    class="refresh-btn"
+                    id="refreshDashboardBtn"
+                >
+
+                    <span class="refresh-icon">
+                        ↻
+                    </span>
+
+                    <span>
+                        Làm mới
+                    </span>
+
+                </button>
+
+
+
+                <a
+                    href="/"
+                    class="store-btn"
+                >
+
+                    Xem cửa hàng ↗
+
+                </a>
 
 
             </div>
@@ -332,183 +408,521 @@
 
 
 
+        <!-- =================================================
+             KPI
+        ================================================== -->
+
+        <section class="stats-grid">
+
+
+            <a
+                href="{{ url_for('admin.orders') }}"
+                class="stat-card"
+            >
+
+
+                <div class="stat-icon primary">
+                    ▣
+                </div>
+
+
+                <div class="stat-body">
+
+                    <span>
+                        Đơn hôm nay
+                    </span>
+
+                    <strong>
+                        {{ today_orders or 0 }}
+                    </strong>
+
+                    <small>
+                        đơn được tạo hôm nay
+                    </small>
+
+                </div>
+
+
+                <span class="stat-arrow">
+                    ›
+                </span>
+
+
+            </a>
+
+
+
+            <a
+                href="{{ url_for('admin.orders') }}?status=Đã tiếp nhận"
+                class="stat-card"
+            >
+
+
+                <div class="stat-icon warning">
+                    ◷
+                </div>
+
+
+                <div class="stat-body">
+
+                    <span>
+                        Chờ xử lý
+                    </span>
+
+                    <strong>
+                        {{ pending_orders or 0 }}
+                    </strong>
+
+                    <small>
+                        cần Admin xử lý
+                    </small>
+
+                </div>
+
+
+                <span class="stat-arrow">
+                    ›
+                </span>
+
+
+            </a>
+
+
+
+            <a
+                href="{{ url_for('admin.orders') }}"
+                class="stat-card"
+            >
+
+
+                <div class="stat-icon blue">
+                    ⇢
+                </div>
+
+
+                <div class="stat-body">
+
+                    <span>
+                        Đang xử lý
+                    </span>
+
+                    <strong>
+                        {{ active_orders or 0 }}
+                    </strong>
+
+                    <small>
+                        đang chuẩn bị hoặc giao
+                    </small>
+
+                </div>
+
+
+                <span class="stat-arrow">
+                    ›
+                </span>
+
+
+            </a>
+
+
+
+            <a
+                href="{{ url_for('admin.orders') }}?status=Hoàn thành"
+                class="stat-card"
+            >
+
+
+                <div class="stat-icon success">
+                    ✓
+                </div>
+
+
+                <div class="stat-body">
+
+                    <span>
+                        Đã hoàn thành
+                    </span>
+
+                    <strong>
+                        {{ today_completed or 0 }}
+                    </strong>
+
+                    <small>
+                        trong đơn tạo hôm nay
+                    </small>
+
+                </div>
+
+
+                <span class="stat-arrow">
+                    ›
+                </span>
+
+
+            </a>
+
+
+
+            <article class="stat-card revenue-card">
+
+
+                <div class="stat-icon gold">
+                    ₫
+                </div>
+
+
+                <div class="stat-body">
+
+                    <span>
+                        Tiền đã thu hôm nay
+                    </span>
+
+                    <strong class="money-value">
+
+                        {{ "{:,.0f}".format(
+                            today_collected or 0
+                        ) }}
+
+                        ₫
+
+                    </strong>
+
+                    <small>
+                        từ đơn hôm nay đã hoàn thành
+                    </small>
+
+                </div>
+
+
+            </article>
+
+
+
+            <a
+                href="{{ url_for('admin.shippers') }}"
+                class="stat-card"
+            >
+
+
+                <div class="stat-icon online">
+                    ●
+                </div>
+
+
+                <div class="stat-body">
+
+                    <span>
+                        Shipper online
+                    </span>
+
+                    <strong>
+                        {{ online_shippers or 0 }}
+                    </strong>
+
+                    <small>
+
+                        {{ online_shippers or 0 }}
+                        /
+                        {{ total_shippers or 0 }}
+
+                        đang nhận đơn
+
+                    </small>
+
+                </div>
+
+
+                <span class="stat-arrow">
+                    ›
+                </span>
+
+
+            </a>
+
+
+        </section>
+
 
 
         <!-- =================================================
-             STATISTICS
+             MAIN GRID
         ================================================== -->
 
-        
-
-        <!-- =================================================
-             MAIN DASHBOARD GRID
-        ================================================== -->
-
-        <section class="dashboard-grid">
-
+        <section class="dashboard-main-grid">
 
 
             <!-- =============================================
-                 QUICK MANAGEMENT
+                 RECENT ORDERS
             ============================================== -->
 
-            <div class="dashboard-panel management-panel">
+            <div class="dashboard-card recent-orders-card">
 
 
-                <div class="panel-header">
+                <div class="card-header">
+
 
                     <div>
 
-                        <span class="panel-label">
-                            TRUY CẬP NHANH
+                        <span class="card-eyebrow">
+                            HOẠT ĐỘNG GẦN ĐÂY
                         </span>
 
                         <h2>
-                            Quản lý cửa hàng
+                            Đơn hàng mới nhất
                         </h2>
+
+                        <p>
+                            Sáu đơn gần nhất trên hệ thống.
+                        </p>
 
                     </div>
 
 
-                    <span class="panel-icon">
-                        ⚙️
-                    </span>
+                    <a
+                        href="{{ url_for('admin.orders') }}"
+                        class="view-all-link"
+                    >
+                        Xem tất cả →
+                    </a>
+
 
                 </div>
 
 
 
-                <div class="management-list">
+                <div class="recent-orders-table-wrapper">
+
+
+                    <table class="recent-orders-table">
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Đơn hàng
+                                </th>
+
+                                <th>
+                                    Khách hàng
+                                </th>
+
+                                <th>
+                                    Shipper
+                                </th>
+
+                                <th>
+                                    Tổng tiền
+                                </th>
+
+                                <th>
+                                    Trạng thái
+                                </th>
+
+                            </tr>
+
+                        </thead>
 
 
 
-                    <!-- PRODUCT -->
-
-                    <a href="/admin/products"
-                       class="management-item">
-
-                        <div class="management-icon product-icon">
-                            🍜
-                        </div>
+                        <tbody>
 
 
-                        <div class="management-content">
-
-                            <h3>
-                                Sản phẩm
-                            </h3>
-
-                            <p>
-                                Thêm, sửa, xoá và cập nhật món ăn
-                            </p>
-
-                        </div>
+                            {% for order in recent_orders %}
 
 
-                        <span class="management-arrow">
-                            ›
-                        </span>
-
-                    </a>
-
+                            <tr
+                                class="recent-order-row"
+                                data-order-id="{{ order[0] }}"
+                            >
 
 
+                                <td>
 
 
-                    <!-- ORDERS -->
+                                    <strong class="recent-order-code">
 
-                    <a href="/admin/orders"
-                       class="management-item">
+                                        #{{ order[1] }}
 
-                        <div class="management-icon order-icon">
-                            📦
-                        </div>
+                                    </strong>
 
 
-                        <div class="management-content">
+                                    <small>
 
-                            <h3>
-                                Đơn hàng
-                            </h3>
+                                        {{ order[5] or '' }}
 
-                            <p>
-                                Kiểm tra và cập nhật trạng thái đơn hàng
-                            </p>
-
-                        </div>
+                                    </small>
 
 
-                        <span class="management-arrow">
-                            ›
-                        </span>
-
-                    </a>
+                                </td>
 
 
 
+                                <td>
 
 
-                    <!-- USER -->
+                                    <span class="customer-name">
 
-                    <a href="/admin/users"
-                       class="management-item">
+                                        {{ order[2] or 'Không có tên' }}
 
-                        <div class="management-icon employee-icon">
-                            👥
-                        </div>
+                                    </span>
 
 
-                        <div class="management-content">
-
-                            <h3>
-                                Nhân viên
-                            </h3>
-
-                            <p>
-                                Quản lý tài khoản và nhân sự cửa hàng
-                            </p>
-
-                        </div>
-
-
-                        <span class="management-arrow">
-                            ›
-                        </span>
-
-                    </a>
+                                </td>
 
 
 
+                                <td>
 
 
-                    <!-- SHIPPER -->
-
-                    <a href="/admin/shippers"
-                       class="management-item">
-
-                        <div class="management-icon shipper-icon">
-                            🛵
-                        </div>
+                                    {% if order[6] == 'Chưa giao shipper' %}
 
 
-                        <div class="management-content">
+                                    <span class="shipper-not-assigned">
 
-                            <h3>
-                                Shipper
-                            </h3>
+                                        Chưa giao shipper
 
-                            <p>
-                                Quản lý nhân viên giao hàng
-                            </p>
-
-                        </div>
+                                    </span>
 
 
-                        <span class="management-arrow">
-                            ›
-                        </span>
+                                    {% else %}
 
-                    </a>
+
+                                    <span class="shipper-assigned">
+
+                                        {{ order[6] }}
+
+                                    </span>
+
+
+                                    {% endif %}
+
+
+                                </td>
+
+
+
+                                <td>
+
+
+                                    <strong class="recent-money">
+
+                                        {{ "{:,.0f}".format(
+                                            order[3] or 0
+                                        ) }}
+
+                                        ₫
+
+                                    </strong>
+
+
+                                </td>
+
+
+
+                                <td>
+
+
+                                    {% if order[4] == 'Đã tiếp nhận' %}
+
+                                    <span class="order-status received">
+                                        Đã tiếp nhận
+                                    </span>
+
+
+                                    {% elif order[4] == 'Đã giao shipper' %}
+
+                                    <span class="order-status assigned">
+                                        Đã giao shipper
+                                    </span>
+
+
+                                    {% elif order[4] == 'Đang chuẩn bị' %}
+
+                                    <span class="order-status preparing">
+                                        Đang chuẩn bị
+                                    </span>
+
+
+                                    {% elif order[4] == 'Đang giao' %}
+
+                                    <span class="order-status delivering">
+                                        Đang giao
+                                    </span>
+
+
+                                    {% elif order[4] == 'Hoàn thành' %}
+
+                                    <span class="order-status completed">
+                                        Hoàn thành
+                                    </span>
+
+
+                                    {% elif order[4] == 'Không giao được' %}
+
+                                    <span class="order-status failed">
+                                        Không giao được
+                                    </span>
+
+
+                                    {% elif order[4] == 'Đã hủy' %}
+
+                                    <span class="order-status cancelled">
+                                        Đã hủy
+                                    </span>
+
+
+                                    {% else %}
+
+                                    <span class="order-status neutral">
+
+                                        {{ order[4] }}
+
+                                    </span>
+
+
+                                    {% endif %}
+
+
+                                </td>
+
+
+                            </tr>
+
+
+                            {% else %}
+
+
+                            <tr>
+
+
+                                <td
+                                    colspan="5"
+                                    class="recent-empty"
+                                >
+
+                                    <strong>
+                                        Chưa có đơn hàng
+                                    </strong>
+
+                                    <p>
+                                        Các đơn mới sẽ xuất hiện tại đây.
+                                    </p>
+
+                                </td>
+
+
+                            </tr>
+
+
+                            {% endfor %}
+
+
+                        </tbody>
+
+
+                    </table>
 
 
                 </div>
@@ -518,100 +932,166 @@
 
 
 
-
-
             <!-- =============================================
-                 SYSTEM INFO
+                 STORE STATUS
             ============================================== -->
 
-            <div class="dashboard-panel system-panel">
+            <aside class="dashboard-card operations-card">
 
 
-                <div class="panel-header">
+                <div class="card-header compact">
+
 
                     <div>
 
-                        <span class="panel-label">
-                            HỆ THỐNG
+                        <span class="card-eyebrow">
+                            VẬN HÀNH
                         </span>
 
                         <h2>
-                            Trạng thái hoạt động
+                            Trạng thái cửa hàng
                         </h2>
 
                     </div>
 
 
-                    <span class="online-dot"></span>
+                    <span class="system-online-dot"></span>
+
 
                 </div>
 
 
 
-                <div class="system-status">
+                <div class="operation-list">
 
 
-                    <div class="status-row">
+                    <div class="operation-item">
 
-                        <div>
 
-                            <span class="status-icon">
-                                🛒
-                            </span>
+                        <div class="operation-icon product">
+                            ◫
+                        </div>
+
+
+                        <div class="operation-info">
 
                             <span>
-                                Hệ thống đặt hàng
+                                Sản phẩm đang bán
                             </span>
+
+                            <strong>
+                                {{ active_products or 0 }}
+                            </strong>
 
                         </div>
 
-                        <span class="status-active">
-                            Hoạt động
-                        </span>
+
+                        <a
+                            href="{{ url_for('admin.products') }}"
+                            class="operation-link"
+                        >
+                            ›
+                        </a>
+
 
                     </div>
 
 
 
-                    <div class="status-row">
+                    <div class="operation-item">
 
-                        <div>
 
-                            <span class="status-icon">
-                                🍜
-                            </span>
+                        <div class="operation-icon shipper">
+                            ⇢
+                        </div>
+
+
+                        <div class="operation-info">
 
                             <span>
-                                Quản lý thực đơn
+                                Tổng shipper
                             </span>
+
+                            <strong>
+                                {{ total_shippers or 0 }}
+                            </strong>
 
                         </div>
 
-                        <span class="status-active">
-                            Hoạt động
-                        </span>
+
+                        <a
+                            href="{{ url_for('admin.shippers') }}"
+                            class="operation-link"
+                        >
+                            ›
+                        </a>
+
 
                     </div>
 
 
 
-                    <div class="status-row">
+                    <div class="operation-item">
 
-                        <div>
 
-                            <span class="status-icon">
-                                🛵
-                            </span>
+                        <div class="operation-icon online">
+                            ●
+                        </div>
+
+
+                        <div class="operation-info">
 
                             <span>
-                                Giao hàng
+                                Đang nhận đơn
                             </span>
+
+                            <strong>
+                                {{ online_shippers or 0 }}
+                            </strong>
 
                         </div>
 
-                        <span class="status-active">
-                            Hoạt động
-                        </span>
+
+                        <a
+                            href="{{ url_for('admin.shippers') }}"
+                            class="operation-link"
+                        >
+                            ›
+                        </a>
+
+
+                    </div>
+
+
+
+                    <div class="operation-item">
+
+
+                        <div class="operation-icon failure">
+                            !
+                        </div>
+
+
+                        <div class="operation-info">
+
+                            <span>
+                                Hủy / giao thất bại
+                            </span>
+
+                            <strong>
+                                {{ failed_orders or 0 }}
+                            </strong>
+
+                        </div>
+
+
+                        <a
+                            href="{{ url_for('admin.orders') }}"
+                            class="operation-link"
+                        >
+                            ›
+                        </a>
+
 
                     </div>
 
@@ -622,187 +1102,203 @@
 
                 <div class="system-message">
 
+
                     <div class="system-message-icon">
                         ✓
                     </div>
 
+
                     <div>
 
                         <strong>
-                            Hệ thống đang hoạt động bình thường
+                            Hệ thống đang hoạt động
                         </strong>
 
                         <p>
-                            Không phát hiện vấn đề cần xử lý.
+
+                            Dữ liệu được lấy trực tiếp từ
+                            hệ thống đơn hàng hiện tại.
+
                         </p>
 
                     </div>
 
+
                 </div>
 
 
-            </div>
+            </aside>
 
 
         </section>
-
-
 
 
 
         <!-- =================================================
-             BOTTOM SECTION
+             QUICK MANAGEMENT
         ================================================== -->
 
-        <section class="bottom-grid">
+        <section class="quick-section">
 
 
-
-            <!-- WELCOME -->
-
-            <div class="welcome-card">
-
-                <div class="welcome-decoration">
-                    🍜
-                </div>
+            <div class="section-title">
 
 
-                <div class="welcome-content">
+                <div>
 
                     <span>
-                        BÚN CHẢ VIỆT
+                        TRUY CẬP NHANH
                     </span>
 
                     <h2>
-                        Hệ thống quản lý cửa hàng
+                        Quản lý cửa hàng
                     </h2>
 
-                    <p>
-                        Theo dõi và quản lý toàn bộ hoạt động
-                        của Bún Chả Việt tại một nơi — từ thực đơn,
-                        đơn hàng đến nhân viên và đội ngũ giao hàng.
-                    </p>
-
-
-                    <a href="/admin/orders"
-                       class="welcome-button">
-
-                        Xem đơn hàng
-
-                        <span>
-                            →
-                        </span>
-
-                    </a>
-
                 </div>
+
 
             </div>
 
 
 
+            <div class="quick-grid">
 
 
-            <!-- QUICK ACTION -->
+                <a
+                    href="{{ url_for('admin.products') }}"
+                    class="quick-card"
+                >
 
-            <div class="quick-panel">
 
-                <div class="panel-header">
+                    <div class="quick-icon product">
+                        ◫
+                    </div>
+
 
                     <div>
 
-                        <span class="panel-label">
-                            THAO TÁC
-                        </span>
+                        <strong>
+                            Sản phẩm
+                        </strong>
 
-                        <h2>
-                            Tác vụ nhanh
-                        </h2>
+                        <p>
+                            Quản lý thực đơn và giá bán.
+                        </p>
 
                     </div>
 
-                </div>
+
+                    <span class="quick-arrow">
+                        ›
+                    </span>
 
 
-                <div class="quick-actions">
-
-
-                    <a href="/admin/products"
-                       class="quick-action">
-
-                        <span>
-                            ➕
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Thêm sản phẩm
-                            </strong>
-
-                            <small>
-                                Cập nhật thực đơn
-                            </small>
-
-                        </div>
-
-                    </a>
+                </a>
 
 
 
-                    <a href="/admin/orders"
-                       class="quick-action">
-
-                        <span>
-                            📋
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Kiểm tra đơn
-                            </strong>
-
-                            <small>
-                                Xử lý đơn hàng mới
-                            </small>
-
-                        </div>
-
-                    </a>
+                <a
+                    href="{{ url_for('admin.orders') }}"
+                    class="quick-card"
+                >
 
 
-
-                    <a href="/admin/users"
-                       class="quick-action">
-
-                        <span>
-                            👤
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Quản lý nhân viên
-                            </strong>
-
-                            <small>
-                                Tài khoản nội bộ
-                            </small>
-
-                        </div>
-
-                    </a>
+                    <div class="quick-icon order">
+                        ▣
+                    </div>
 
 
-                </div>
+                    <div>
+
+                        <strong>
+                            Đơn hàng
+                        </strong>
+
+                        <p>
+                            Theo dõi và phân công giao hàng.
+                        </p>
+
+                    </div>
+
+
+                    <span class="quick-arrow">
+                        ›
+                    </span>
+
+
+                </a>
+
+
+
+                <a
+                    href="{{ url_for('admin.shippers') }}"
+                    class="quick-card"
+                >
+
+
+                    <div class="quick-icon shipper">
+                        ⇢
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Shipper
+                        </strong>
+
+                        <p>
+                            Theo dõi trạng thái đội giao hàng.
+                        </p>
+
+                    </div>
+
+
+                    <span class="quick-arrow">
+                        ›
+                    </span>
+
+
+                </a>
+
+
+
+                <a
+                    href="{{ url_for('admin.users') }}"
+                    class="quick-card"
+                >
+
+
+                    <div class="quick-icon employee">
+                        ◉
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Nhân viên
+                        </strong>
+
+                        <p>
+                            Quản lý người dùng nội bộ.
+                        </p>
+
+                    </div>
+
+
+                    <span class="quick-arrow">
+                        ›
+                    </span>
+
+
+                </a>
+
 
             </div>
 
 
         </section>
-
-
 
 
 
@@ -812,13 +1308,16 @@
 
         <footer class="admin-footer">
 
-            <p>
-                © 2026 Bún Chả Việt
-            </p>
 
-            <p>
-                Admin Management System
-            </p>
+            <span>
+                Bún Chả Việt Admin System
+            </span>
+
+
+            <span>
+                Dashboard vận hành
+            </span>
+
 
         </footer>
 
@@ -828,6 +1327,12 @@
 
 </div>
 
+
+
+<script
+    src="{{ url_for('static', filename='js/dashboard.js') }}"
+>
+</script>
 
 
 </body>
