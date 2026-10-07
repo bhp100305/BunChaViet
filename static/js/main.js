@@ -49,16 +49,16 @@ function filterProducts(categoryId, button) {
 
 
     document
-    .querySelectorAll(".tab-btn")
-    .forEach(btn => {
+        .querySelectorAll(".tab-btn")
+        .forEach(btn => {
 
-        btn.classList.remove("active");
+            btn.classList.remove("active");
 
-    });
+        });
 
 
 
-    if(button){
+    if (button) {
 
         button.classList.add("active");
 
@@ -80,34 +80,34 @@ function filterProducts(categoryId, button) {
 
 
 
-function applyCategoryFilter(){
+function applyCategoryFilter() {
 
 
     let result;
 
 
 
-    if(currentCategoryId === "all"){
+    if (currentCategoryId === "all") {
 
         result = products;
 
     }
 
-    else{
+    else {
 
 
         result = products.filter(product => {
 
 
             let category =
-            product.categoryID ??
-            product.categoryId ??
-            product.category_id;
+                product.categoryID ??
+                product.categoryId ??
+                product.category_id;
 
 
 
             return String(category)
-            === String(currentCategoryId);
+                === String(currentCategoryId);
 
 
         });
@@ -132,24 +132,24 @@ function applyCategoryFilter(){
 // DISPLAY PRODUCTS
 // ======================================
 
-function displayProducts(list){
+function displayProducts(list) {
 
 
     const container =
-    document.getElementById(
-        "product-list"
-    );
+        document.getElementById(
+            "product-list"
+        );
 
 
 
     const loadMore =
-    document.getElementById(
-        "load-more-btn"
-    );
+        document.getElementById(
+            "load-more-btn"
+        );
 
 
 
-    if(!container) return;
+    if (!container) return;
 
 
 
@@ -157,7 +157,7 @@ function displayProducts(list){
 
 
 
-    if(list.length === 0){
+    if (list.length === 0) {
 
 
         container.innerHTML = `
@@ -171,9 +171,9 @@ function displayProducts(list){
         `;
 
 
-        if(loadMore){
+        if (loadMore) {
 
-            loadMore.style.display="none";
+            loadMore.style.display = "none";
 
         }
 
@@ -187,23 +187,23 @@ function displayProducts(list){
 
 
     list
-    .slice(0, visibleCount)
-    .forEach(product => {
+        .slice(0, visibleCount)
+        .forEach(product => {
 
 
-        const id =
-        product.productID ??
-        product.id;
-
-
-
-        const name =
-        product.productName ??
-        product.name;
+            const id =
+                product.productID ??
+                product.id;
 
 
 
-        container.innerHTML += `
+            const name =
+                product.productName ??
+                product.name;
+
+
+
+            container.innerHTML += `
 
 
         <div class="product-card">
@@ -259,26 +259,26 @@ function displayProducts(list){
 
 
 
-    });
+        });
 
 
 
 
 
-    if(loadMore){
+    if (loadMore) {
 
 
-        if(visibleCount >= list.length){
+        if (visibleCount >= list.length) {
 
             loadMore.style.display =
-            "none";
+                "none";
 
         }
 
-        else{
+        else {
 
             loadMore.style.display =
-            "block";
+                "block";
 
         }
 
@@ -297,37 +297,37 @@ function displayProducts(list){
 
 
 document
-.addEventListener(
-"DOMContentLoaded",
-()=>{
+    .addEventListener(
+        "DOMContentLoaded",
+        () => {
 
 
-    const button =
-    document.getElementById(
-        "load-more-btn"
-    );
+            const button =
+                document.getElementById(
+                    "load-more-btn"
+                );
 
 
 
-    if(button){
+            if (button) {
 
 
-        button.onclick = function(){
+                button.onclick = function () {
 
 
-            visibleCount += LOAD_STEP;
+                    visibleCount += LOAD_STEP;
 
 
-            applyCategoryFilter();
+                    applyCategoryFilter();
 
 
-        };
+                };
 
 
-    }
+            }
 
 
-});
+        });
 
 
 
@@ -340,46 +340,46 @@ document
 // ======================================
 
 
-function addToCart(productId){
+function addToCart(productId) {
 
 
     const product =
-    products.find(
-        p =>
-        String(p.productID ?? p.id)
-        === String(productId)
-    );
+        products.find(
+            p =>
+                String(p.productID ?? p.id)
+                === String(productId)
+        );
 
 
 
-    if(!product) return;
+    if (!product) return;
 
 
 
 
     const id =
-    product.productID ??
-    product.id;
+        product.productID ??
+        product.id;
 
 
 
     const name =
-    product.productName ??
-    product.name;
+        product.productName ??
+        product.name;
 
 
 
 
     const item =
-    cart.find(
-        p =>
-        String(p.id)
-        === String(id)
-    );
+        cart.find(
+            p =>
+                String(p.id)
+                === String(id)
+        );
 
 
 
-    if(item){
+    if (item) {
 
 
         item.quantity++;
@@ -388,20 +388,20 @@ function addToCart(productId){
     }
 
 
-    else{
+    else {
 
 
         cart.push({
 
-            id:id,
+            id: id,
 
-            name:name,
+            name: name,
 
-            price:Number(product.price),
+            price: Number(product.price),
 
-            image:product.image,
+            image: product.image,
 
-            quantity:1
+            quantity: 1
 
         });
 
@@ -428,28 +428,28 @@ function addToCart(productId){
 
 
 
-function updateCartCount(){
+function updateCartCount() {
 
 
     const count =
-    cart.reduce(
-        (sum,item)=>
-        sum + item.quantity,
-        0
-    );
+        cart.reduce(
+            (sum, item) =>
+                sum + item.quantity,
+            0
+        );
 
 
 
     const element =
-    document.getElementById(
-        "cart-count"
-    );
+        document.getElementById(
+            "cart-count"
+        );
 
 
 
-    if(element){
+    if (element) {
 
-        element.innerText=count;
+        element.innerText = count;
 
     }
 
@@ -467,19 +467,19 @@ function updateCartCount(){
 // ======================================
 
 
-function showCart(){
+function showCart() {
 
 
     const box =
-    document.getElementById(
-        "cart-box"
-    );
+        document.getElementById(
+            "cart-box"
+        );
 
 
     const overlay =
-    document.getElementById(
-        "cart-overlay"
-    );
+        document.getElementById(
+            "cart-overlay"
+        );
 
 
 
@@ -504,26 +504,26 @@ function showCart(){
 
 
 
-function closeCart(){
+function closeCart() {
 
 
     document
-    .getElementById(
-        "cart-box"
-    )
-    .classList.remove(
-        "active"
-    );
+        .getElementById(
+            "cart-box"
+        )
+        .classList.remove(
+            "active"
+        );
 
 
 
     document
-    .getElementById(
-        "cart-overlay"
-    )
-    .classList.remove(
-        "active"
-    );
+        .getElementById(
+            "cart-overlay"
+        )
+        .classList.remove(
+            "active"
+        );
 
 
 }
@@ -539,31 +539,31 @@ function closeCart(){
 // ======================================
 
 
-function renderCart(){
+function renderCart() {
 
 
     const container =
-    document.getElementById(
-        "cart-items"
-    );
+        document.getElementById(
+            "cart-items"
+        );
 
 
     const totalBox =
-    document.getElementById(
-        "cart-total"
-    );
+        document.getElementById(
+            "cart-total"
+        );
 
 
 
-    container.innerHTML="";
+    container.innerHTML = "";
 
 
 
-    if(cart.length===0){
+    if (cart.length === 0) {
 
 
         container.innerHTML =
-        `
+            `
 
         <p class="empty-cart">
 
@@ -575,7 +575,7 @@ function renderCart(){
 
 
         totalBox.innerText =
-        "0 ₫";
+            "0 ₫";
 
 
         return;
@@ -589,12 +589,12 @@ function renderCart(){
 
 
 
-    cart.forEach(item=>{
+    cart.forEach(item => {
 
 
         let money =
-        item.price *
-        item.quantity;
+            item.price *
+            item.quantity;
 
 
 
@@ -604,7 +604,7 @@ function renderCart(){
 
 
         container.innerHTML +=
-        `
+            `
 
 
         <div class="cart-item">
@@ -695,7 +695,7 @@ function renderCart(){
 
 
     totalBox.innerText =
-    formatMoney(total);
+        formatMoney(total);
 
 
 }
@@ -706,17 +706,17 @@ function renderCart(){
 
 
 
-function increaseQuantity(id){
+function increaseQuantity(id) {
 
 
     const item =
-    cart.find(
-        x=>String(x.id)
-        ===String(id)
-    );
+        cart.find(
+            x => String(x.id)
+                === String(id)
+        );
 
 
-    if(item){
+    if (item) {
 
         item.quantity++;
 
@@ -734,18 +734,18 @@ function increaseQuantity(id){
 
 
 
-function decreaseQuantity(id){
+function decreaseQuantity(id) {
 
 
     const item =
-    cart.find(
-        x=>String(x.id)
-        ===String(id)
-    );
+        cart.find(
+            x => String(x.id)
+                === String(id)
+        );
 
 
 
-    if(!item)return;
+    if (!item) return;
 
 
 
@@ -753,7 +753,7 @@ function decreaseQuantity(id){
 
 
 
-    if(item.quantity<=0){
+    if (item.quantity <= 0) {
 
         removeFromCart(id);
 
@@ -774,15 +774,15 @@ function decreaseQuantity(id){
 
 
 
-function removeFromCart(id){
+function removeFromCart(id) {
 
 
     cart =
-    cart.filter(
-        x =>
-        String(x.id)
-        !== String(id)
-    );
+        cart.filter(
+            x =>
+                String(x.id)
+                !== String(id)
+        );
 
 
     updateCartCount();
@@ -798,12 +798,12 @@ function removeFromCart(id){
 // ======================================
 
 
-function formatMoney(number){
+function formatMoney(number) {
 
 
     return Number(number)
-    .toLocaleString("vi-VN")
-    + " ₫";
+        .toLocaleString("vi-VN")
+        + " ₫";
 
 
 }
@@ -818,9 +818,9 @@ function formatMoney(number){
 // ======================================
 
 
-function goToCheckout(){
+function goToCheckout() {
 
-    if(cart.length === 0){
+    if (cart.length === 0) {
 
         alert(
             "Giỏ hàng đang trống!"
@@ -837,7 +837,7 @@ function goToCheckout(){
     );
 
 
-    window.location.href="/checkout";
+    window.location.href = "/checkout";
 
 }
 

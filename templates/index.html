@@ -11,7 +11,9 @@
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet">
 
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
@@ -20,459 +22,436 @@
 <body>
 
 
-<!-- HEADER -->
+    <!-- HEADER -->
 
-<header class="header">
+    <header class="header">
 
-    <div class="header-container">
-
-
-        <div class="staff-login-left">
-
-            <a href="/login" class="btn-staff-login">
-                🔑 Đăng nhập Nội bộ
-            </a>
-
-        </div>
+        <div class="header-container">
 
 
+            <div class="staff-login-left">
 
-        <div class="logo">
-
-            <span class="logo-icon">
-                🍜
-            </span>
-
-
-            <div class="logo-text">
-
-                <span class="brand-name">
-                    BÚN CHẢ VIỆT
-                </span>
-
-
-                <span class="brand-slogan">
-                    Nhất sạch – nhì ngon
-                </span>
+                <a href="/login" class="btn-staff-login">
+                    🔑 Đăng nhập Nội bộ
+                </a>
 
             </div>
 
+
+
+            <div class="logo">
+
+                <span class="logo-icon">
+                    🍜
+                </span>
+
+
+                <div class="logo-text">
+
+                    <span class="brand-name">
+                        BÚN CHẢ VIỆT
+                    </span>
+
+
+                    <span class="brand-slogan">
+                        Nhất sạch – nhì ngon
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+
+            <nav>
+
+
+                <a href="/" class="nav-link active">
+                    Trang chủ
+                </a>
+
+
+                <a href="/about" class="nav-link">
+                    Giới thiệu
+                </a>
+
+                <a href="/contact" class="nav-link">
+                    Liên hệ
+                </a>
+
+                <a href="/track-order" class="nav-link">
+                    Theo dõi đơn hàng
+                </a>
+
+                <button class="cart-btn" onclick="showCart()">
+
+                    🛒 Giỏ hàng
+
+                    <span id="cart-count">
+                        0
+                    </span>
+
+                </button>
+
+
+            </nav>
+
+
+        </div>
+
+
+    </header>
+
+
+
+
+
+    <!-- BANNER -->
+
+
+    <section class="banner">
+
+        <div class="banner-overlay"></div>
+
+
+        <div class="banner-content">
+
+            <h1>
+                BÚN CHẢ VIỆT
+            </h1>
+
+
+            <p class="tagline">
+                Nhất sạch – nhì ngon
+            </p>
+
+
+            <p class="desc">
+                Hương vị bún chả Hà Nội giao tận nơi nóng hổi
+            </p>
+
+
+            <a href="#products" class="btn btn-primary">
+                XEM THỰC ĐƠN
+            </a>
+
+
+        </div>
+
+
+    </section>
+
+
+
+
+
+
+    <!-- PRODUCTS -->
+
+
+    <main id="products" class="main-container">
+
+
+        <div class="category-tabs">
+
+
+            <button class="tab-btn active" onclick="filterProducts('all',this)">
+                Tất cả
+            </button>
+
+
+            <button class="tab-btn" onclick="filterProducts(1,this)">
+                Món chính
+            </button>
+
+
+            <button class="tab-btn" onclick="filterProducts(2,this)">
+                Combo
+            </button>
+
+
+            <button class="tab-btn" onclick="filterProducts(3,this)">
+                Nem & món kèm
+            </button>
+
+
+            <button class="tab-btn" onclick="filterProducts(4,this)">
+                Đồ uống
+            </button>
+
+
         </div>
 
 
 
 
-        <nav>
+
+        <section class="products-section">
 
 
-            <a href="/" class="nav-link active">
-                Trang chủ
-            </a>
+            <div class="section-header">
 
 
-            <a href="/about" class="nav-link">
-                Giới thiệu
-            </a>     
+                <h2>
+                    THỰC ĐƠN PHONG PHÚ
+                </h2>
 
-            <a href="#contact" class="nav-link">
-                Liên hệ
-            </a>
 
-            <a href="/track-order" class="nav-link">
-                Theo dõi đơn hàng
-            </a>
+                <div class="divider">
+                    <span>
+                        🍜
+                    </span>
+                </div>
 
-            <button class="cart-btn" onclick="showCart()">
 
-                🛒 Giỏ hàng
+                <p class="subtitle">
+                    Món ngon chuẩn vị – Giao hàng tận nơi
+                </p>
 
-                <span id="cart-count">
-                    0
-                </span>
+
+            </div>
+
+
+
+
+            <div id="product-list" class="product-list">
+
+            </div>
+
+
+
+
+            <button id="load-more-btn" class="load-more-btn">
+
+                Xem thêm món ăn
 
             </button>
 
 
-        </nav>
+        </section>
+
+
+    </main>
+
+
+
+
+
+
+
+    <!-- CART -->
+
+
+    <div id="cart-overlay" class="cart-overlay" onclick="closeCart()">
+
+    </div>
+
+
+
+    <div id="cart-box" class="cart-box">
+
+
+        <div class="cart-header">
+
+            <h2>
+                🛒 Giỏ hàng của bạn
+            </h2>
+
+
+            <button class="close-cart" onclick="closeCart()">
+
+                ×
+
+            </button>
+
+
+        </div>
+
+
+
+        <div id="cart-items" class="cart-items">
+
+        </div>
+
+
+
+        <div class="cart-footer">
+
+
+            <div class="total">
+
+                <span>
+                    Tổng tiền:
+                </span>
+
+
+                <strong id="cart-total">
+                    0 ₫
+                </strong>
+
+
+            </div>
+
+
+
+            <button class="checkout-btn" onclick="goToCheckout()">
+
+                TIẾN HÀNH ĐẶT HÀNG
+
+            </button>
+
+
+        </div>
 
 
     </div>
 
 
-</header>
 
 
 
 
 
-<!-- BANNER -->
+
+    <!-- FLOAT BUTTON -->
 
 
-<section class="banner">
-
-    <div class="banner-overlay"></div>
+    <div class="floating-widgets">
 
 
-    <div class="banner-content">
+        <a href="tel:0988888888" class="widget-btn">
 
-        <h1>
-            BÚN CHẢ VIỆT
-        </h1>
+            📞
 
-
-        <p class="tagline">
-            Nhất sạch – nhì ngon
-        </p>
+        </a>
 
 
-        <p class="desc">
-            Hương vị bún chả Hà Nội giao tận nơi nóng hổi
-        </p>
+        <a href="#" class="widget-btn">
 
+            💬
 
-        <a href="#products" class="btn btn-primary">
-            XEM THỰC ĐƠN
         </a>
 
 
     </div>
 
 
-</section>
 
 
 
 
+    <!-- FOOTER -->
 
 
-<!-- PRODUCTS -->
-
-
-<main id="products" class="main-container">
-
-
-    <div class="category-tabs">
-
-
-        <button class="tab-btn active"
-        onclick="filterProducts('all',this)">
-            Tất cả
-        </button>
-
-
-        <button class="tab-btn"
-        onclick="filterProducts(1,this)">
-            Món chính
-        </button>
-
-
-        <button class="tab-btn"
-        onclick="filterProducts(2,this)">
-            Combo
-        </button>
-
-
-        <button class="tab-btn"
-        onclick="filterProducts(3,this)">
-            Nem & món kèm
-        </button>
-
-
-        <button class="tab-btn"
-        onclick="filterProducts(4,this)">
-            Đồ uống
-        </button>
-
-
-    </div>
-
-
-
-
-
-    <section class="products-section">
-
-
-        <div class="section-header">
-
-
-            <h2>
-                THỰC ĐƠN PHONG PHÚ
-            </h2>
-
-
-            <div class="divider">
-                <span>
-                    🍜
-                </span>
-            </div>
-
-
-            <p class="subtitle">
-                Món ngon chuẩn vị – Giao hàng tận nơi
-            </p>
-
-
-        </div>
-
-
-
-
-        <div id="product-list"
-             class="product-list">
-
-        </div>
-
-
-
-
-        <button id="load-more-btn"
-                class="load-more-btn">
-
-            Xem thêm món ăn
-
-        </button>
-
-
-    </section>
-
-
-</main>
-
-
-
-
-
-
-
-<!-- CART -->
-
-
-<div id="cart-overlay"
-     class="cart-overlay"
-     onclick="closeCart()">
-
-</div>
-
-
-
-<div id="cart-box"
-     class="cart-box">
-
-
-    <div class="cart-header">
-
-        <h2>
-            🛒 Giỏ hàng của bạn
-        </h2>
-
-
-        <button class="close-cart"
-                onclick="closeCart()">
-
-            ×
-
-        </button>
-
-
-    </div>
-
-
-
-    <div id="cart-items"
-         class="cart-items">
-
-    </div>
-
-
-
-    <div class="cart-footer">
-
-
-        <div class="total">
-
-            <span>
-                Tổng tiền:
-            </span>
-
-
-            <strong id="cart-total">
-                0 ₫
-            </strong>
-
-
-        </div>
-
-
-
-        <button class="checkout-btn"
-                onclick="goToCheckout()">
-
-            TIẾN HÀNH ĐẶT HÀNG
-
-        </button>
-
-
-    </div>
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- FLOAT BUTTON -->
-
-
-<div class="floating-widgets">
-
-
-    <a href="tel:0988888888"
-       class="widget-btn">
-
-        📞
-
-    </a>
-
-
-    <a href="#"
-       class="widget-btn">
-
-        💬
-
-    </a>
-
-
-</div>
-
-
-
-
-
-
-<!-- FOOTER -->
-
-
-<!-- =========================
+    <!-- =========================
      FOOTER
 ========================= -->
 
-<footer id="contact" class="site-footer">
+    <footer id="contact" class="site-footer">
 
-    <div class="footer-main">
+        <div class="footer-main">
 
-        <!-- CỘT 1: THÔNG TIN LIÊN HỆ -->
-        <div class="footer-column footer-contact">
+            <!-- CỘT 1: THÔNG TIN LIÊN HỆ -->
+            <div class="footer-column footer-contact">
 
-            <h3>LIÊN HỆ - BÚN CHẢ VIỆT</h3>
+                <h3>LIÊN HỆ - BÚN CHẢ VIỆT</h3>
 
-            <div class="footer-line"></div>
+                <div class="footer-line"></div>
 
-            <p>
-                <span class="footer-icon">📍</span>
-                <span>
-                    <strong>Địa chỉ:</strong><br>
-                    3 Cầu Giấy, Hà Nội
-                </span>
-            </p>
-
-            <p>
-                <span class="footer-icon">📞</span>
-                <span>
-                    <strong>Hotline:</strong><br>
-                    <a href="tel:0329961823">
-                        0329 961 823
-                    </a>
-                </span>
-            </p>
-
-            <p>
-                <span class="footer-icon">🕐</span>
-                <span>
-                    <strong>Giờ mở cửa:</strong><br>
-                    08:00 - 22:00 hàng ngày
-                </span>
-            </p>
-
-            <a href="tel:0329961823" class="footer-call-btn">
-                📞 0329 961 823
-            </a>
-
-        </div>
-
-
-        <!-- CỘT 2: GOOGLE MAP -->
-        <div class="footer-column footer-map">
-
-            <h3>BẢN ĐỒ</h3>
-
-            <div class="footer-line"></div>
-
-            <iframe
-                src="https://www.google.com/maps?q=3+Cầu+Giấy,+Hà+Nội&output=embed"
-                width="100%"
-                height="260"
-                style="border:0;"
-                allowfullscreen=""
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
-
-        </div>
-
-
-        <!-- CỘT 3: FANPAGE -->
-        <div class="footer-column footer-fanpage">
-
-            <h3>FANPAGE</h3>
-
-            <div class="footer-line"></div>
-
-            <div class="fanpage-card">
-
-                <div class="fanpage-top">
-
-                    <div class="fanpage-logo">
-                        🍜
-                    </div>
-
-                    <div>
-                        <h4>BÚN CHẢ VIỆT</h4>
-                        <p>Nhất sạch – nhì ngon</p>
-                    </div>
-
-                </div>
-
-                <p class="fanpage-desc">
-                    Theo dõi Bún Chả Việt để cập nhật
-                    món ngon, ưu đãi và những thông tin mới nhất.
+                <p>
+                    <span class="footer-icon">📍</span>
+                    <span>
+                        <strong>Địa chỉ:</strong><br>
+                        3 Cầu Giấy, Hà Nội
+                    </span>
                 </p>
 
-                <a href="#"
-                   class="facebook-btn"
-                   target="_blank">
+                <p>
+                    <span class="footer-icon">📞</span>
+                    <span>
+                        <strong>Hotline:</strong><br>
+                        <a href="tel:0329961823">
+                            0329 961 823
+                        </a>
+                    </span>
+                </p>
 
-                    👍 Theo dõi Fanpage
+                <p>
+                    <span class="footer-icon">🕐</span>
+                    <span>
+                        <strong>Giờ mở cửa:</strong><br>
+                        08:00 - 22:00 hàng ngày
+                    </span>
+                </p>
 
+                <a href="tel:0329961823" class="footer-call-btn">
+                    📞 0329 961 823
                 </a>
 
             </div>
 
+
+            <!-- CỘT 2: GOOGLE MAP -->
+            <div class="footer-column footer-map">
+
+                <h3>BẢN ĐỒ</h3>
+
+                <div class="footer-line"></div>
+
+                <iframe src="https://www.google.com/maps?q=3+Cầu+Giấy,+Hà+Nội&output=embed" width="100%" height="260"
+                    style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+
+            </div>
+
+
+            <!-- CỘT 3: FANPAGE -->
+            <div class="footer-column footer-fanpage">
+
+                <h3>FANPAGE</h3>
+
+                <div class="footer-line"></div>
+
+                <div class="fanpage-card">
+
+                    <div class="fanpage-top">
+
+                        <div class="fanpage-logo">
+                            🍜
+                        </div>
+
+                        <div>
+                            <h4>BÚN CHẢ VIỆT</h4>
+                            <p>Nhất sạch – nhì ngon</p>
+                        </div>
+
+                    </div>
+
+                    <p class="fanpage-desc">
+                        Theo dõi Bún Chả Việt để cập nhật
+                        món ngon, ưu đãi và những thông tin mới nhất.
+                    </p>
+
+                    <a href="#" class="facebook-btn" target="_blank">
+
+                        👍 Theo dõi Fanpage
+
+                    </a>
+
+                </div>
+
+            </div>
+
         </div>
 
-    </div>
 
 
 
+    </footer>
 
-</footer>
 
-
-<script src="/static/js/main.js"></script>
+    <script src="/static/js/main.js"></script>
 
 </body>
 

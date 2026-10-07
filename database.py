@@ -3,7 +3,11 @@ import pyodbc
 def get_connection():
 
     connection = pyodbc.connect(
-        "DRIVER={SQL Server};SERVER=127.0.0.1;DATABASE=BunCha;;UID=sa;PWD=HuyPhu@999;TrustServerCertificate=yes;MARS_Connection=yes;"
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=THAFIE\\SQLEXPRESS;"
+        "DATABASE=BunCha;"
+        "Trusted_Connection=yes;"
+        "TrustServerCertificate=yes;"
     )
 
     return connection

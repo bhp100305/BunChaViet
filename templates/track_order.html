@@ -12,36 +12,25 @@
 
     <link
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap"
-        rel="stylesheet"
-    >
+        rel="stylesheet">
 
 
     <!-- CSS trang theo dõi -->
 
-    <link
-        rel="stylesheet"
-        href="/static/css/track_order.css"
-    >
+    <link rel="stylesheet" href="/static/css/track_order.css">
 
 
     <!-- CSS chung -->
 
-    <link
-        rel="stylesheet"
-        href="/static/css/style.css"
-    >
+    <link rel="stylesheet" href="/static/css/style.css">
 
 
     <!-- Leaflet -->
 
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    >
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 
     <style>
-
         /* ================================
            BẢN ĐỒ
         ================================= */
@@ -299,7 +288,6 @@
             display: none;
 
         }
-
     </style>
 
 </head>
@@ -308,163 +296,138 @@
 <body>
 
 
-<header class="header">
+    <header class="header">
 
-    <div class="header-container">
-
-
-        <div class="staff-login-left">
-
-            <a
-                href="/login"
-                class="btn-staff-login"
-            >
-                🔑 Đăng nhập Nội bộ
-            </a>
-
-        </div>
+        <div class="header-container">
 
 
-        <div class="logo">
+            <div class="staff-login-left">
 
-            <span class="logo-icon">
-                🍜
-            </span>
-
-
-            <div class="logo-text">
-
-                <span class="brand-name">
-                    BÚN CHẢ VIỆT
-                </span>
-
-
-                <span class="brand-slogan">
-                    Nhất sạch – nhì ngon
-                </span>
+                <a href="/login" class="btn-staff-login">
+                    🔑 Đăng nhập Nội bộ
+                </a>
 
             </div>
 
+
+            <div class="logo">
+
+                <span class="logo-icon">
+                    🍜
+                </span>
+
+
+                <div class="logo-text">
+
+                    <span class="brand-name">
+                        BÚN CHẢ VIỆT
+                    </span>
+
+
+                    <span class="brand-slogan">
+                        Nhất sạch – nhì ngon
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <nav>
+
+                <a href="/" class="nav-link">
+                    Trang chủ
+                </a>
+
+
+                <a href="/about" class="nav-link">
+                    Giới thiệu
+                </a>
+
+
+                <a href="/contact" class="nav-link">
+                    Liên hệ
+                </a>
+
+
+                <a href="/track-order" class="nav-link active">
+                    Theo dõi đơn hàng
+                </a>
+
+
+                <button class="cart-btn" onclick="showCart()">
+                    🛒 Giỏ hàng
+
+                    <span id="cart-count">
+                        0
+                    </span>
+                </button>
+
+            </nav>
+
         </div>
 
-
-        <nav>
-
-            <a
-                href="/"
-                class="nav-link"
-            >
-                Trang chủ
-            </a>
-
-
-            <a
-                href="/about"
-                class="nav-link"
-            >
-                Giới thiệu
-            </a>
-
-
-            <a
-                href="#contact"
-                class="nav-link"
-            >
-                Liên hệ
-            </a>
-
-
-            <a
-                href="/track-order"
-                class="nav-link active"
-            >
-                Theo dõi đơn hàng
-            </a>
-
-
-            <button
-                class="cart-btn"
-                onclick="showCart()"
-            >
-                🛒 Giỏ hàng
-
-                <span id="cart-count">
-                    0
-                </span>
-            </button>
-
-        </nav>
-
-    </div>
-
-</header>
+    </header>
 
 
 
-<main class="container">
+    <main class="container">
 
 
-    <!-- ================================
+        <!-- ================================
          TRA CỨU
     ================================= -->
 
-    <section class="search-box">
+        <section class="search-box">
 
-        <h2>
-            🔎 Theo dõi đơn hàng
-        </h2>
+            <h2>
+                🔎 Theo dõi đơn hàng
+            </h2>
 
-        <p>
-            Nhập số điện thoại đặt hàng
-        </p>
-
-
-        <div class="search-form">
-
-            <input
-                id="phone"
-                type="tel"
-                placeholder="Nhập số điện thoại"
-                autocomplete="tel"
-            >
+            <p>
+                Nhập số điện thoại đặt hàng
+            </p>
 
 
-            <button onclick="searchOrder()">
-                Tra cứu đơn hàng
-            </button>
+            <div class="search-form">
 
-        </div>
-
-    </section>
+                <input id="phone" type="tel" placeholder="Nhập số điện thoại">
 
 
-    <section
-        id="order-result"
-        class="order-result"
-    >
+                <button onclick="searchOrder()">
+                    Tra cứu đơn hàng
+                </button>
+                <button onclick="searchOrder()">
+                    Tra cứu đơn hàng
+                </button>
 
-    </section>
+            </div>
 
-
-</main>
+        </section>
 
 
 
-<!-- Leaflet JS -->
+        <!-- ================================
+         KẾT QUẢ
+    ================================= -->
 
-<script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-></script>
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+        <section id="order-result" class="order-result">
 
-<!-- JS theo dõi -->
+        </section>
 
-<script
-    src="/static/js/track_order.js"
-></script>
+
+    </main>
+
+
+
+    <!-- Leaflet JS -->
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- JS theo dõi -->
+
+    <script src="/static/js/track_order.js"></script>
 
 
 </body>

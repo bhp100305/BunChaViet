@@ -126,10 +126,15 @@ def login():
             "message": "Không thể kết nối tới máy chủ!"
         }), 500
 
+@app.route('/contact')
+def contact():
+
+    return render_template("contact.html")
 
 @app.route('/about')
 def about():
     return render_template('about.html')
+
 @app.route("/staff/orders")
 def staff_orders():
 
