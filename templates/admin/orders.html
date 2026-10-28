@@ -32,6 +32,11 @@
 
     <link
         rel="stylesheet"
+        href="{{ url_for('static', filename='css/dashboard.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
         href="{{ url_for('static', filename='css/orders.css') }}"
     >
 
@@ -41,6 +46,7 @@
 <body>
 
 
+{% set active_page = 'orders' %}
 {% set summary = namespace(
     pending=0,
     active=0,
@@ -96,6 +102,9 @@
 
 
 
+<div class="admin-layout">
+    {% include 'admin/_sidebar.html' %}
+    <main class="content">
 <div class="page">
 
 
@@ -107,6 +116,8 @@
 
 
         <div class="header-left">
+
+            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Mở menu">☰</button>
 
 
             <p class="header-eyebrow">
@@ -1210,10 +1221,14 @@
 
 
 
+</main>
+</div>
+
 <script
     src="{{ url_for('static', filename='js/orders.js') }}"
 >
 </script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
 
 </body>

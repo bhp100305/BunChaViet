@@ -32,6 +32,11 @@
 
     <link
         rel="stylesheet"
+        href="{{ url_for('static', filename='css/dashboard.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
         href="{{ url_for('static', filename='css/shippers.css') }}"
     >
 
@@ -92,6 +97,10 @@
 
 
 
+{% set active_page = 'shippers' %}
+<div class="admin-layout">
+    {% include 'admin/_sidebar.html' %}
+    <main class="content">
 <div class="page">
 
 
@@ -103,6 +112,7 @@
 
 
         <div>
+            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Mở menu">☰</button>
 
             <h1>
                 Quản lý shipper
@@ -796,6 +806,9 @@
      ADD / EDIT MODAL
 ====================================================== -->
 
+</main>
+</div>
+
 <div
     id="shipperModal"
     class="modal"
@@ -1054,6 +1067,7 @@
     src="{{ url_for('static', filename='js/shippers.js') }}"
 >
 </script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
 
 </body>

@@ -1,1227 +1,2478 @@
-    // =========================================================
-    // BIẾN BẢN ĐỒ
-    // =========================================================
+let currentPhone = "";
 
-    let driverMap = null;
+let currentOrders = [];
 
-    let driverMarker = null;
-
-    let trackingTimer = null;
-
-    let currentPhone = "";
+let trackingTimer = null;
 
 
-    // =========================================================
-    // TRA CỨU ĐƠN HÀNG
-    // =========================================================
-
-    async function searchOrder() {
-
-        const phone =
-            document.getElementById("phone")
-            .value
-            .trim();
+const trackingMaps =
+    new Map();
 
 
-        if (!phone) {
+// =========================================================
+// INIT
+// =========================================================
 
-            alert(
-                "Vui lòng nhập số điện thoại!"
-            );
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-            return;
-
-        }
-
-
-        currentPhone = phone;
-
-
-        try {
-
-
-            const response =
-                await fetch(
-                    "/api/orders/" +
-                    encodeURIComponent(phone)
-                );
-
-
-            const orders =
-                await response.json();
-
-
-
-            if (
-                !orders ||
-                orders.length === 0
-            ) {
-
-                showNotFound();
-
-                stopTracking();
-
-                return;
-
-            }
-
-
-
-            renderOrders(
-                orders
-            );
-
-
-
-            const shipping =
-                orders.some(order =>
-                    order.status === "Đang giao"
-                );
-
-
-
-            if (shipping) {
-
-                startTracking();
-
-            }
-            else {
-
-                stopTracking();
-
-            }
-
-
-
-        }
-        catch(error) {
-
-
-            console.error(
-                error
-            );
-
-
-            alert(
-                "Không thể kết nối máy chủ!"
-            );
-
-        }
-
-    }
-
-
-    // =========================================================
-    // HIỆN KHÔNG TÌM THẤY
-    // =========================================================
-
-    function showNotFound() {
-
-        const box =
+        const phoneInput =
             document.getElementById(
-                "order-result"
+                "phone"
             );
 
 
-        box.innerHTML = `
+        phoneInput?.addEventListener(
+            "keydown",
+            (event) => {
 
-            <div class="order-card not-found">
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
 
-                <div class="not-found-icon">
-                    ❌
-                </div>
+                    event.preventDefault();
 
+                    searchOrder();
 
-                <h3>
-                    Không tìm thấy đơn hàng
-                </h3>
+                }
 
-
-                <p>
-                    Vui lòng kiểm tra lại số điện thoại.
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-
-    // =========================================================
-    // XÁC ĐỊNH BƯỚC TRẠNG THÁI
-    // =========================================================
-
-    function getStatusStep(status) {
-
-        const statusMap = {
-
-            "Đã tiếp nhận": 1,
-
-            "Đang chuẩn bị": 2,
-
-            "Đang giao": 3,
-
-            "Hoàn thành": 4,
-
-            "Đã hủy": 0
-
-        };
-
-
-        return statusMap[status] ?? 1;
-
-    }
-
-
-    // =========================================================
-    // HIỂN THỊ ĐƠN HÀNG
-    // =========================================================
-
-    function renderOrder(order) {
-
-        const box =
-            document.getElementById(
-                "order-result"
-            );
-
-
-        const currentStep =
-            getStatusStep(
-                order.status
-            );
-
-
-        box.innerHTML = `   
-
-
-            <div class="order-card">
-
-
-                <!-- HEADER ĐƠN -->
-
-                <div class="order-heading">
-
-                    <div>
-
-                        <p class="order-label">
-                            MÃ ĐƠN HÀNG
-                        </p>
-
-
-                        <h2>
-                            🧾 #${order.code}
-                        </h2>
-
-                    </div>
-
-
-                    <span class="status-badge">
-                        ${order.status}
-                    </span>
-
-                </div>
-
-
-
-                <!-- TRẠNG THÁI -->
-
-                <div class="status-tracker">
-
-
-                    ${createStatusStep(
-                        1,
-                        currentStep,
-                        "✓",
-                        "Đã tiếp nhận",
-                        "Quán đã nhận đơn"
-                    )}
-
-
-                    <div
-                        class="status-line ${
-                            currentStep >= 2
-                                ? "completed"
-                                : ""
-                        }"
-                    ></div>
-
-
-                    ${createStatusStep(
-                        2,
-                        currentStep,
-                        "🍜",
-                        "Đang chuẩn bị",
-                        "Món ăn đang được chuẩn bị"
-                    )}
-
-
-                    <div
-                        class="status-line ${
-                            currentStep >= 3
-                                ? "completed"
-                                : ""
-                        }"
-                    ></div>
-
-
-                    ${createStatusStep(
-                        3,
-                        currentStep,
-                        "🚚",
-                        "Đang giao",
-                        "Tài xế đang giao món"
-                    )}
-
-
-                    <div
-                        class="status-line ${
-                            currentStep >= 4
-                                ? "completed"
-                                : ""
-                        }"
-                    ></div>
-
-
-                    ${createStatusStep(
-                        4,
-                        currentStep,
-                        "✓",
-                        "Hoàn thành",
-                        "Đơn hàng đã giao"
-                    )}
-
-                </div>
-
-
-
-                <!-- THÔNG TIN GIAO HÀNG -->
-
-                <div class="order-info">
-
-                    <h3>
-                        👤 Thông tin giao hàng
-                    </h3>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            Khách hàng
-                        </span>
-
-
-                        <strong>
-                            ${escapeHTML(
-                                order.name
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            Địa chỉ
-                        </span>
-
-
-                        <strong>
-                            ${escapeHTML(
-                                order.address
-                            )}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            Trạng thái
-                        </span>
-
-
-                        <strong class="status-text">
-                            ${escapeHTML(
-                                order.status
-                            )}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- TỔNG TIỀN -->
-
-                <div class="order-total">
-
-                    <div>
-
-                        <p>
-                            Tiền món:
-                            ${formatMoney(order.foodMoney)}
-                        </p>
-
-
-                        <p>
-                            Phí giao hàng:
-                            ${formatMoney(order.shippingFee)}
-                        </p>
-
-                    </div>
-
-
-                    <strong>
-                        ${formatMoney(order.total)}
-                    </strong>
-
-                </div>
-
-
-
-                <!-- SHIPPER -->
-
-                ${renderDriverSection(order)}
-
-            </div>
-
-        `;
-
-
-        /*
-        * Nếu đang giao thì tạo map
-        */
-
-        if (
-            order.status === "Đang giao"
-        ) {
-
-            setTimeout(
-                function() {
-
-                    initDriverMap(
-                        order
-                    );
-
-                },
-                100
-            );
-
-        }
-
-    }
-
-
-    // =========================================================
-    // TẠO STATUS
-    // =========================================================
-
-    function createStatusStep(
-        step,
-        currentStep,
-        icon,
-        title,
-        description
-    ) {
-
-        let className = "";
-
-
-        if (
-            step < currentStep
-        ) {
-
-            className =
-                "completed";
-
-        }
-
-
-        if (
-            step === currentStep
-        ) {
-
-            className =
-                "current";
-
-        }
-
-
-        return `
-
-            <div
-                class="status-step ${className}"
-            >
-
-                <div class="status-icon">
-
-                    ${icon}
-
-                </div>
-
-
-                <div class="status-content">
-
-                    <strong>
-                        ${title}
-                    </strong>
-
-
-                    <small>
-                        ${description}
-                    </small>
-
-                </div>
-
-            </div>
-
-        `;
-
-    }
-
-
-    // =========================================================
-    // PHẦN SHIPPER
-    // =========================================================
-
-    function renderDriverSection(order) {
-
-        if (order.status === "Đang giao") {
-
-            const driverName =
-                order.driver &&
-                order.driver.name
-                    ? order.driver.name
-                    : "Đang tìm tài xế";
-
-
-            return `
-                <div class="driver active-driver">
-
-                    <div class="driver-header">
-
-                        <div>
-
-                            <h3>
-                                🛵 Tài xế đang giao hàng
-                            </h3>
-
-                            <p>
-                                ${driverName}
-                            </p>
-
-                        </div>
-
-                        <span class="delivery-live">
-                            ● Đang giao
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="map-section">
-
-                    <h3>
-                        📍 Vị trí tài xế
-                    </h3>
-
-                    <p
-                        id="driver-location-text"
-                    >
-                        Đang lấy vị trí tài xế...
-                    </p>
-
-
-                    <div
-                        id="driver-map"
-                        class="driver-map"
-                    >
-                    </div>
-
-                </div>
-            `;
-        }
-
-
-        if (order.status === "Hoàn thành") {
-
-            return `
-                <div class="driver completed-driver">
-
-                    <h3>
-                        ✅ Giao hàng thành công
-                    </h3>
-
-                    <p>
-                        Cảm ơn bạn đã đặt món
-                        tại Bún Chả Việt.
-                    </p>
-
-                </div>
-            `;
-        }
-
-
-        return `
-            <div class="driver">
-
-                <h3>
-                    🛵 Tài xế giao hàng
-                </h3>
-
-                <p>
-                    Tài xế sẽ được phân công
-                    khi đơn hàng sẵn sàng.
-                </p>
-
-            </div>
-        `;
-    }
-
-
-    // =========================================================
-    // KHỞI TẠO BẢN ĐỒ
-    // =========================================================
-
-function initDriverMap(order) {
-
-
-    const mapId =
-        "driver-map-" + order.code;
-
-
-    const mapElement =
-        document.getElementById(mapId);
-
-
-
-    if (!mapElement) {
-
-        console.log(
-            "Không tìm thấy map:",
-            mapId
+            }
         );
+
+
+        const lastOrderPhone =
+            localStorage.getItem(
+                "lastOrderPhone"
+            )
+            ||
+            "";
+
+
+        const newOrderCode =
+            localStorage.getItem(
+                "orderCode"
+            )
+            ||
+            "";
+
+
+        if (phoneInput && lastOrderPhone) {
+
+            phoneInput.value =
+                lastOrderPhone;
+
+        }
+
+
+        if (
+            phoneInput
+            &&
+            lastOrderPhone
+            &&
+            newOrderCode
+        ) {
+
+            // Mã đơn chỉ dùng để tự mở đúng đơn vừa đặt một lần.
+            localStorage.removeItem(
+                "orderCode"
+            );
+
+
+            searchOrder(
+                newOrderCode
+            );
+
+        }
+
+    }
+);
+
+
+window.searchOrder =
+    searchOrder;
+
+
+// =========================================================
+// SEARCH
+// =========================================================
+
+async function searchOrder(
+    focusOrderCode = ""
+) {
+
+    const input =
+        document.getElementById(
+            "phone"
+        );
+
+
+    const phone =
+        input?.value.trim()
+        ||
+        "";
+
+
+    if (!phone) {
+
+        alert(
+            "Vui lòng nhập số điện thoại."
+        );
+
+
+        input?.focus();
+
 
         return;
 
     }
 
 
+    currentPhone =
+        phone;
 
-    // Xóa map cũ nếu có
 
-    if (driverMap) {
+    try {
 
-        driverMap.remove();
+        const response =
+            await fetch(
+                `/api/orders/${encodeURIComponent(phone)}`,
+                {
+                    cache:
+                        "no-store"
+                }
+            );
 
-        driverMap = null;
 
-        driverMarker = null;
+        const data =
+            await safeJson(
+                response
+            );
+
+
+        if (
+            !response.ok
+            ||
+            !Array.isArray(
+                data
+            )
+        ) {
+
+            throw new Error(
+                data?.message
+                ||
+                "Không thể tra cứu đơn hàng."
+            );
+
+        }
+
+
+        const ordersToDisplay =
+            focusOrderCode
+                ? data.filter(
+                    (order) =>
+                        order.code ===
+                        focusOrderCode
+                )
+                : data;
+
+
+        if (
+            ordersToDisplay.length ===
+            0
+        ) {
+
+            stopTracking();
+
+            destroyTrackingMaps();
+
+            showNotFound();
+
+
+            return;
+
+        }
+
+
+        currentOrders =
+            ordersToDisplay;
+
+
+        renderOrders(
+            ordersToDisplay
+        );
+
+
+        if (
+            ordersToDisplay.some(
+                (order) =>
+                    order.status ===
+                    "Đang giao"
+            )
+        ) {
+
+            startTracking();
+
+        }
+        else {
+
+            stopTracking();
+
+        }
+
+    }
+    catch (error) {
+
+        console.error(
+            "Order search error:",
+            error
+        );
+
+
+        alert(
+            error.message
+            ||
+            "Không thể kết nối máy chủ."
+        );
+
+    }
+
+}
+
+
+function showNotFound() {
+
+    const box =
+        document.getElementById(
+            "order-result"
+        );
+
+
+    if (!box) {
+        return;
+    }
+
+
+    box.innerHTML =
+        `
+        <div class="tracking-empty">
+
+            <div class="tracking-empty-icon">
+                📦
+            </div>
+
+            <h3>
+                Không tìm thấy đơn hàng
+            </h3>
+
+            <p>
+                Kiểm tra lại số điện thoại đã dùng khi đặt hàng.
+            </p>
+
+        </div>
+        `;
+
+}
+
+
+// =========================================================
+// RENDER
+// =========================================================
+
+function renderOrders(
+    orders
+) {
+
+    stopTrackingAnimations();
+
+    destroyTrackingMaps();
+
+
+    const box =
+        document.getElementById(
+            "order-result"
+        );
+
+
+    if (!box) {
+        return;
+    }
+
+
+    box.innerHTML =
+        orders
+            .map(
+                renderOrderCard
+            )
+            .join(
+                ""
+            );
+
+
+    orders
+        .filter(
+            (order) =>
+                order.status ===
+                "Đang giao"
+        )
+        .forEach(
+            (order) => {
+
+                window.setTimeout(
+                    () => {
+
+                        initTrackingMap(
+                            order
+                        );
+
+                    },
+                    80
+                );
+
+            }
+        );
+
+}
+
+
+function renderOrderCard(
+    order
+) {
+
+    const status =
+        String(
+            order.status
+            ||
+            ""
+        );
+
+
+    const step =
+        getStatusStep(
+            status
+        );
+
+
+    const code =
+        escapeHTML(
+            order.code
+            ||
+            ""
+        );
+
+
+    const driverName =
+        escapeHTML(
+            order.driverName
+            ||
+            "Đang cập nhật"
+        );
+
+
+    const total =
+        formatMoney(
+            order.total
+            ||
+            0
+        );
+
+
+    const hasDestination =
+        Number.isFinite(
+            Number(
+                order.latitude
+            )
+        )
+        &&
+        Number.isFinite(
+            Number(
+                order.longitude
+            )
+        );
+
+
+    const mapSection =
+        status ===
+        "Đang giao"
+
+            ? `
+            <section
+                class="customer-live-map-panel"
+                data-order-code="${code}"
+                data-destination-lat="${numberOrBlank(order.latitude)}"
+                data-destination-lng="${numberOrBlank(order.longitude)}"
+            >
+
+                <div class="tracking-map-heading">
+
+                    <div>
+
+                        <span class="tracking-map-eyebrow">
+                            THEO DÕI TRỰC TIẾP
+                        </span>
+
+                        <h3>
+                            🛵 Shipper đang trên đường
+                        </h3>
+
+                        <p class="tracking-map-message">
+                            Đang lấy vị trí shipper...
+                        </p>
+
+                    </div>
+
+
+                    <span class="tracking-live-badge">
+                        Đang kết nối
+                    </span>
+
+                </div>
+
+
+                <div class="tracking-map-metrics">
+
+                    <div>
+
+                        <span>
+                            Shipper
+                        </span>
+
+                        <strong class="tracking-driver-name">
+                            ${driverName}
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Khoảng cách
+                        </span>
+
+                        <strong class="tracking-distance">
+                            -- km
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            ETA
+                        </span>
+
+                        <strong class="tracking-eta">
+                            -- phút
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            GPS cập nhật
+                        </span>
+
+                        <strong class="tracking-gps-time">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                ${
+                    hasDestination
+
+                        ? `
+                        <div class="customer-live-map">
+                        </div>
+                        `
+
+                        : `
+                        <div class="tracking-map-unavailable">
+                            Đơn hàng chưa có tọa độ giao hàng.
+                        </div>
+                        `
+                }
+
+            </section>
+            `
+
+            : "";
+
+
+    return `
+        <article class="order-card live-order-card">
+
+            <div class="order-heading">
+
+                <div>
+
+                    <p class="order-label">
+                        MÃ ĐƠN HÀNG
+                    </p>
+
+                    <h2>
+                        #${code}
+                    </h2>
+
+                    <small class="tracking-created-time">
+                        ${escapeHTML(order.createdAt || "")}
+                    </small>
+
+                </div>
+
+
+                <span
+                    class="status-badge ${statusClass(status)}"
+                >
+                    ${escapeHTML(status)}
+                </span>
+
+            </div>
+
+
+            <div class="customer-status-tracker">
+
+                ${createStatusStep(
+                    1,
+                    step,
+                    "✓",
+                    "Đã tiếp nhận"
+                )}
+
+                ${createStatusConnector(
+                    1,
+                    step
+                )}
+
+                ${createStatusStep(
+                    2,
+                    step,
+                    "🍜",
+                    "Đang chuẩn bị"
+                )}
+
+                ${createStatusConnector(
+                    2,
+                    step
+                )}
+
+                ${createStatusStep(
+                    3,
+                    step,
+                    "🛵",
+                    "Đang giao"
+                )}
+
+                ${createStatusConnector(
+                    3,
+                    step
+                )}
+
+                ${createStatusStep(
+                    4,
+                    step,
+                    "✓",
+                    "Hoàn thành"
+                )}
+
+            </div>
+
+
+            <div class="tracking-order-info">
+
+                <div>
+
+                    <span>
+                        Khách hàng
+                    </span>
+
+                    <strong>
+                        ${escapeHTML(order.name || "Chưa cập nhật")}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Địa chỉ giao hàng
+                    </span>
+
+                    <strong>
+                        ${escapeHTML(order.address || "Chưa cập nhật")}
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Tổng thanh toán
+                    </span>
+
+                    <strong class="tracking-total">
+                        ${total}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            ${mapSection}
+
+        </article>
+    `;
+
+}
+
+
+// =========================================================
+// STATUS
+// =========================================================
+
+function createStatusStep(
+    index,
+    current,
+    icon,
+    label
+) {
+
+    const completed =
+        current >=
+        index;
+
+
+    const active =
+        current ===
+        index;
+
+
+    return `
+        <div
+            class="
+                customer-status-step
+                ${completed ? "completed" : ""}
+                ${active ? "active" : ""}
+            "
+        >
+
+            <div class="customer-status-icon">
+                ${icon}
+            </div>
+
+            <strong>
+                ${label}
+            </strong>
+
+        </div>
+    `;
+
+}
+
+
+function createStatusConnector(
+    index,
+    current
+) {
+
+    return `
+        <div
+            class="
+                customer-status-line
+                ${current > index ? "completed" : ""}
+            "
+        >
+        </div>
+    `;
+
+}
+
+
+function getStatusStep(
+    status
+) {
+
+    switch (
+        status
+    ) {
+
+        case "Đã tiếp nhận":
+
+            return 1;
+
+
+        case "Đã giao shipper":
+
+        case "Đang chuẩn bị":
+
+            return 2;
+
+
+        case "Đang giao":
+
+            return 3;
+
+
+        case "Hoàn thành":
+
+            return 4;
+
+
+        case "Không giao được":
+
+        case "Đã hủy":
+
+            return 3;
+
+
+        default:
+
+            return 1;
+
+    }
+
+}
+
+
+function statusClass(
+    status
+) {
+
+    switch (
+        status
+    ) {
+
+        case "Đã tiếp nhận":
+
+            return "received";
+
+
+        case "Đã giao shipper":
+
+            return "assigned";
+
+
+        case "Đang chuẩn bị":
+
+            return "preparing";
+
+
+        case "Đang giao":
+
+            return "delivering";
+
+
+        case "Hoàn thành":
+
+            return "completed";
+
+
+        case "Không giao được":
+
+            return "failed";
+
+
+        case "Đã hủy":
+
+            return "cancelled";
+
+
+        default:
+
+            return "neutral";
+
+    }
+
+}
+
+
+// =========================================================
+// MAP INIT
+// =========================================================
+
+function initTrackingMap(
+    order
+) {
+
+    if (
+        typeof L ===
+        "undefined"
+    ) {
+
+        return;
 
     }
 
 
+    const panel = [
+        ...document.querySelectorAll(
+            ".customer-live-map-panel"
+        )
+    ]
+        .find(
+            (element) => {
 
-    const SHOP_LAT = 21.0338;
-    const SHOP_LNG = 105.8019;
+                return (
+                    element.dataset.orderCode
+                    ===
+                    String(
+                        order.code
+                    )
+                );
 
-
-
-    const latitude =
-        Number(order.latitude)
-        || SHOP_LAT;
-
-
-    const longitude =
-        Number(order.longitude)
-        || SHOP_LNG;
-
-
-
-    // Tạo map
-
-    driverMap =
-        L.map(
-            mapElement
-        ).setView(
-            [
-                latitude,
-                longitude
-            ],
-            16
+            }
         );
 
+
+    if (!panel) {
+        return;
+    }
+
+
+    const mapElement =
+        panel.querySelector(
+            ".customer-live-map"
+        );
+
+
+    if (
+        !mapElement ||
+        mapElement.dataset.mapReady ===
+        "1"
+    ) {
+
+        return;
+
+    }
+
+
+    const destinationLat =
+        Number(
+            panel.dataset.destinationLat
+        );
+
+
+    const destinationLng =
+        Number(
+            panel.dataset.destinationLng
+        );
+
+
+    if (
+        !Number.isFinite(
+            destinationLat
+        )
+        ||
+        !Number.isFinite(
+            destinationLng
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const map =
+        L.map(
+            mapElement,
+            {
+                zoomControl:
+                    true
+            }
+        ).setView(
+            [
+                destinationLat,
+                destinationLng
+            ],
+            15
+        );
 
 
     L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
 
-            maxZoom:19,
+            maxZoom:
+                19,
 
             attribution:
-            "&copy; OpenStreetMap"
+                "&copy; OpenStreetMap"
 
         }
-
     ).addTo(
-        driverMap
+        map
     );
 
 
-
-
-    const driverIcon =
+    const customerIcon =
         L.divIcon({
 
             className:
-            "custom-driver-icon",
+                "tracking-customer-marker-wrap",
 
             html:
-            `
-            <div class="driver-marker">
-                🛵
-            </div>
-            `,
-
+                '<div class="tracking-customer-marker">📍</div>',
 
             iconSize:
-            [
-                58,
-                70
-            ],
+                [44, 50],
 
             iconAnchor:
-            [
-                29,
-                60
-            ]
+                [22, 46]
 
         });
 
 
-
-    driverMarker =
-        L.marker(
-            [
-                latitude,
-                longitude
-            ],
-            {
-                icon:
-                driverIcon
-            }
-        )
+    L.marker(
+        [
+            destinationLat,
+            destinationLng
+        ],
+        {
+            icon:
+                customerIcon
+        }
+    )
         .addTo(
-            driverMap
+            map
+        )
+        .bindPopup(
+            "<strong>Địa chỉ nhận hàng</strong>"
         );
 
 
+    const state = {
 
-    driverMarker.bindPopup(
+        orderCode:
+            String(
+                order.code
+            ),
 
-        `
-        <div class="driver-popup">
+        panel,
 
-            <div class="driver-popup-name">
+        mapElement,
 
-                🛵
-                ${order.driverName || "Shipper"}
+        map,
 
-            </div>
+        destination: {
+            lat:
+                destinationLat,
+            lng:
+                destinationLng
+        },
+
+        driverMarker:
+            null,
+
+        routeLayer:
+            null,
+
+        routePoints:
+            [],
+
+        lastDriverPosition:
+            null,
+
+        lastRoutePosition:
+            null,
+
+        lastRouteAt:
+            0,
+
+        routeLoading:
+            false,
+
+        animationFrame:
+            null,
+
+        hasFittedBounds:
+            false
+
+    };
 
 
-            <div class="driver-popup-status">
-
-                ● Đang giao hàng
-
-            </div>
-
-        </div>
-        `
-
+    trackingMaps.set(
+        state.orderCode,
+        state
     );
 
 
-    driverMarker.openPopup();
+    mapElement.dataset.mapReady =
+        "1";
 
 
+    window.setTimeout(
+        () => {
 
-    // Fix lỗi map trắng khi render động
+            map.invalidateSize();
 
-    setTimeout(()=>{
-
-        driverMap.invalidateSize();
-
-    },500);
+        },
+        120
+    );
 
 
+    pollTrackingForOrder(
+        state.orderCode,
+        true
+    );
 
 }
 
 
-    // =========================================================
-    // LẤY VỊ TRÍ SHIPPER
-    // =========================================================
+function createCustomerDriverIcon(
+    bearing = 0
+) {
 
-async function updateDriverLocation(){
+    return L.divIcon({
+
+        className:
+            "tracking-driver-marker-wrap",
+
+        html:
+            `
+            <div class="tracking-driver-marker">
+
+                <div
+                    class="tracking-bike-body"
+                    style="transform: rotate(${bearing}deg)"
+                >
+                    🛵
+                </div>
+
+            </div>
+            `,
+
+        iconSize:
+            [56, 56],
+
+        iconAnchor:
+            [28, 28]
+
+    });
+
+}
 
 
-    if(
+// =========================================================
+// TRACKING REQUEST
+// =========================================================
+
+async function pollTrackingForOrder(
+    orderCode,
+    forceRoute = false
+) {
+
+    if (
         !currentPhone ||
-        !driverMap ||
-        !driverMarker
-    ){
+        !orderCode
+    ) {
 
         return;
 
     }
 
 
+    const state =
+        trackingMaps.get(
+            String(
+                orderCode
+            )
+        );
 
-    try{
 
+    if (!state) {
+        return;
+    }
+
+
+    try {
 
         const response =
             await fetch(
-                "/api/orders/"
-                +
-                encodeURIComponent(
-                    currentPhone
-                )
+                `/api/orders/${encodeURIComponent(orderCode)}/tracking?phone=${encodeURIComponent(currentPhone)}`,
+                {
+                    cache:
+                        "no-store"
+                }
             );
 
 
-
-        const orders =
-            await response.json();
-
-
-
-        if(!Array.isArray(orders)){
-
-            return;
-
-        }
-
-
-
-        const order =
-            orders.find(
-                x =>
-                x.status === "Đang giao"
+        const data =
+            await safeJson(
+                response
             );
 
 
+        if (
+            !response.ok ||
+            !data.success
+        ) {
 
-        if(!order){
-
-            return;
-
-        }
-
-
-
-        const lat =
-            Number(order.latitude);
-
-
-
-        const lng =
-            Number(order.longitude);
-
-
-
-        if(
-            !lat ||
-            !lng
-        ){
-
-            return;
+            throw new Error(
+                data.message
+                ||
+                "Không lấy được vị trí shipper."
+            );
 
         }
 
 
-
-        const position =
-        [
-            lat,
-            lng
-        ];
-
-
-
-        driverMarker.setLatLng(
-            position
+        updateTrackingPanel(
+            state,
+            data,
+            forceRoute
         );
-
-
-        driverMap.panTo(
-            position
-        );
-
-
 
     }
-
-    catch(error){
+    catch (error) {
 
         console.error(
-            "GPS lỗi:",
+            "Tracking error:",
             error
         );
 
-    }
 
+        setTrackingConnectionState(
+            state,
+            error.message
+            ||
+            "Mất kết nối GPS",
+            false
+        );
+
+    }
 
 }
 
 
-    // =========================================================
-    // BẮT ĐẦU TRACKING
-    // =========================================================
+// =========================================================
+// UPDATE MAP
+// =========================================================
 
-    function startTracking() {
+function updateTrackingPanel(
+    state,
+    data,
+    forceRoute = false
+) {
 
-        stopTracking();
-
-
-        /*
-        * Cập nhật ngay lập tức
-        */
-
-        updateDriverLocation();
+    const driver =
+        data.driver;
 
 
-        /*
-        * Sau đó cứ 5 giây cập nhật
-        */
+    if (!driver) {
 
-        trackingTimer =
-            setInterval(
-                updateDriverLocation,
-                5000
-            );
-
-    }
+        setTrackingConnectionState(
+            state,
+            data.message
+            ||
+            "Shipper chưa gửi GPS",
+            false
+        );
 
 
-    // =========================================================
-    // DỪNG TRACKING
-    // =========================================================
-
-    function stopTracking() {
-
-        if (trackingTimer) {
-
-            clearInterval(
-                trackingTimer
-            );
-
-            trackingTimer = null;
-
-        }
+        return;
 
     }
 
 
-    // =========================================================
-    // STATUS MAP
-    // =========================================================
+    const lat =
+        Number(
+            driver.latitude
+        );
 
-    function updateMapStatus(
-        text
+
+    const lng =
+        Number(
+            driver.longitude
+        );
+
+
+    if (
+        !Number.isFinite(
+            lat
+        )
+        ||
+        !Number.isFinite(
+            lng
+        )
     ) {
 
-        const element =
-            document.getElementById(
-                "map-live-status"
+        setTrackingConnectionState(
+            state,
+            "GPS shipper không hợp lệ",
+            false
+        );
+
+
+        return;
+
+    }
+
+
+    const current = {
+        lat,
+        lng
+    };
+
+
+    const snapped =
+        state.routePoints.length
+
+            ? snapPositionToRoute(
+                state.routePoints,
+                current
+            )
+
+            : current;
+
+
+    const bearing =
+        state.lastDriverPosition
+
+            ? calculateBearing(
+                state.lastDriverPosition.lat,
+                state.lastDriverPosition.lng,
+                snapped.lat,
+                snapped.lng
+            )
+
+            : 0;
+
+
+    if (
+        !state.driverMarker
+    ) {
+
+        state.driverMarker =
+            L.marker(
+                [
+                    snapped.lat,
+                    snapped.lng
+                ],
+                {
+
+                    icon:
+                        createCustomerDriverIcon(
+                            bearing
+                        ),
+
+                    zIndexOffset:
+                        1000
+
+                }
+            )
+                .addTo(
+                    state.map
+                )
+                .bindPopup(
+                    `<strong>${escapeHTML(driver.name || "Shipper")}</strong><br>Đang giao đơn #${escapeHTML(state.orderCode)}`
+                );
+
+    }
+    else {
+
+        animateCustomerDriverMarker(
+            state,
+            snapped,
+            bearing
+        );
+
+    }
+
+
+    state.lastDriverPosition = {
+        lat:
+            snapped.lat,
+        lng:
+            snapped.lng
+    };
+
+
+    const name =
+        state.panel.querySelector(
+            ".tracking-driver-name"
+        );
+
+
+    const gpsTime =
+        state.panel.querySelector(
+            ".tracking-gps-time"
+        );
+
+
+    if (name) {
+
+        name.textContent =
+            driver.name
+            ||
+            "Shipper";
+
+    }
+
+
+    if (gpsTime) {
+
+        gpsTime.textContent =
+            driver.updatedAt
+            ||
+            "Vừa cập nhật";
+
+    }
+
+
+    const isFresh =
+        Boolean(
+            driver.isFresh
+        );
+
+
+    setTrackingConnectionState(
+        state,
+        isFresh
+
+            ? "Shipper đang di chuyển tới bạn"
+
+            : "GPS shipper đang cập nhật chậm",
+        isFresh
+    );
+
+
+    if (
+        !state.hasFittedBounds
+    ) {
+
+        state.map.fitBounds(
+            L.latLngBounds([
+                [
+                    snapped.lat,
+                    snapped.lng
+                ],
+                [
+                    state.destination.lat,
+                    state.destination.lng
+                ]
+            ]),
+            {
+
+                padding:
+                    [45, 45],
+
+                maxZoom:
+                    16
+
+            }
+        );
+
+
+        state.hasFittedBounds =
+            true;
+
+    }
+
+
+    refreshCustomerRoute(
+        state,
+        current,
+        forceRoute
+    );
+
+}
+
+
+function setTrackingConnectionState(
+    state,
+    message,
+    isLive
+) {
+
+    const messageElement =
+        state.panel.querySelector(
+            ".tracking-map-message"
+        );
+
+
+    const badge =
+        state.panel.querySelector(
+            ".tracking-live-badge"
+        );
+
+
+    if (messageElement) {
+
+        messageElement.textContent =
+            message;
+
+    }
+
+
+    if (badge) {
+
+        badge.textContent =
+            isLive
+
+                ? "● Trực tiếp"
+
+                : "GPS chậm";
+
+
+        badge.classList.toggle(
+            "is-live",
+            isLive
+        );
+
+
+        badge.classList.toggle(
+            "is-stale",
+            !isLive
+        );
+
+    }
+
+}
+
+
+// =========================================================
+// MARKER ANIMATION
+// =========================================================
+
+function animateCustomerDriverMarker(
+    state,
+    targetPosition,
+    bearing
+) {
+
+    if (
+        !state.driverMarker
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        state.animationFrame
+    ) {
+
+        cancelAnimationFrame(
+            state.animationFrame
+        );
+
+    }
+
+
+    const current =
+        state.driverMarker.getLatLng();
+
+
+    const start = {
+        lat:
+            current.lat,
+        lng:
+            current.lng
+    };
+
+
+    const duration =
+        2300;
+
+
+    const startedAt =
+        performance.now();
+
+
+    function frame(
+        now
+    ) {
+
+        const progress =
+            Math.min(
+                (
+                    now -
+                    startedAt
+                )
+                /
+                duration,
+                1
             );
 
 
-        if (!element) {
-            return;
+        const eased =
+            1
+            -
+            Math.pow(
+                1 -
+                progress,
+                3
+            );
+
+
+        const lat =
+            start.lat
+            +
+            (
+                targetPosition.lat
+                -
+                start.lat
+            )
+            *
+            eased;
+
+
+        const lng =
+            start.lng
+            +
+            (
+                targetPosition.lng
+                -
+                start.lng
+            )
+            *
+            eased;
+
+
+        state.driverMarker.setLatLng([
+            lat,
+            lng
+        ]);
+
+
+        const bike =
+            state.driverMarker
+                .getElement()
+                ?.querySelector(
+                    ".tracking-bike-body"
+                );
+
+
+        if (bike) {
+
+            bike.style.transform =
+                `rotate(${bearing}deg)`;
+
         }
 
-
-        element.innerHTML =
-            text;
-
-    }
-
-
-    // =========================================================
-    // FORMAT TIỀN
-    // =========================================================
-
-    function formatMoney(price) {
-
-        return Number(price)
-            .toLocaleString("vi-VN")
-            + " ₫";
-
-    }
-
-
-    // =========================================================
-    // CHỐNG HTML INJECTION
-    // =========================================================
-
-    function escapeHTML(value) {
 
         if (
-            value === null ||
-            value === undefined
+            progress < 1
         ) {
 
-            return "";
+            state.animationFrame =
+                requestAnimationFrame(
+                    frame
+                );
+
+        }
+        else {
+
+            state.animationFrame =
+                null;
+
+        }
+
+    }
+
+
+    state.animationFrame =
+        requestAnimationFrame(
+            frame
+        );
+
+}
+
+
+// =========================================================
+// ROUTING
+// =========================================================
+
+async function refreshCustomerRoute(
+    state,
+    position,
+    force = false
+) {
+
+    if (
+        state.routeLoading
+    ) {
+
+        return;
+
+    }
+
+
+    const now =
+        Date.now();
+
+
+    const moved =
+        state.lastRoutePosition
+
+            ? distanceBetweenMeters(
+                state.lastRoutePosition.lat,
+                state.lastRoutePosition.lng,
+                position.lat,
+                position.lng
+            )
+
+            : Number.POSITIVE_INFINITY;
+
+
+    if (
+        !force &&
+        moved < 25 &&
+        now -
+        state.lastRouteAt
+        <
+        15000
+    ) {
+
+        return;
+
+    }
+
+
+    state.routeLoading =
+        true;
+
+
+    try {
+
+        const url =
+            "https://router.project-osrm.org/route/v1/driving/"
+            +
+            `${encodeURIComponent(position.lng)},${encodeURIComponent(position.lat)};`
+            +
+            `${encodeURIComponent(state.destination.lng)},${encodeURIComponent(state.destination.lat)}`
+            +
+            "?overview=full&geometries=geojson&steps=false";
+
+
+        const response =
+            await fetch(
+                url
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "Routing service unavailable"
+            );
 
         }
 
 
-        return String(value)
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
+        const data =
+            await response.json();
+
+
+        const route =
+            data.routes?.[0];
+
+
+        if (!route) {
+
+            throw new Error(
+                "Không có tuyến đường."
+            );
+
+        }
+
+
+        const points =
+            route.geometry.coordinates.map(
+                (
+                    [
+                        lng,
+                        lat
+                    ]
+                ) => {
+
+                    return [
+                        lat,
+                        lng
+                    ];
+
+                }
+            );
+
+
+        state.routePoints =
+            points;
+
+
+        if (
+            state.routeLayer
+        ) {
+
+            state.routeLayer.setLatLngs(
+                points
+            );
+
+        }
+        else {
+
+            state.routeLayer =
+                L.polyline(
+                    points,
+                    {
+
+                        color:
+                            "#7a0c1e",
+
+                        weight:
+                            5,
+
+                        opacity:
+                            0.86
+
+                    }
+                ).addTo(
+                    state.map
+                );
+
+        }
+
+
+        updateCustomerRouteMetrics(
+            state,
+            route.distance,
+            route.duration
+        );
+
+
+        state.lastRoutePosition = {
+            lat:
+                position.lat,
+            lng:
+                position.lng
+        };
+
+
+        state.lastRouteAt =
+            now;
+
+    }
+    catch (error) {
+
+        console.warn(
+            "OSRM route error:",
+            error
+        );
+
+
+        const distance =
+            distanceBetweenMeters(
+                position.lat,
+                position.lng,
+                state.destination.lat,
+                state.destination.lng
+            );
+
+
+        const fallback = [
+            [
+                position.lat,
+                position.lng
+            ],
+            [
+                state.destination.lat,
+                state.destination.lng
+            ]
+        ];
+
+
+        state.routePoints =
+            fallback;
+
+
+        if (
+            state.routeLayer
+        ) {
+
+            state.routeLayer.setLatLngs(
+                fallback
+            );
+
+        }
+        else {
+
+            state.routeLayer =
+                L.polyline(
+                    fallback,
+                    {
+
+                        color:
+                            "#7a0c1e",
+
+                        weight:
+                            4,
+
+                        opacity:
+                            0.55,
+
+                        dashArray:
+                            "8 10"
+
+                    }
+                ).addTo(
+                    state.map
+                );
+
+        }
+
+
+        updateCustomerRouteMetrics(
+            state,
+            distance,
+            null
+        );
+
+    }
+    finally {
+
+        state.routeLoading =
+            false;
+
+    }
+
+}
+
+
+function updateCustomerRouteMetrics(
+    state,
+    distanceMeters,
+    durationSeconds
+) {
+
+    const distance =
+        state.panel.querySelector(
+            ".tracking-distance"
+        );
+
+
+    const eta =
+        state.panel.querySelector(
+            ".tracking-eta"
+        );
+
+
+    if (distance) {
+
+        distance.textContent =
+            formatDistance(
+                distanceMeters
             );
 
     }
 
 
-    // =========================================================
-    // DỪNG TRACKING KHI RỜI TRANG
-    // =========================================================
+    if (eta) {
 
-    window.addEventListener(
-        "beforeunload",
-        function() {
+        eta.textContent =
+            Number.isFinite(
+                Number(
+                    durationSeconds
+                )
+            )
 
-            stopTracking();
+                ? formatDuration(
+                    durationSeconds
+                )
+
+                : "Đang tính";
+
+    }
+
+}
+
+
+// =========================================================
+// POLLING
+// =========================================================
+
+function startTracking() {
+
+    stopTracking();
+
+
+    trackingMaps.forEach(
+        (state) => {
+
+            pollTrackingForOrder(
+                state.orderCode,
+                true
+            );
 
         }
     );
 
-    function renderOrders(orders) {
 
+    trackingTimer =
+        window.setInterval(
+            () => {
 
-        const box =
-            document.getElementById(
-                "order-result"
-            );
+                trackingMaps.forEach(
+                    (state) => {
 
+                        pollTrackingForOrder(
+                            state.orderCode,
+                            false
+                        );
 
-        box.innerHTML = "";
+                    }
+                );
 
+            },
+            3000
+        );
 
-        orders.forEach(order => {
+}
 
 
-            box.innerHTML += `
+function stopTracking() {
 
-            <div class="order-history">
+    if (
+        trackingTimer
+    ) {
 
+        clearInterval(
+            trackingTimer
+        );
 
-                <div class="order-heading">
 
-                    <div>
+        trackingTimer =
+            null;
 
-                        <p class="order-label">
-                            MÃ ĐƠN HÀNG
-                        </p>
+    }
 
-                        <h2>
-                            🧾 #${order.code}
-                        </h2>
+}
 
-                    </div>
 
+function stopTrackingAnimations() {
 
-                    <span class="status-badge">
+    trackingMaps.forEach(
+        (state) => {
 
-                        ${order.status}
+            if (
+                state.animationFrame
+            ) {
 
-                    </span>
-
-                </div>
-
-
-
-                <div class="info-row">
-
-                    <span>
-                        Ngày đặt
-                    </span>
-
-
-                    <strong>
-                        ${order.createdAt}
-                    </strong>
-
-                </div>
-
-
-
-                <div class="info-row">
-
-                    <span>
-                        Khách hàng
-                    </span>
-
-
-                    <strong>
-                        ${escapeHTML(order.name)}
-                    </strong>
-
-                </div>
-
-
-
-                <div class="info-row">
-
-                    <span>
-                        Địa chỉ
-                    </span>
-
-
-                    <strong>
-                        ${escapeHTML(order.address)}
-                    </strong>
-
-                </div>
-
-
-
-                <div class="info-row">
-
-                    <span>
-                        Trạng thái
-                    </span>
-
-
-                    <strong class="status-text">
-
-                        ${order.status}
-
-                    </strong>
-
-                </div>
-
-
-
-                <div class="order-total">
-
-
-                    <p>
-                        Tiền món:
-                        ${formatMoney(order.foodTotal)}
-                    </p>
-
-
-                    <p>
-                        Phí giao hàng:
-                        ${formatMoney(order.shippingFee)}
-                    </p>
-
-
-                    <strong>
-                        ${formatMoney(order.total)}
-                    </strong>
-
-
-                </div>
-
-
-                ${
-                    order.status === "Đang giao"
-
-                    ?
-
-                    `
-
-                    <div class="driver">
-
-                        <h3>
-                            🛵 Tài xế đang giao hàng
-                        </h3>
-
-
-                        <p>
-                            ${
-                                order.driverName ||
-                                "Đang tìm tài xế"
-                            }
-                        </p>
-
-
-                    </div>
-
-
-                    <div class="map-section">
-
-                        <h3>
-                            📍 Vị trí tài xế
-                        </h3>
-
-
-                        <div
-                            id="driver-map-${order.code}"
-                            class="driver-map"
-                        ></div>
-
-                    </div>
-
-                    `
-
-                    :
-
-                    ""
-
-                }
-
-
-            </div>
-
-
-            `;
-
-
-
-            // tạo map cho đơn đang giao
-
-            if(order.status === "Đang giao"){
-
-                setTimeout(()=>{
-
-                    initDriverMap(order);
-
-                },200);
+                cancelAnimationFrame(
+                    state.animationFrame
+                );
 
             }
 
+        }
+    );
 
-        });
+}
 
+
+function destroyTrackingMaps() {
+
+    stopTrackingAnimations();
+
+
+    trackingMaps.forEach(
+        (state) => {
+
+            try {
+
+                state.map.remove();
+
+            }
+            catch (error) {
+
+                console.debug(
+                    error
+                );
+
+            }
+
+        }
+    );
+
+
+    trackingMaps.clear();
+
+}
+
+
+// =========================================================
+// HELPERS
+// =========================================================
+
+function numberOrBlank(
+    value
+) {
+
+    const number =
+        Number(
+            value
+        );
+
+
+    return Number.isFinite(
+        number
+    )
+
+        ? String(
+            number
+        )
+
+        : "";
+
+}
+
+
+function formatMoney(
+    value
+) {
+
+    const number =
+        Number(
+            value
+        )
+        ||
+        0;
+
+
+    return `${
+        number.toLocaleString(
+            "vi-VN",
+            {
+                maximumFractionDigits:
+                    0
+            }
+        )
+    } ₫`;
+
+}
+
+
+function formatDistance(
+    distanceMeters
+) {
+
+    const meters =
+        Number(
+            distanceMeters
+        );
+
+
+    if (
+        !Number.isFinite(
+            meters
+        )
+    ) {
+
+        return "-- km";
 
     }
+
+
+    if (
+        meters < 1000
+    ) {
+
+        return `${Math.max(Math.round(meters), 0)} m`;
+
+    }
+
+
+    return `${
+        (
+            meters / 1000
+        ).toLocaleString(
+            "vi-VN",
+            {
+                minimumFractionDigits:
+                    1,
+
+                maximumFractionDigits:
+                    1
+            }
+        )
+    } km`;
+
+}
+
+
+function formatDuration(
+    durationSeconds
+) {
+
+    const seconds =
+        Number(
+            durationSeconds
+        );
+
+
+    if (
+        !Number.isFinite(
+            seconds
+        )
+    ) {
+
+        return "-- phút";
+
+    }
+
+
+    const minutes =
+        Math.max(
+            Math.ceil(
+                seconds / 60
+            ),
+            1
+        );
+
+
+    if (
+        minutes < 60
+    ) {
+
+        return `${minutes} phút`;
+
+    }
+
+
+    const hours =
+        Math.floor(
+            minutes / 60
+        );
+
+
+    const remaining =
+        minutes %
+        60;
+
+
+    return remaining
+
+        ? `${hours} giờ ${remaining} phút`
+
+        : `${hours} giờ`;
+
+}
+
+
+function distanceBetweenMeters(
+    lat1,
+    lng1,
+    lat2,
+    lng2
+) {
+
+    const earthRadius =
+        6371000;
+
+
+    const toRadians =
+        Math.PI
+        /
+        180;
+
+
+    const dLat =
+        (
+            lat2 -
+            lat1
+        )
+        *
+        toRadians;
+
+
+    const dLng =
+        (
+            lng2 -
+            lng1
+        )
+        *
+        toRadians;
+
+
+    const a =
+        Math.sin(
+            dLat / 2
+        ) ** 2
+        +
+        Math.cos(
+            lat1
+            *
+            toRadians
+        )
+        *
+        Math.cos(
+            lat2
+            *
+            toRadians
+        )
+        *
+        Math.sin(
+            dLng / 2
+        ) ** 2;
+
+
+    return earthRadius
+        *
+        2
+        *
+        Math.atan2(
+            Math.sqrt(
+                a
+            ),
+            Math.sqrt(
+                1 - a
+            )
+        );
+
+}
+
+
+function calculateBearing(
+    lat1,
+    lng1,
+    lat2,
+    lng2
+) {
+
+    const toRadians =
+        Math.PI
+        /
+        180;
+
+
+    const toDegrees =
+        180
+        /
+        Math.PI;
+
+
+    const phi1 =
+        lat1
+        *
+        toRadians;
+
+
+    const phi2 =
+        lat2
+        *
+        toRadians;
+
+
+    const deltaLambda =
+        (
+            lng2 -
+            lng1
+        )
+        *
+        toRadians;
+
+
+    const y =
+        Math.sin(
+            deltaLambda
+        )
+        *
+        Math.cos(
+            phi2
+        );
+
+
+    const x =
+        Math.cos(
+            phi1
+        )
+        *
+        Math.sin(
+            phi2
+        )
+        -
+        Math.sin(
+            phi1
+        )
+        *
+        Math.cos(
+            phi2
+        )
+        *
+        Math.cos(
+            deltaLambda
+        );
+
+
+    return (
+        Math.atan2(
+            y,
+            x
+        )
+        *
+        toDegrees
+        +
+        360
+    )
+    %
+    360;
+
+}
+
+
+function snapPositionToRoute(
+    points,
+    position
+) {
+
+    if (
+        !Array.isArray(
+            points
+        )
+        ||
+        points.length ===
+        0
+    ) {
+
+        return position;
+
+    }
+
+
+    let bestPoint =
+        null;
+
+
+    let bestDistance =
+        Number.POSITIVE_INFINITY;
+
+
+    for (
+        const point
+        of points
+    ) {
+
+        const distance =
+            distanceBetweenMeters(
+                position.lat,
+                position.lng,
+                point[0],
+                point[1]
+            );
+
+
+        if (
+            distance <
+            bestDistance
+        ) {
+
+            bestDistance =
+                distance;
+
+
+            bestPoint =
+                point;
+
+        }
+
+    }
+
+
+    if (
+        !bestPoint ||
+        bestDistance > 80
+    ) {
+
+        return position;
+
+    }
+
+
+    return {
+        lat:
+            bestPoint[0],
+        lng:
+            bestPoint[1]
+    };
+
+}
+
+
+function escapeHTML(
+    value
+) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        String(
+            value
+            ??
+            ""
+        );
+
+
+    return div.innerHTML;
+
+}
+
+
+async function safeJson(
+    response
+) {
+
+    try {
+
+        return await response.json();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Invalid JSON:",
+            error
+        );
+
+
+        return {
+
+            success:
+                false,
+
+            message:
+                "Server trả về dữ liệu không hợp lệ."
+
+        };
+
+    }
+
+}
+
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        stopTracking();
+
+        destroyTrackingMaps();
+
+    }
+);

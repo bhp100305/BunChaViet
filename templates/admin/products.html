@@ -7,14 +7,21 @@
 
     <title>Quản lý sản phẩm - Bún Chả Việt</title>
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <link rel="stylesheet" href="/static/css/products.css">
 </head>
 
 <body>
 
+{% set active_page = 'products' %}
+<div class="admin-layout">
+    {% include 'admin/_sidebar.html' %}
+    <main class="content">
 <div class="page">
 
     <header class="page-header">
+
+        <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Mở menu">☰</button>
 
         <div>
             <h1>🍜 Quản lý món ăn</h1>
@@ -151,6 +158,9 @@
 
 <!-- FORM MODAL -->
 
+</main>
+</div>
+
 <div id="productModal" class="modal">
 
     <div class="modal-content">
@@ -252,6 +262,7 @@
 
 
 <script src="/static/js/products.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
 </body>
 </html>

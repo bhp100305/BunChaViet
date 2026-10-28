@@ -1,313 +1,37 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | Bún Chả Việt</title>
 
-    <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+>
 
-    <title>
-        Admin Dashboard | Bún Chả Việt
-    </title>
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
-
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='css/dashboard.css') }}"
-    >
-
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard.css') }}"
+>
 </head>
-
 
 <body>
 
+{% set active_page = 'dashboard' %}
 
 <div class="admin-layout">
 
-
-    <!-- =====================================================
-         SIDEBAR
-    ====================================================== -->
-
-    <aside
-        class="sidebar"
-        id="adminSidebar"
-    >
-
-
-        <div class="brand">
-
-
-            <a
-                href="{{ url_for('admin.dashboard') }}"
-                class="brand-link"
-            >
-
-
-                <div class="brand-logo">
-                    BCV
-                </div>
-
-
-                <div class="brand-text">
-
-                    <h2>
-                        BÚN CHẢ VIỆT
-                    </h2>
-
-                    <span>
-                        ADMIN SYSTEM
-                    </span>
-
-                </div>
-
-
-            </a>
-
-
-        </div>
-
-
-
-        <div class="menu-label">
-            QUẢN LÝ
-        </div>
-
-
-
-        <nav class="sidebar-nav">
-
-
-            <a
-                class="nav-item active"
-                href="{{ url_for('admin.dashboard') }}"
-            >
-
-                <span class="nav-icon">
-                    ⌂
-                </span>
-
-                <span class="nav-text">
-                    Tổng quan
-                </span>
-
-            </a>
-
-
-
-            <a
-                class="nav-item"
-                href="{{ url_for('admin.products') }}"
-            >
-
-                <span class="nav-icon">
-                    ◫
-                </span>
-
-                <span class="nav-text">
-                    Sản phẩm
-                </span>
-
-            </a>
-
-
-
-            <a
-                class="nav-item"
-                href="{{ url_for('admin.orders') }}"
-            >
-
-                <span class="nav-icon">
-                    ▣
-                </span>
-
-                <span class="nav-text">
-                    Đơn hàng
-                </span>
-
-                {% if pending_orders > 0 %}
-
-                <span class="nav-count">
-                    {{ pending_orders }}
-                </span>
-
-                {% endif %}
-
-            </a>
-
-
-
-            <a
-                class="nav-item"
-                href="{{ url_for('admin.users') }}"
-            >
-
-                <span class="nav-icon">
-                    ◉
-                </span>
-
-                <span class="nav-text">
-                    Nhân viên
-                </span>
-
-            </a>
-
-
-
-            <a
-                class="nav-item"
-                href="{{ url_for('admin.shippers') }}"
-            >
-
-                <span class="nav-icon">
-                    ⇢
-                </span>
-
-                <span class="nav-text">
-                    Shipper
-                </span>
-
-                {% if online_shippers > 0 %}
-
-                <span class="online-indicator"></span>
-
-                {% endif %}
-
-            </a>
-
-
-        </nav>
-
-
-
-        <div class="menu-label second-label">
-            HỆ THỐNG
-        </div>
-
-
-
-        <nav class="sidebar-nav">
-
-
-            <a
-                class="nav-item"
-                href="/"
-            >
-
-                <span class="nav-icon">
-                    ↗
-                </span>
-
-                <span class="nav-text">
-                    Xem cửa hàng
-                </span>
-
-            </a>
-
-
-        </nav>
-
-
-
-        <div class="sidebar-footer">
-
-
-            <div class="sidebar-user">
-
-
-                <div class="sidebar-avatar">
-
-                    {{ (username or 'A')[0] | upper }}
-
-                </div>
-
-
-                <div class="sidebar-user-info">
-
-                    <strong>
-                        {{ username or 'Admin' }}
-                    </strong>
-
-                    <span>
-                        Quản trị viên
-                    </span>
-
-                </div>
-
-
-            </div>
-
-
-
-            <a
-                href="/logout"
-                class="logout-btn"
-            >
-
-                <span>
-                    ↪
-                </span>
-
-                <span class="logout-text">
-                    Đăng xuất
-                </span>
-
-            </a>
-
-
-        </div>
-
-
-    </aside>
-
-
-
-    <!-- =====================================================
-         SIDEBAR OVERLAY MOBILE
-    ====================================================== -->
-
-    <div
-        class="sidebar-overlay"
-        id="sidebarOverlay"
-    ></div>
-
-
-
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
+    {% include 'admin/_sidebar.html' %}
 
     <main class="content">
 
-
-        <!-- =================================================
-             TOPBAR
-        ================================================== -->
-
         <header class="topbar">
 
-
             <div class="topbar-left">
-
 
                 <button
                     type="button"
@@ -318,42 +42,29 @@
                     ☰
                 </button>
 
-
                 <div class="topbar-title">
-
 
                     <p class="breadcrumb">
                         ADMIN / TỔNG QUAN
                     </p>
 
-
                     <h1>
                         Trang quản lý
                     </h1>
 
-
                     <p class="welcome-text">
-
                         Xin chào,
-
                         <strong>
                             {{ username or 'Admin' }}
                         </strong>.
-
                         Đây là tình hình vận hành hiện tại của cửa hàng.
-
                     </p>
-
 
                 </div>
 
-
             </div>
 
-
-
             <div class="topbar-actions">
-
 
                 <div class="current-time-box">
 
@@ -371,14 +82,11 @@
 
                 </div>
 
-
-
                 <button
                     type="button"
                     class="refresh-btn"
                     id="refreshDashboardBtn"
                 >
-
                     <span class="refresh-icon">
                         ↻
                     </span>
@@ -386,45 +94,29 @@
                     <span>
                         Làm mới
                     </span>
-
                 </button>
-
-
 
                 <a
                     href="/"
                     class="store-btn"
                 >
-
                     Xem cửa hàng ↗
-
                 </a>
 
-
             </div>
-
 
         </header>
 
 
-
-        <!-- =================================================
-             KPI
-        ================================================== -->
-
         <section class="stats-grid">
-
 
             <a
                 href="{{ url_for('admin.orders') }}"
                 class="stat-card"
             >
-
-
                 <div class="stat-icon primary">
                     ▣
                 </div>
-
 
                 <div class="stat-body">
 
@@ -442,26 +134,19 @@
 
                 </div>
 
-
                 <span class="stat-arrow">
                     ›
                 </span>
-
-
             </a>
-
 
 
             <a
                 href="{{ url_for('admin.orders') }}?status=Đã tiếp nhận"
                 class="stat-card"
             >
-
-
                 <div class="stat-icon warning">
                     ◷
                 </div>
-
 
                 <div class="stat-body">
 
@@ -479,26 +164,19 @@
 
                 </div>
 
-
                 <span class="stat-arrow">
                     ›
                 </span>
-
-
             </a>
-
 
 
             <a
                 href="{{ url_for('admin.orders') }}"
                 class="stat-card"
             >
-
-
                 <div class="stat-icon blue">
                     ⇢
                 </div>
-
 
                 <div class="stat-body">
 
@@ -516,26 +194,19 @@
 
                 </div>
 
-
                 <span class="stat-arrow">
                     ›
                 </span>
-
-
             </a>
-
 
 
             <a
                 href="{{ url_for('admin.orders') }}?status=Hoàn thành"
                 class="stat-card"
             >
-
-
                 <div class="stat-icon success">
                     ✓
                 </div>
-
 
                 <div class="stat-body">
 
@@ -553,23 +224,17 @@
 
                 </div>
 
-
                 <span class="stat-arrow">
                     ›
                 </span>
-
-
             </a>
-
 
 
             <article class="stat-card revenue-card">
 
-
                 <div class="stat-icon gold">
                     ₫
                 </div>
-
 
                 <div class="stat-body">
 
@@ -578,13 +243,8 @@
                     </span>
 
                     <strong class="money-value">
-
-                        {{ "{:,.0f}".format(
-                            today_collected or 0
-                        ) }}
-
+                        {{ "{:,.0f}".format(today_collected or 0) }}
                         ₫
-
                     </strong>
 
                     <small>
@@ -593,21 +253,16 @@
 
                 </div>
 
-
             </article>
-
 
 
             <a
                 href="{{ url_for('admin.shippers') }}"
                 class="stat-card"
             >
-
-
                 <div class="stat-icon online">
                     ●
                 </div>
-
 
                 <div class="stat-body">
 
@@ -620,46 +275,27 @@
                     </strong>
 
                     <small>
-
                         {{ online_shippers or 0 }}
                         /
                         {{ total_shippers or 0 }}
-
                         đang nhận đơn
-
                     </small>
 
                 </div>
 
-
                 <span class="stat-arrow">
                     ›
                 </span>
-
-
             </a>
-
 
         </section>
 
 
-
-        <!-- =================================================
-             MAIN GRID
-        ================================================== -->
-
         <section class="dashboard-main-grid">
-
-
-            <!-- =============================================
-                 RECENT ORDERS
-            ============================================== -->
 
             <div class="dashboard-card recent-orders-card">
 
-
                 <div class="card-header">
-
 
                     <div>
 
@@ -677,7 +313,6 @@
 
                     </div>
 
-
                     <a
                         href="{{ url_for('admin.orders') }}"
                         class="view-all-link"
@@ -685,144 +320,80 @@
                         Xem tất cả →
                     </a>
 
-
                 </div>
-
 
 
                 <div class="recent-orders-table-wrapper">
 
-
                     <table class="recent-orders-table">
 
-
                         <thead>
-
                             <tr>
-
-                                <th>
-                                    Đơn hàng
-                                </th>
-
-                                <th>
-                                    Khách hàng
-                                </th>
-
-                                <th>
-                                    Shipper
-                                </th>
-
-                                <th>
-                                    Tổng tiền
-                                </th>
-
-                                <th>
-                                    Trạng thái
-                                </th>
-
+                                <th>Đơn hàng</th>
+                                <th>Khách hàng</th>
+                                <th>Shipper</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
                             </tr>
-
                         </thead>
-
-
 
                         <tbody>
 
-
                             {% for order in recent_orders %}
-
 
                             <tr
                                 class="recent-order-row"
                                 data-order-id="{{ order[0] }}"
                             >
 
-
                                 <td>
-
 
                                     <strong class="recent-order-code">
-
                                         #{{ order[1] }}
-
                                     </strong>
 
-
                                     <small>
-
                                         {{ order[5] or '' }}
-
                                     </small>
 
-
                                 </td>
 
-
-
                                 <td>
-
 
                                     <span class="customer-name">
-
                                         {{ order[2] or 'Không có tên' }}
-
                                     </span>
-
 
                                 </td>
 
-
-
                                 <td>
-
 
                                     {% if order[6] == 'Chưa giao shipper' %}
 
-
                                     <span class="shipper-not-assigned">
-
                                         Chưa giao shipper
-
                                     </span>
-
 
                                     {% else %}
 
-
                                     <span class="shipper-assigned">
-
                                         {{ order[6] }}
-
                                     </span>
-
 
                                     {% endif %}
 
-
                                 </td>
 
-
-
                                 <td>
-
 
                                     <strong class="recent-money">
-
-                                        {{ "{:,.0f}".format(
-                                            order[3] or 0
-                                        ) }}
-
+                                        {{ "{:,.0f}".format(order[3] or 0) }}
                                         ₫
-
                                     </strong>
-
 
                                 </td>
 
-
-
                                 <td>
-
 
                                     {% if order[4] == 'Đã tiếp nhận' %}
 
@@ -830,13 +401,11 @@
                                         Đã tiếp nhận
                                     </span>
 
-
                                     {% elif order[4] == 'Đã giao shipper' %}
 
                                     <span class="order-status assigned">
                                         Đã giao shipper
                                     </span>
-
 
                                     {% elif order[4] == 'Đang chuẩn bị' %}
 
@@ -844,13 +413,11 @@
                                         Đang chuẩn bị
                                     </span>
 
-
                                     {% elif order[4] == 'Đang giao' %}
 
                                     <span class="order-status delivering">
                                         Đang giao
                                     </span>
-
 
                                     {% elif order[4] == 'Hoàn thành' %}
 
@@ -858,13 +425,11 @@
                                         Hoàn thành
                                     </span>
 
-
                                     {% elif order[4] == 'Không giao được' %}
 
                                     <span class="order-status failed">
                                         Không giao được
                                     </span>
-
 
                                     {% elif order[4] == 'Đã hủy' %}
 
@@ -872,30 +437,21 @@
                                         Đã hủy
                                     </span>
 
-
                                     {% else %}
 
                                     <span class="order-status neutral">
-
                                         {{ order[4] }}
-
                                     </span>
-
 
                                     {% endif %}
 
-
                                 </td>
-
 
                             </tr>
 
-
                             {% else %}
 
-
                             <tr>
-
 
                                 <td
                                     colspan="5"
@@ -912,35 +468,22 @@
 
                                 </td>
 
-
                             </tr>
-
 
                             {% endfor %}
 
-
                         </tbody>
-
 
                     </table>
 
-
                 </div>
-
 
             </div>
 
 
-
-            <!-- =============================================
-                 STORE STATUS
-            ============================================== -->
-
             <aside class="dashboard-card operations-card">
 
-
                 <div class="card-header compact">
-
 
                     <div>
 
@@ -954,24 +497,18 @@
 
                     </div>
 
-
                     <span class="system-online-dot"></span>
-
 
                 </div>
 
 
-
                 <div class="operation-list">
 
-
                     <div class="operation-item">
-
 
                         <div class="operation-icon product">
                             ◫
                         </div>
-
 
                         <div class="operation-info">
 
@@ -985,7 +522,6 @@
 
                         </div>
 
-
                         <a
                             href="{{ url_for('admin.products') }}"
                             class="operation-link"
@@ -993,18 +529,14 @@
                             ›
                         </a>
 
-
                     </div>
-
 
 
                     <div class="operation-item">
 
-
                         <div class="operation-icon shipper">
                             ⇢
                         </div>
-
 
                         <div class="operation-info">
 
@@ -1018,7 +550,6 @@
 
                         </div>
 
-
                         <a
                             href="{{ url_for('admin.shippers') }}"
                             class="operation-link"
@@ -1026,18 +557,14 @@
                             ›
                         </a>
 
-
                     </div>
-
 
 
                     <div class="operation-item">
 
-
                         <div class="operation-icon online">
                             ●
                         </div>
-
 
                         <div class="operation-info">
 
@@ -1051,7 +578,6 @@
 
                         </div>
 
-
                         <a
                             href="{{ url_for('admin.shippers') }}"
                             class="operation-link"
@@ -1059,18 +585,14 @@
                             ›
                         </a>
 
-
                     </div>
-
 
 
                     <div class="operation-item">
 
-
                         <div class="operation-icon failure">
                             !
                         </div>
-
 
                         <div class="operation-info">
 
@@ -1084,7 +606,6 @@
 
                         </div>
 
-
                         <a
                             href="{{ url_for('admin.orders') }}"
                             class="operation-link"
@@ -1092,21 +613,16 @@
                             ›
                         </a>
 
-
                     </div>
-
 
                 </div>
 
 
-
                 <div class="system-message">
-
 
                     <div class="system-message-icon">
                         ✓
                     </div>
-
 
                     <div>
 
@@ -1115,34 +631,22 @@
                         </strong>
 
                         <p>
-
                             Dữ liệu được lấy trực tiếp từ
                             hệ thống đơn hàng hiện tại.
-
                         </p>
 
                     </div>
 
-
                 </div>
 
-
             </aside>
-
 
         </section>
 
 
-
-        <!-- =================================================
-             QUICK MANAGEMENT
-        ================================================== -->
-
         <section class="quick-section">
 
-
             <div class="section-title">
-
 
                 <div>
 
@@ -1156,24 +660,19 @@
 
                 </div>
 
-
             </div>
 
 
-
             <div class="quick-grid">
-
 
                 <a
                     href="{{ url_for('admin.products') }}"
                     class="quick-card"
                 >
 
-
                     <div class="quick-icon product">
                         ◫
                     </div>
-
 
                     <div>
 
@@ -1187,14 +686,11 @@
 
                     </div>
 
-
                     <span class="quick-arrow">
                         ›
                     </span>
 
-
                 </a>
-
 
 
                 <a
@@ -1202,11 +698,9 @@
                     class="quick-card"
                 >
 
-
                     <div class="quick-icon order">
                         ▣
                     </div>
-
 
                     <div>
 
@@ -1220,14 +714,11 @@
 
                     </div>
 
-
                     <span class="quick-arrow">
                         ›
                     </span>
 
-
                 </a>
-
 
 
                 <a
@@ -1235,11 +726,9 @@
                     class="quick-card"
                 >
 
-
                     <div class="quick-icon shipper">
                         ⇢
                     </div>
-
 
                     <div>
 
@@ -1253,14 +742,11 @@
 
                     </div>
 
-
                     <span class="quick-arrow">
                         ›
                     </span>
 
-
                 </a>
-
 
 
                 <a
@@ -1268,11 +754,9 @@
                     class="quick-card"
                 >
 
-
                     <div class="quick-icon employee">
                         ◉
                     </div>
-
 
                     <div>
 
@@ -1286,47 +770,32 @@
 
                     </div>
 
-
                     <span class="quick-arrow">
                         ›
                     </span>
 
-
                 </a>
 
-
             </div>
-
 
         </section>
 
 
-
-        <!-- =================================================
-             FOOTER
-        ================================================== -->
-
         <footer class="admin-footer">
-
 
             <span>
                 Bún Chả Việt Admin System
             </span>
 
-
             <span>
                 Dashboard vận hành
             </span>
 
-
         </footer>
-
 
     </main>
 
-
 </div>
-
 
 
 <script
@@ -1334,7 +803,5 @@
 >
 </script>
 
-
 </body>
-
 </html>

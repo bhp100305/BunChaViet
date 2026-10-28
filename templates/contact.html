@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Liên hệ - Bún Chả Việt
+    </title>
+
+
+    <!-- FONT CHUNG -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- CSS CHÍNH CỦA WEBSITE -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+    <script src="{{ url_for('static', filename='js/customer-header.js') }}" defer></script>
+
+
+    <!-- CSS RIÊNG TRANG CONTACT -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/contact.css') }}"
+    >
+
+
+    <!-- LEAFLET -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+</head>
+
+
+<body class="contact-page">
+
+
+<!-- ======================================================
+     HEADER
+     GIỮ CÙNG CẤU TRÚC VỚI TRANG CHÍNH
+======================================================= -->
+
+<header class="header">
+
+    <div class="header-container">
+
+
+        <!-- LOGIN NỘI BỘ -->
+
+        <div class="staff-login-left">
+
+            <a
+                href="/login"
+                class="btn-staff-login"
+            >
+
+                🔑 Đăng nhập Nội bộ
+
+            </a>
+
+        </div>
+
+
+
+        <!-- LOGO -->
+
+        <div class="logo">
+
+            <span class="logo-icon">
+                🍜
+            </span>
+
+
+            <div class="logo-text">
+
+                <span class="brand-name">
+                    BÚN CHẢ VIỆT
+                </span>
+
+                <span class="brand-slogan">
+                    Nhất sạch – nhì ngon
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- MENU -->
+
+        <nav>
+
+            <a
+                href="/"
+                class="nav-link"
+            >
+                Trang chủ
+            </a>
+
+
+            <a
+                href="/about"
+                class="nav-link"
+            >
+                Giới thiệu
+            </a>
+
+
+            <a
+                href="/contact"
+                class="nav-link active"
+            >
+                Liên hệ
+            </a>
+
+
+            <a
+                href="/track-order"
+                class="nav-link"
+            >
+                Theo dõi đơn hàng
+            </a>
+
+            <a href="/customer/login" class="nav-link customer-account-link">Đăng nhập</a>
+
+
+            <!-- GIỎ HÀNG -->
+
+            <button
+                class="cart-btn"
+                type="button"
+                onclick="showCart()"
+            >
+
+                🛒 Giỏ hàng
+
+                <span id="cart-count">
+                    0
+                </span>
+
+            </button>
+
+        </nav>
+
+
+    </div>
+
+</header>
+
+
+
+<!-- ======================================================
+     HERO
+======================================================= -->
+
+<section class="contact-page__hero">
+
+    <div class="contact-page__hero-content">
+
+        <span class="contact-page__eyebrow">
+            BÚN CHẢ VIỆT
+        </span>
+
+
+        <h1>
+            Liên hệ với chúng tôi
+        </h1>
+
+
+        <p>
+
+            Có câu hỏi, góp ý hoặc cần hỗ trợ đơn hàng?
+            Hãy gửi lời nhắn cho Bún Chả Việt.
+
+        </p>
+
+    </div>
+
+</section>
+
+
+
+<!-- ======================================================
+     MAIN
+======================================================= -->
+
+<main class="contact-page__container">
+
+
+    <div class="contact-page__grid">
+
+
+        <!-- =================================================
+             LEFT
+        ================================================== -->
+
+        <aside class="contact-page__info-card">
+
+
+            <span class="contact-page__section-label">
+                THÔNG TIN CỬA HÀNG
+            </span>
+
+
+            <h2>
+                Bún Chả Việt
+            </h2>
+
+
+            <p class="contact-page__intro">
+
+                Chúng tôi sẵn sàng hỗ trợ các vấn đề
+                liên quan đến món ăn, giao hàng,
+                thanh toán và đơn hàng.
+
+            </p>
+
+
+
+            <div class="contact-page__info-list">
+
+
+                <div class="contact-page__info-item">
+
+                    <div class="contact-page__info-icon">
+                        📍
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Địa chỉ
+                        </span>
+
+                        <strong>
+                            Số 3 Cầu Giấy, Hà Nội
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="contact-page__info-item">
+
+                    <div class="contact-page__info-icon">
+                        📞
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Hotline
+                        </span>
+
+                        <strong>
+                            0900 000 000
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="contact-page__info-item">
+
+                    <div class="contact-page__info-icon">
+                        ✉
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Email
+                        </span>
+
+                        <strong>
+                            bunchaviet@gmail.com
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="contact-page__info-item">
+
+                    <div class="contact-page__info-icon">
+                        🕒
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Giờ mở cửa
+                        </span>
+
+                        <strong>
+                            08:00 - 22:00
+                        </strong>
+
+                        <small>
+                            Thứ 2 - Chủ nhật
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="contact-page__actions">
+
+
+                <a
+                    href="tel:0900000000"
+                    class="contact-page__action contact-page__action--primary"
+                >
+                    📞 Gọi ngay
+                </a>
+
+
+                <a
+                    href="https://www.google.com/maps/search/?api=1&query=21.0338,105.8019"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="contact-page__action contact-page__action--secondary"
+                >
+                    📍 Chỉ đường
+                </a>
+
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- =================================================
+             FORM
+        ================================================== -->
+
+        <section class="contact-page__form-card">
+
+
+            <span class="contact-page__section-label">
+                GỬI LỜI NHẮN
+            </span>
+
+
+            <h2>
+                Chúng tôi có thể giúp gì cho bạn?
+            </h2>
+
+
+            <p class="contact-page__description">
+
+                Điền thông tin bên dưới.
+                Cửa hàng sẽ tiếp nhận và xử lý yêu cầu của bạn.
+
+            </p>
+
+
+
+            <form
+                id="contact-form"
+                novalidate
+            >
+
+
+                <div class="contact-page__form-row">
+
+
+                    <div class="contact-page__field">
+
+                        <label for="contact-fullname">
+
+                            Họ và tên
+
+                            <span>*</span>
+
+                        </label>
+
+                        <input
+                            id="contact-fullname"
+                            type="text"
+                            maxlength="100"
+                            placeholder="Nguyễn Văn A"
+                            autocomplete="name"
+                        >
+
+                    </div>
+
+
+
+                    <div class="contact-page__field">
+
+                        <label for="contact-phone">
+
+                            Số điện thoại
+
+                            <span>*</span>
+
+                        </label>
+
+                        <input
+                            id="contact-phone"
+                            type="tel"
+                            maxlength="20"
+                            placeholder="09xxxxxxxx"
+                            autocomplete="tel"
+                        >
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="contact-page__field">
+
+                    <label for="contact-email">
+
+                        Email
+
+                    </label>
+
+                    <input
+                        id="contact-email"
+                        type="email"
+                        maxlength="150"
+                        placeholder="example@email.com"
+                        autocomplete="email"
+                    >
+
+                </div>
+
+
+
+                <div class="contact-page__field">
+
+                    <label for="contact-subject">
+
+                        Chủ đề
+
+                        <span>*</span>
+
+                    </label>
+
+
+                    <select id="contact-subject">
+
+                        <option value="">
+                            Chọn nội dung cần hỗ trợ
+                        </option>
+
+                        <option value="Góp ý món ăn">
+                            Góp ý món ăn
+                        </option>
+
+                        <option value="Phản ánh đơn hàng">
+                            Phản ánh đơn hàng
+                        </option>
+
+                        <option value="Hỗ trợ giao hàng">
+                            Hỗ trợ giao hàng
+                        </option>
+
+                        <option value="Thanh toán">
+                            Thanh toán
+                        </option>
+
+                        <option value="Hợp tác">
+                            Hợp tác
+                        </option>
+
+                        <option value="Khác">
+                            Khác
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <!-- ORDER CODE -->
+
+                <div
+                    class="contact-page__field contact-page__order-code"
+                    id="order-code-field"
+                >
+
+                    <label for="contact-order-code">
+
+                        Mã đơn hàng
+
+                        <span>*</span>
+
+                    </label>
+
+
+                    <input
+                        id="contact-order-code"
+                        type="text"
+                        maxlength="20"
+                        placeholder="Ví dụ: BCV123456"
+                    >
+
+
+                    <small>
+                        Nhập mã đơn bạn cần phản ánh.
+                    </small>
+
+                </div>
+
+
+
+                <!-- MESSAGE -->
+
+                <div class="contact-page__field">
+
+                    <label for="contact-message">
+
+                        Nội dung
+
+                        <span>*</span>
+
+                    </label>
+
+
+                    <textarea
+                        id="contact-message"
+                        maxlength="1000"
+                        rows="6"
+                        placeholder="Nhập nội dung cần hỗ trợ..."
+                    ></textarea>
+
+
+                    <div class="contact-page__counter">
+
+                        <span id="message-count">
+                            0
+                        </span>
+
+                        / 1000
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- ERROR -->
+
+                <div
+                    class="contact-page__error"
+                    id="contact-error"
+                >
+                </div>
+
+
+
+                <button
+                    id="contact-submit"
+                    type="submit"
+                    class="contact-page__submit"
+                >
+
+                    GỬI LIÊN HỆ
+
+                </button>
+
+
+            </form>
+
+
+
+            <!-- =================================================
+                 SUCCESS
+            ================================================== -->
+
+            <div
+                class="contact-page__success"
+                id="contact-success"
+            >
+
+                <div class="contact-page__success-icon">
+                    ✓
+                </div>
+
+
+                <h3>
+                    Đã gửi liên hệ
+                </h3>
+
+
+                <p>
+
+                    Bún Chả Việt đã nhận được lời nhắn của bạn.
+                    Cửa hàng sẽ kiểm tra và hỗ trợ sớm nhất có thể.
+
+                </p>
+
+
+                <button
+                    type="button"
+                    id="send-another-contact"
+                >
+
+                    Gửi nội dung khác
+
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+    </div>
+
+
+
+    <!-- =====================================================
+         MAP
+    ====================================================== -->
+
+    <section class="contact-page__map-section">
+
+
+        <div class="contact-page__map-heading">
+
+
+            <div>
+
+                <span class="contact-page__section-label">
+                    TÌM CHÚNG TÔI
+                </span>
+
+                <h2>
+                    Bản đồ cửa hàng
+                </h2>
+
+                <p>
+                    Số 3 Cầu Giấy, Hà Nội
+                </p>
+
+            </div>
+
+
+            <a
+                href="https://www.google.com/maps/search/?api=1&query=21.0338,105.8019"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="contact-page__direction"
+            >
+                Chỉ đường ↗
+            </a>
+
+        </div>
+
+
+        <div id="contact-map">
+        </div>
+
+
+    </section>
+
+
+</main>
+
+
+
+<!-- ======================================================
+     FOOTER
+======================================================= -->
+
+<footer class="contact-page__footer">
+
+    <strong>
+        Bún Chả Việt
+    </strong>
+
+    <span>
+        Nhất sạch - nhì ngon
+    </span>
+
+</footer>
+
+
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
+
+
+<script
+    src="{{ url_for('static', filename='js/contact.js') }}"
+></script>
+
+
+</body>
+
+</html>

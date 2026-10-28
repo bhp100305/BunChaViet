@@ -19,6 +19,11 @@
         href="{{ url_for('static', filename='css/shipper.css') }}"
     >
 
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
 </head>
 
 
@@ -767,6 +772,83 @@
 
 
                     </div>
+
+
+                    {% if order[9] in ['Đang chuẩn bị', 'Đang giao'] %}
+
+                    <section
+                        class="shipper-map-panel"
+                        data-order-code="{{ order[1] }}"
+                        data-destination-lat="{{ order[11] if order[11] is not none else '' }}"
+                        data-destination-lng="{{ order[12] if order[12] is not none else '' }}"
+                        data-address="{{ order[4] or '' }}"
+                    >
+
+                        <div class="shipper-map-heading">
+
+                            <div>
+                                <span class="shipper-map-eyebrow">
+                                    ĐIỀU HƯỚNG ĐƠN #{{ order[1] }}
+                                </span>
+
+                                <h3>
+                                    🛵 Đường đến khách hàng
+                                </h3>
+
+                                <p class="shipper-map-gps-text">
+                                    Đang chờ GPS của thiết bị...
+                                </p>
+                            </div>
+
+                            {% if order[11] is not none and order[12] is not none %}
+
+                            <a
+                                class="shipper-open-navigation"
+                                href="https://www.google.com/maps/dir/?api=1&destination={{ order[11] }},{{ order[12] }}&travelmode=driving"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Mở điều hướng ↗
+                            </a>
+
+                            {% endif %}
+
+                        </div>
+
+                        <div class="shipper-map-metrics">
+
+                            <div>
+                                <span>Khoảng cách còn lại</span>
+                                <strong class="shipper-map-distance">-- km</strong>
+                            </div>
+
+                            <div>
+                                <span>Thời gian dự kiến</span>
+                                <strong class="shipper-map-eta">-- phút</strong>
+                            </div>
+
+                            <div>
+                                <span>GPS</span>
+                                <strong class="shipper-map-live-status">Đang chờ</strong>
+                            </div>
+
+                        </div>
+
+                        {% if order[11] is not none and order[12] is not none %}
+
+                        <div class="shipper-route-map"></div>
+
+                        {% else %}
+
+                        <div class="shipper-map-missing">
+                            Đơn này chưa có tọa độ khách hàng nên chưa thể dựng tuyến đường.
+                        </div>
+
+                        {% endif %}
+
+                    </section>
+
+                    {% endif %}
 
 
 
@@ -1577,6 +1659,11 @@
 
 </div>
 
+
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
 
 
 <script
