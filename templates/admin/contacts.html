@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    Góp ý & hỗ trợ | Bún Chả Việt
+</title>
+
+<link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+>
+
+<link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+>
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+>
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard.css') }}"
+>
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/contacts.css') }}"
+>
+
+</head>
+
+
+<body>
+
+
+{% set active_page = 'contacts' %}
+
+
+<div class="admin-layout">
+
+
+{% include 'admin/_sidebar.html' %}
+
+
+<main class="content contacts-content">
+
+
+<header class="topbar contacts-topbar">
+
+
+<div class="topbar-left">
+
+
+<button
+    type="button"
+    class="mobile-menu-btn"
+    id="mobileMenuBtn"
+>
+    ☰
+</button>
+
+
+<div class="topbar-title">
+
+<p class="breadcrumb">
+    ADMIN / GÓP Ý & HỖ TRỢ
+</p>
+
+<h1>
+    Liên hệ khách hàng
+</h1>
+
+<p class="welcome-text">
+    Tiếp nhận góp ý,
+    phản ánh đơn hàng và
+    yêu cầu hỗ trợ của khách hàng.
+</p>
+
+</div>
+
+
+</div>
+
+
+<div class="topbar-actions">
+
+
+<div class="current-time-box">
+
+<span>
+    THỜI GIAN
+</span>
+
+<strong id="dashboardClock">
+    --:--
+</strong>
+
+<small id="dashboardDate">
+    --/--/----
+</small>
+
+</div>
+
+
+<button
+    type="button"
+    class="refresh-btn"
+    id="refreshDashboardBtn"
+>
+
+<span class="refresh-icon">
+    ↻
+</span>
+
+<span>
+    Làm mới
+</span>
+
+</button>
+
+
+<a
+    href="{{ url_for('admin.dashboard') }}"
+    class="store-btn"
+>
+    Dashboard
+</a>
+
+
+</div>
+
+
+</header>
+
+
+<section class="contact-stats-grid">
+
+
+<article class="contact-stat-card">
+
+<div class="contact-stat-icon all">
+    ✉
+</div>
+
+<div>
+
+<span>
+    Tổng liên hệ
+</span>
+
+<strong>
+    {{ total_contacts or 0 }}
+</strong>
+
+<small>
+    yêu cầu đã tiếp nhận
+</small>
+
+</div>
+
+</article>
+
+
+<article class="contact-stat-card">
+
+<div class="contact-stat-icon new">
+    ●
+</div>
+
+<div>
+
+<span>
+    Mới
+</span>
+
+<strong>
+    {{ new_contacts or 0 }}
+</strong>
+
+<small>
+    chưa được xử lý
+</small>
+
+</div>
+
+</article>
+
+
+<article class="contact-stat-card">
+
+<div class="contact-stat-icon processing">
+    ◷
+</div>
+
+<div>
+
+<span>
+    Đang xử lý
+</span>
+
+<strong>
+    {{ processing_contacts or 0 }}
+</strong>
+
+<small>
+    đang được theo dõi
+</small>
+
+</div>
+
+</article>
+
+
+<article class="contact-stat-card">
+
+<div class="contact-stat-icon done">
+    ✓
+</div>
+
+<div>
+
+<span>
+    Đã phản hồi
+</span>
+
+<strong>
+    {{ replied_contacts or 0 }}
+</strong>
+
+<small>
+    đã hoàn tất xử lý
+</small>
+
+</div>
+
+</article>
+
+
+</section>
+
+
+<section class="contacts-panel">
+
+
+<div class="contacts-panel-header">
+
+<div>
+
+<p class="panel-eyebrow">
+    DANH SÁCH LIÊN HỆ
+</p>
+
+<h2>
+    Yêu cầu từ khách hàng
+</h2>
+
+</div>
+
+<span class="result-count">
+    {{ contacts | length }}
+    kết quả
+</span>
+
+</div>
+
+
+<form
+    method="GET"
+    action="{{ url_for('admin_contacts.contacts') }}"
+    class="contact-filters"
+>
+
+
+<div class="filter-search-wrap">
+
+<span class="filter-search-icon">
+    ⌕
+</span>
+
+<input
+    type="search"
+    name="q"
+    value="{{ keyword or '' }}"
+    class="contact-search-input"
+    placeholder="Tên, SĐT, email, mã đơn..."
+>
+
+</div>
+
+
+<select
+    name="status"
+    class="contact-filter-select"
+>
+
+<option value="">
+    Tất cả trạng thái
+</option>
+
+<option
+    value="Mới"
+    {% if selected_status == 'Mới' %}
+    selected
+    {% endif %}
+>
+    Mới
+</option>
+
+<option
+    value="Đang xử lý"
+    {% if selected_status == 'Đang xử lý' %}
+    selected
+    {% endif %}
+>
+    Đang xử lý
+</option>
+
+<option
+    value="Đã phản hồi"
+    {% if selected_status == 'Đã phản hồi' %}
+    selected
+    {% endif %}
+>
+    Đã phản hồi
+</option>
+
+</select>
+
+
+<select
+    name="subject"
+    class="contact-filter-select"
+>
+
+<option value="">
+    Tất cả chủ đề
+</option>
+
+{% for subject in [
+    'Góp ý món ăn',
+    'Phản ánh đơn hàng',
+    'Hỗ trợ giao hàng',
+    'Thanh toán',
+    'Hợp tác',
+    'Khác'
+] %}
+
+<option
+    value="{{ subject }}"
+    {% if selected_subject == subject %}
+    selected
+    {% endif %}
+>
+    {{ subject }}
+</option>
+
+{% endfor %}
+
+</select>
+
+
+<button
+    type="submit"
+    class="contact-filter-btn"
+>
+    Lọc
+</button>
+
+
+<a
+    href="{{ url_for('admin_contacts.contacts') }}"
+    class="contact-reset-btn"
+>
+    Đặt lại
+</a>
+
+
+</form>
+
+
+<div class="contacts-table-wrap">
+
+
+<table class="contacts-table">
+
+
+<thead>
+
+<tr>
+
+<th>
+    Mã
+</th>
+
+<th>
+    Khách hàng
+</th>
+
+<th>
+    Chủ đề
+</th>
+
+<th>
+    Đơn hàng
+</th>
+
+<th>
+    Trạng thái
+</th>
+
+<th>
+    Thời gian
+</th>
+
+<th></th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+
+{% for contact in contacts %}
+
+
+<tr>
+
+
+<td>
+
+<strong class="contact-id">
+    #{{ contact.ContactID }}
+</strong>
+
+</td>
+
+
+<td>
+
+<div class="customer-cell">
+
+<strong>
+    {{ contact.FullName or '-' }}
+</strong>
+
+<span>
+    {{ contact.Phone or '-' }}
+</span>
+
+</div>
+
+</td>
+
+
+<td>
+
+<span class="subject-pill">
+    {{ contact.Subject or '-' }}
+</span>
+
+</td>
+
+
+<td>
+
+
+{% if contact.OrderCode %}
+
+
+<div class="order-cell">
+
+<strong>
+    {{ contact.OrderCode }}
+</strong>
+
+{% if contact.OrderStatus %}
+
+<span>
+    {{ contact.OrderStatus }}
+</span>
+
+{% endif %}
+
+</div>
+
+
+{% else %}
+
+
+<span class="muted-value">
+    -
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+<td>
+
+<span
+    class="
+        status-badge
+
+        {% if contact.Status == 'Mới' %}
+        status-new
+        {% endif %}
+
+        {% if contact.Status == 'Đang xử lý' %}
+        status-processing
+        {% endif %}
+
+        {% if contact.Status == 'Đã phản hồi' %}
+        status-done
+        {% endif %}
+    "
+>
+    {{ contact.Status or 'Mới' }}
+</span>
+
+</td>
+
+
+<td>
+
+<span class="created-time">
+    {{ contact.CreatedAt or '-' }}
+</span>
+
+</td>
+
+
+<td class="action-cell">
+
+<button
+    type="button"
+    class="view-contact-btn"
+    data-contact-id="{{ contact.ContactID }}"
+>
+    Xem
+</button>
+
+</td>
+
+
+</tr>
+
+
+{% else %}
+
+
+<tr>
+
+<td
+    colspan="7"
+    class="empty-table-cell"
+>
+
+<div class="contacts-empty-state">
+
+<div>
+    ✉
+</div>
+
+<strong>
+    Không có liên hệ phù hợp
+</strong>
+
+<span>
+    Thử thay đổi bộ lọc.
+</span>
+
+</div>
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</section>
+
+
+</main>
+
+
+</div>
+
+
+<div
+    class="contact-detail-modal"
+    id="contactDetailModal"
+>
+
+
+<div class="contact-detail-card">
+
+
+<button
+    type="button"
+    class="contact-modal-close"
+    id="closeContactModal"
+>
+    ×
+</button>
+
+
+<div
+    class="contact-modal-loading"
+    id="contactModalLoading"
+>
+
+<div class="loading-spinner"></div>
+
+<span>
+    Đang tải thông tin...
+</span>
+
+</div>
+
+
+<div id="contactModalContent">
+
+
+<div class="contact-modal-heading">
+
+<p class="panel-eyebrow">
+    CHI TIẾT LIÊN HỆ
+</p>
+
+<h2>
+    Yêu cầu
+    <span id="detailContactId">
+        #0
+    </span>
+</h2>
+
+</div>
+
+
+<div class="contact-detail-grid">
+
+
+<div class="detail-block">
+
+<span>
+    KHÁCH HÀNG
+</span>
+
+<strong id="detailFullName">
+    -
+</strong>
+
+</div>
+
+
+<div class="detail-block">
+
+<span>
+    SỐ ĐIỆN THOẠI
+</span>
+
+<strong id="detailPhone">
+    -
+</strong>
+
+</div>
+
+
+<div class="detail-block">
+
+<span>
+    EMAIL
+</span>
+
+<strong id="detailEmail">
+    -
+</strong>
+
+</div>
+
+
+<div class="detail-block">
+
+<span>
+    CHỦ ĐỀ
+</span>
+
+<strong id="detailSubject">
+    -
+</strong>
+
+</div>
+
+
+<div class="detail-block">
+
+<span>
+    GỬI LÚC
+</span>
+
+<strong id="detailCreatedAt">
+    -
+</strong>
+
+</div>
+
+
+<div class="detail-block">
+
+<span>
+    CẬP NHẬT
+</span>
+
+<strong id="detailUpdatedAt">
+    -
+</strong>
+
+</div>
+
+
+</div>
+
+
+<div
+    class="contact-order-box"
+    id="detailOrderBox"
+>
+
+
+<div class="contact-order-header">
+
+
+<div>
+
+<span>
+    ĐƠN HÀNG LIÊN QUAN
+</span>
+
+<strong id="detailOrderCode">
+    -
+</strong>
+
+</div>
+
+
+<button
+    type="button"
+    id="copyContactOrderCode"
+>
+    Sao chép mã
+</button>
+
+
+</div>
+
+
+<div class="contact-order-meta">
+
+
+<div>
+
+<span>
+    TRẠNG THÁI ĐƠN
+</span>
+
+<strong id="detailOrderStatus">
+    -
+</strong>
+
+</div>
+
+
+<div>
+
+<span>
+    GIÁ TRỊ ĐƠN
+</span>
+
+<strong id="detailOrderAmount">
+    0 ₫
+</strong>
+
+</div>
+
+
+</div>
+
+
+<a
+    href="{{ url_for('admin.orders') }}"
+    class="open-orders-link"
+>
+    Mở quản lý đơn hàng →
+</a>
+
+
+</div>
+
+
+<div class="message-box">
+
+<span>
+    NỘI DUNG KHÁCH GỬI
+</span>
+
+<p id="detailMessage">
+    -
+</p>
+
+</div>
+
+
+<div class="contact-admin-form">
+
+
+<div class="contact-admin-field">
+
+<label for="detailStatus">
+    Trạng thái xử lý
+</label>
+
+<select id="detailStatus">
+
+<option value="Mới">
+    Mới
+</option>
+
+<option value="Đang xử lý">
+    Đang xử lý
+</option>
+
+<option value="Đã phản hồi">
+    Đã phản hồi
+</option>
+
+</select>
+
+</div>
+
+
+<div class="contact-admin-field">
+
+<label for="detailAdminNote">
+    Ghi chú nội bộ
+</label>
+
+<textarea
+    id="detailAdminNote"
+    maxlength="1000"
+    rows="4"
+    placeholder="Ví dụ: Đã gọi khách, đang kiểm tra đơn..."
+></textarea>
+
+</div>
+
+
+<div class="resolved-info">
+
+<span>
+    Hoàn tất lúc:
+</span>
+
+<strong id="detailResolvedAt">
+    Chưa hoàn tất
+</strong>
+
+</div>
+
+
+</div>
+
+
+<div class="contact-modal-actions">
+
+
+<button
+    type="button"
+    class="modal-secondary-btn"
+    id="cancelContactModal"
+>
+    Đóng
+</button>
+
+
+<button
+    type="button"
+    class="modal-primary-btn"
+    id="saveContactStatus"
+>
+    Lưu thay đổi
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/dashboard.js') }}"
+>
+</script>
+
+<script
+    src="{{ url_for('static', filename='js/contacts.js') }}"
+>
+</script>
+
+
+</body>
+
+</html>

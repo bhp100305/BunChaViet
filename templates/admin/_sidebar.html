@@ -1,0 +1,325 @@
+<aside class="sidebar" id="adminSidebar">
+
+    <!-- =====================================================
+         BRAND
+    ====================================================== -->
+
+    <div class="brand">
+
+        <a
+            href="{{ url_for('admin.dashboard') }}"
+            class="brand-link"
+        >
+
+            <div class="brand-logo">
+                BCV
+            </div>
+
+            <div class="brand-text">
+
+                <h2>
+                    BÚN CHẢ VIỆT
+                </h2>
+
+                <span>
+                    ADMIN SYSTEM
+                </span>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         QUẢN LÝ
+    ====================================================== -->
+
+    <div class="menu-label">
+        QUẢN LÝ
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+
+        <!-- =================================================
+             DASHBOARD
+        ================================================== -->
+
+        <a
+            class="nav-item {% if active_page == 'dashboard' %}active{% endif %}"
+            href="{{ url_for('admin.dashboard') }}"
+        >
+
+            <span class="nav-icon">
+                ⌂
+            </span>
+
+            <span class="nav-text">
+                Tổng quan
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             PRODUCTS
+        ================================================== -->
+
+        <a
+            class="nav-item {% if active_page == 'products' %}active{% endif %}"
+            href="{{ url_for('admin.products') }}"
+        >
+
+            <span class="nav-icon">
+                ◫
+            </span>
+
+            <span class="nav-text">
+                Sản phẩm
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             ORDERS
+        ================================================== -->
+
+        <a
+            class="nav-item {% if active_page == 'orders' %}active{% endif %}"
+            href="{{ url_for('admin.orders') }}"
+        >
+
+            <span class="nav-icon">
+                ▣
+            </span>
+
+            <span class="nav-text">
+                Đơn hàng
+            </span>
+
+
+            {% set sidebar_pending_orders = pending_orders | default(0, true) %}
+
+            {% if sidebar_pending_orders > 0 %}
+
+            <span class="nav-count">
+                {{ sidebar_pending_orders }}
+            </span>
+
+            {% endif %}
+
+        </a>
+
+
+        <!-- =================================================
+             USERS
+        ================================================== -->
+
+        <a
+            class="nav-item {% if active_page == 'users' %}active{% endif %}"
+            href="{{ url_for('admin.users') }}"
+        >
+
+            <span class="nav-icon">
+                ◉
+            </span>
+
+            <span class="nav-text">
+                Nhân viên
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             SHIPPERS
+        ================================================== -->
+
+        <a
+            class="nav-item {% if active_page == 'shippers' %}active{% endif %}"
+            href="{{ url_for('admin.shippers') }}"
+        >
+
+            <span class="nav-icon">
+                ⇢
+            </span>
+
+            <span class="nav-text">
+                Shipper
+            </span>
+
+
+            {% set sidebar_online_shippers = online_shippers | default(0, true) %}
+
+            {% if sidebar_online_shippers > 0 %}
+
+            <span class="online-indicator"></span>
+
+            {% endif %}
+
+        </a>
+
+
+        <!-- =================================================
+             PAYMENTS
+        ================================================== -->
+
+        <a
+            class="nav-item {% if active_page == 'payments' %}active{% endif %}"
+            href="{{ url_for('admin_payments.payments') }}"
+        >
+
+            <span class="nav-icon">
+                ₫
+            </span>
+
+            <span class="nav-text">
+                Thanh toán
+            </span>
+
+
+            {% set sidebar_reported_count = reported_count | default(0, true) %}
+
+            {% if sidebar_reported_count > 0 %}
+
+            <span class="nav-count">
+                {{ sidebar_reported_count }}
+            </span>
+
+            {% endif %}
+
+        </a>
+
+
+        <!-- =================================================
+             CONTACTS
+        ================================================== -->
+
+        <a
+            class="nav-item {% if active_page == 'contacts' %}active{% endif %}"
+            href="{{ url_for('admin_contacts.contacts') }}"
+        >
+
+            <span class="nav-icon">
+                ✉
+            </span>
+
+            <span class="nav-text">
+                Góp ý &amp; hỗ trợ
+            </span>
+
+
+            {% set sidebar_new_contacts = new_contacts | default(0, true) %}
+
+            {% if sidebar_new_contacts > 0 %}
+
+            <span class="nav-count">
+                {{ sidebar_new_contacts }}
+            </span>
+
+            {% endif %}
+
+        </a>
+
+
+    </nav>
+
+
+    <!-- =====================================================
+         HỆ THỐNG
+    ====================================================== -->
+
+    <div class="menu-label second-label">
+        HỆ THỐNG
+    </div>
+
+
+    <nav class="sidebar-nav">
+
+        <a
+            class="nav-item"
+            href="/"
+        >
+
+            <span class="nav-icon">
+                ↗
+            </span>
+
+            <span class="nav-text">
+                Xem cửa hàng
+            </span>
+
+        </a>
+
+    </nav>
+
+
+    <!-- =====================================================
+         USER FOOTER
+    ====================================================== -->
+
+    <div class="sidebar-footer">
+
+
+        {% set sidebar_username = username | default('Admin', true) %}
+
+
+        <div class="sidebar-user">
+
+            <div class="sidebar-avatar">
+
+                {{ sidebar_username[0] | upper }}
+
+            </div>
+
+
+            <div class="sidebar-user-info">
+
+                <strong>
+                    {{ sidebar_username }}
+                </strong>
+
+                <span>
+                    Quản trị viên
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <a
+            href="/logout"
+            class="logout-btn"
+        >
+
+            <span>
+                ↪
+            </span>
+
+            <span class="logout-text">
+                Đăng xuất
+            </span>
+
+        </a>
+
+
+    </div>
+
+
+</aside>
+
+
+<!-- =========================================================
+     MOBILE SIDEBAR OVERLAY
+========================================================== -->
+
+<div
+    class="sidebar-overlay"
+    id="sidebarOverlay"
+>
+</div>

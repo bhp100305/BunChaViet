@@ -1,27 +1,54 @@
 <!DOCTYPE html>
+
 <html lang="vi">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Thanh toán - Bún Chả Việt</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/css/checkout.css">
+    <title>
+        Thanh toán - Bún Chả Việt
+    </title>
+
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <link
+        rel="stylesheet"
+        href="/static/css/checkout.css"
+    >
+    <script src="/static/js/customer-header.js" defer></script>
+
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    >
+
 </head>
 
 
 <body>
 
-<header class="checkout-header">
+
+<header class="header">
 
     <div class="header-content">
 
         <h1>
             🍜 BÚN CHẢ VIỆT
         </h1>
+
 
         <a href="/">
             ← Quay lại thực đơn
@@ -36,14 +63,21 @@
 <main class="checkout-container">
 
 
-    <!-- THÔNG TIN KHÁCH HÀNG -->
+    <!-- =====================================================
+         CUSTOMER
+    ====================================================== -->
 
     <section class="customer-box">
+
 
         <h2>
             📍 Thông tin giao hàng
         </h2>
 
+
+        <!-- =================================================
+             FULL NAME
+        ================================================== -->
 
         <div class="form-group">
 
@@ -51,14 +85,18 @@
                 Họ và tên
             </label>
 
-            <input 
+            <input
                 id="fullname"
-                type="text"
-                placeholder="Nhập họ tên">
+                placeholder="Nhập họ tên"
+            >
 
         </div>
 
 
+
+        <!-- =================================================
+             PHONE
+        ================================================== -->
 
         <div class="form-group">
 
@@ -66,92 +104,156 @@
                 Số điện thoại
             </label>
 
-            <input 
+
+            <input
                 id="phone"
-                type="text"
-                placeholder="Nhập số điện thoại">
-
-        </div>
-
-
-
-        <div class="address-grid">
-
-
-            <div class="form-group">
-
-                <label>
-                    Tỉnh/Thành phố
-                </label>
-
-                <select id="province">
-
-                    <option>
-                        Chọn tỉnh/thành phố
-                    </option>
-
-                </select>
-
-            </div>
-
-
-
-            <div class="form-group">
-
-                <label>
-                    Quận/Huyện
-                </label>
-
-                <select id="district">
-
-                    <option>
-                        Chọn quận/huyện
-                    </option>
-
-                </select>
-
-            </div>
-
-
-
-
-            <div class="form-group">
-
-                <label>
-                    Phường/Xã
-                </label>
-
-                <select id="ward">
-
-                    <option>
-                        Chọn phường/xã
-                    </option>
-
-                </select>
-
-            </div>
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="Ví dụ: 0900000001"
+            >
 
 
         </div>
 
 
 
+        <!-- =================================================
+             EMAIL OTP
+        ================================================== -->
 
         <div class="form-group">
 
             <label>
-                Địa chỉ cụ thể
+                Email nhận OTP
             </label>
 
-            <textarea 
-                id="address"
-                placeholder="Ví dụ: Số 10, đường ABC">
-            </textarea>
+            <div class="email-verify-row">
+
+                <input
+                    id="email"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="Ví dụ: ban@gmail.com"
+                >
+
+                <button
+                    id="send-email-otp-btn"
+                    class="send-email-otp-btn"
+                    type="button"
+                >
+                    Gửi OTP
+                </button>
+
+            </div>
+
+            <div
+                id="email-otp-panel"
+                class="email-otp-panel"
+                hidden
+            >
+
+                <input
+                    id="email-otp-code"
+                    class="email-otp-code-input"
+                    type="text"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    maxlength="6"
+                    placeholder="Nhập 6 số OTP"
+                >
+
+                <button
+                    id="verify-email-otp-btn"
+                    class="verify-email-otp-btn"
+                    type="button"
+                >
+                    Xác nhận OTP
+                </button>
+
+            </div>
+
+            <p
+                id="email-otp-status"
+                class="email-otp-status is-pending"
+            >
+                Email chưa được xác thực.
+            </p>
 
         </div>
 
 
 
+        <!-- =================================================
+             ADDRESS
+        ================================================== -->
+
+        <div class="form-group">
+
+            <label>
+                Địa chỉ giao hàng
+            </label>
+
+
+            <div class="address-search">
+
+                <input
+                    id="address"
+                    placeholder="Nhập địa chỉ giao hàng..."
+                    autocomplete="off"
+                >
+
+
+                <button
+                    id="search-location"
+                    type="button"
+                >
+                    🔎
+                </button>
+
+
+                <div id="suggestions">
+                </div>
+
+            </div>
+
+
+            <button
+                class="current-btn"
+                id="current-location"
+                type="button"
+            >
+                📍 Dùng vị trí hiện tại
+            </button>
+
+        </div>
+
+
+
+        <!-- =================================================
+             MAP
+        ================================================== -->
+
+        <div id="map">
+        </div>
+
+
+        <input
+            type="hidden"
+            id="latitude"
+        >
+
+
+        <input
+            type="hidden"
+            id="longitude"
+        >
+
+
+
+        <!-- =================================================
+             NOTE
+        ================================================== -->
 
         <div class="form-group">
 
@@ -161,8 +263,8 @@
 
             <textarea
                 id="note"
-                placeholder="Ví dụ: Giao giờ trưa, ít hành...">
-            </textarea>
+                placeholder="Ví dụ: Giao giờ trưa, ít hành..."
+            ></textarea>
 
         </div>
 
@@ -171,11 +273,12 @@
 
 
 
-
-
-    <!-- ĐƠN HÀNG -->
+    <!-- =====================================================
+         ORDER
+    ====================================================== -->
 
     <section class="order-box">
+
 
         <h2>
             🛒 Đơn hàng của bạn
@@ -183,33 +286,182 @@
 
 
         <div id="checkout-items">
+        </div>
+
+
+
+        <!-- =================================================
+             SUMMARY
+        ================================================== -->
+
+        <div class="summary">
+
+
+            <div>
+
+                <span>
+                    Tiền món:
+                </span>
+
+                <strong id="food-total">
+                    0 ₫
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>
+                    Khoảng cách:
+                </span>
+
+                <strong id="distance">
+                    0 km
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>
+                    Phí giao hàng:
+                </span>
+
+                <strong id="shipping-fee">
+                    0 ₫
+                </strong>
+
+            </div>
+
+
+            <div class="final-total">
+
+                <span>
+                    Tổng tiền:
+                </span>
+
+                <strong id="checkout-total">
+                    0 ₫
+                </strong>
+
+            </div>
+
 
         </div>
 
 
 
-        <div class="total">
+        <!-- =================================================
+             PAYMENT METHOD
+        ================================================== -->
 
-            <span>
-                Tổng tiền:
-            </span>
+        <div class="payment-section">
 
 
-            <strong id="checkout-total">
-                0 ₫
-            </strong>
+            <h3>
+                Phương thức thanh toán
+            </h3>
+
+
+
+            <!-- =============================================
+                 CASH
+            ============================================== -->
+
+            <label class="payment-option selected">
+
+
+                <input
+                    type="radio"
+                    name="payment-method"
+                    value="CASH"
+                    checked
+                >
+
+
+                <div class="payment-icon">
+                    💵
+                </div>
+
+
+                <div class="payment-content">
+
+                    <strong>
+                        Tiền mặt
+                    </strong>
+
+                    <span>
+                        Thanh toán khi nhận hàng
+                    </span>
+
+                </div>
+
+
+                <span class="payment-check">
+                    ✓
+                </span>
+
+
+            </label>
+
+
+
+            <!-- =============================================
+                 BANK TRANSFER
+            ============================================== -->
+
+            <label class="payment-option">
+
+
+                <input
+                    type="radio"
+                    name="payment-method"
+                    value="BANK_TRANSFER"
+                >
+
+
+                <div class="payment-icon">
+                    🏦
+                </div>
+
+
+                <div class="payment-content">
+
+                    <strong>
+                        Chuyển khoản
+                    </strong>
+
+                    <span>
+                        Quét mã QR ngân hàng
+                    </span>
+
+                </div>
+
+
+                <span class="payment-check">
+                    ✓
+                </span>
+
+
+            </label>
+
 
         </div>
 
 
 
+        <!-- =================================================
+             ORDER BUTTON
+        ================================================== -->
 
-        <button 
+        <button
             id="order-btn"
-            class="order-btn">
-
+            class="order-btn"
+            type="button"
+        >
             ĐẶT HÀNG
-
         </button>
 
 
@@ -220,7 +472,182 @@
 
 
 
-<script src="/static/js/checkout.js"></script>
+<!-- =========================================================
+     BANK TRANSFER MODAL
+========================================================= -->
+
+<div
+    id="bank-transfer-modal"
+    class="payment-modal"
+>
+
+
+    <div class="payment-modal-card">
+
+
+        <button
+            id="close-payment-modal"
+            class="payment-modal-close"
+            type="button"
+        >
+            ×
+        </button>
+
+
+
+        <div class="payment-success-icon">
+            ✓
+        </div>
+
+
+
+        <h2>
+            Đơn hàng đã được tạo
+        </h2>
+
+
+
+        <p class="payment-order-code-text">
+
+            Mã đơn:
+
+            <strong id="payment-order-code">
+                BCV000000
+            </strong>
+
+        </p>
+
+
+
+        <!-- =================================================
+             QR
+        ================================================== -->
+
+        <div class="qr-box">
+
+            <img
+                src="/static/images/payment-qr.png"
+                alt="QR chuyển khoản Bún Chả Việt"
+            >
+
+        </div>
+
+
+
+        <p class="qr-help">
+
+            Mở ứng dụng ngân hàng và quét mã QR
+
+        </p>
+
+
+
+        <!-- =================================================
+             BANK INFORMATION
+        ================================================== -->
+
+        <div class="bank-transfer-info">
+
+
+            <div>
+
+                <span>
+                    Số tiền cần chuyển
+                </span>
+
+                <strong id="payment-amount">
+                    0 ₫
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span>
+                    Nội dung chuyển khoản
+                </span>
+
+                <strong id="payment-content">
+                    BCV000000
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="payment-warning">
+
+            Vui lòng chuyển đúng số tiền và ghi đúng
+            mã đơn hàng trong nội dung chuyển khoản.
+
+        </div>
+
+
+
+        <button
+            id="confirm-transfer-btn"
+            class="confirm-transfer-btn"
+            type="button"
+        >
+
+            ✓ TÔI ĐÃ CHUYỂN KHOẢN
+
+        </button>
+
+
+
+        <button
+            id="pay-later-btn"
+            class="pay-later-btn"
+            type="button"
+        >
+
+            Tôi sẽ chuyển khoản sau
+
+        </button>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =========================================================
+     LEAFLET
+========================================================= -->
+
+<script
+    src="https://unpkg.com/leaflet/dist/leaflet.js"
+>
+</script>
+
+
+
+<!-- =========================================================
+     EMAIL OTP
+========================================================= -->
+
+<script
+    src="/static/js/email-otp.js"
+>
+</script>
+
+
+
+<!-- =========================================================
+     CHECKOUT
+========================================================= -->
+
+<script
+    src="/static/js/checkout.js"
+>
+</script>
 
 
 </body>

@@ -1,0 +1,172 @@
+/* Customer sign-in and registration share the internal login visual style. */
+.customer-auth-body {
+    padding: 30px 0;
+}
+
+.customer-auth-card {
+    width: min(460px, calc(100% - 32px));
+    padding: 38px 40px;
+}
+
+.customer-auth-card .login-header {
+    margin-bottom: 26px;
+}
+
+.customer-auth-card .login-header h1 {
+    font-size: 25px;
+}
+
+.customer-auth-card .input-box {
+    margin-bottom: 17px;
+}
+
+.customer-auth-card .input-box label {
+    color: #7a0c1e;
+}
+
+.customer-auth-card .input-box input {
+    min-height: 48px;
+}
+
+.customer-auth-card .input-box input:focus-visible,
+.customer-auth-card button:focus-visible,
+.customer-auth-card a:focus-visible {
+    outline: 3px solid rgba(230, 161, 0, .28);
+    outline-offset: 2px;
+}
+
+.customer-auth-card .login-btn {
+    margin-top: 2px;
+}
+
+.customer-auth-form .auth-message {
+    display: none;
+    margin: 0 0 16px;
+    padding: 0;
+    color: #b00020;
+    background: transparent;
+    line-height: 1.5;
+}
+
+.customer-auth-form .auth-message:not(:empty) {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #ffe5e5;
+}
+
+.customer-auth-form .auth-message.is-success:not(:empty) {
+    color: #17643a;
+    background: #e5f5eb;
+}
+
+.customer-auth-switch {
+    margin: 20px 0 0;
+    color: #666;
+    text-align: center;
+    font-size: 14px;
+}
+
+.customer-auth-switch a {
+    color: #7a0c1e;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.customer-auth-switch a:hover {
+    color: #e6a100;
+}
+
+.customer-auth-card .back-home {
+    margin-top: 14px;
+}
+
+.customer-register-card {
+    width: min(500px, calc(100% - 32px));
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+.customer-register-card .logo-circle {
+    width: 66px;
+    height: 66px;
+    font-size: 36px;
+}
+
+.customer-register-card .login-header {
+    margin-bottom: 20px;
+}
+
+.customer-register-card .input-box {
+    margin-bottom: 13px;
+}
+
+.auth-email-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+}
+
+.auth-email-row input {
+    min-width: 0;
+}
+
+.auth-otp-button {
+    min-width: 100px;
+    padding: 0 14px;
+    border: 1px solid #7a0c1e;
+    border-radius: 10px;
+    color: #7a0c1e;
+    background: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color .2s ease, background .2s ease;
+}
+
+.auth-otp-button:hover:not(:disabled) {
+    color: #fff;
+    background: #7a0c1e;
+}
+
+.auth-otp-button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+.customer-auth-card #otp-fields[hidden] {
+    display: none;
+}
+
+.customer-auth-card #otp-code {
+    letter-spacing: .25em;
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    .customer-auth-body {
+        align-items: flex-start;
+        padding: 18px 0;
+    }
+
+    .customer-auth-card,
+    .customer-register-card {
+        padding: 27px 22px;
+    }
+
+    .customer-register-card .logo-circle {
+        width: 58px;
+        height: 58px;
+        font-size: 31px;
+    }
+}
+
+@media (max-width: 360px) {
+    .auth-email-row {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-otp-button {
+        min-height: 44px;
+    }
+}

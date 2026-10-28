@@ -4,191 +4,1672 @@
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>
-        Shipper - Bún Chả Việt
+        Shipper Dashboard | Bún Chả Việt
     </title>
 
-    <link rel="stylesheet" href="/static/css/shipper.css">
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/shipper.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
 
 </head>
 
 
-<body>
+{% set current_section = request.args.get('section', 'overview') %}
 
 
-<header class="header">
-
-    <div class="brand">
-
-        <h1>
-            🛵 BÚN CHẢ VIỆT
-        </h1>
-
-        <p>
-            Xin chào {{ username }}
-        </p>
-
-    </div>
+<body data-working="{{ 1 if is_working else 0 }}">
 
 
-    <a href="/logout">
-        Đăng xuất
-    </a>
+<div class="shipper-app">
 
 
-</header>
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="sidebar">
 
 
+        <div class="sidebar-brand">
+
+            <div class="brand-logo">
+                BCV
+            </div>
 
 
-<main class="container">
+            <div class="brand-content">
 
+                <strong>
+                    Bún Chả Việt
+                </strong>
 
-    <h2>
-        📦 Đơn hàng được giao
-    </h2>
+                <span>
+                    Shipper Center
+                </span>
 
+            </div>
 
-
-    <div class="order-list">
+        </div>
 
 
 
-        {% for order in orders %}
+        <div class="shipper-profile">
 
 
-        <div class="order-card">
+            <div class="profile-avatar">
+
+                {{ (username or 'S')[0] | upper }}
+
+            </div>
 
 
-            <div class="order-top">
+            <div class="profile-info">
+
+                <strong>
+                    {{ username or 'Shipper' }}
+                </strong>
+
+                <span>
+                    Nhân viên giao hàng
+                </span>
+
+            </div>
 
 
-                <h3>
-                    🧾 Đơn #{{ order.OrderCode }}
-                </h3>
+        </div>
 
 
-                <span class="status">
 
-                    {{ order.Status }}
+        <nav class="sidebar-menu">
+
+
+            <button
+                type="button"
+                class="menu-item {% if current_section == 'overview' %}active{% endif %}"
+                data-target="overview"
+            >
+
+                <span class="menu-icon">
+                    ⌂
+                </span>
+
+                <span>
+                    Tổng quan
+                </span>
+
+            </button>
+
+
+
+            <div class="menu-label">
+                ĐƠN HÀNG
+            </div>
+
+
+
+            <button
+                type="button"
+                class="menu-item {% if current_section == 'active-orders' %}active{% endif %}"
+                data-target="active-orders"
+            >
+
+                <span class="menu-icon">
+                    ▣
+                </span>
+
+                <span>
+                    Đơn đang xử lý
+                </span>
+
+                <span
+                    class="menu-count"
+                    id="activeOrderCount"
+                >
+
+                    {{ active_order_count or 0 }}
 
                 </span>
+
+            </button>
+
+
+
+            <button
+                type="button"
+                class="menu-item {% if current_section == 'completed-orders' %}active{% endif %}"
+                data-target="completed-orders"
+            >
+
+                <span class="menu-icon">
+                    ✓
+                </span>
+
+                <span>
+                    Đã hoàn thành
+                </span>
+
+            </button>
+
+
+
+            <button
+                type="button"
+                class="menu-item {% if current_section == 'failed-orders' %}active{% endif %}"
+                data-target="failed-orders"
+            >
+
+                <span class="menu-icon">
+                    ×
+                </span>
+
+                <span>
+                    Không giao được
+                </span>
+
+            </button>
+
+
+
+            <div class="menu-label">
+                BÁO CÁO
+            </div>
+
+
+
+            <button
+                type="button"
+                class="menu-item {% if current_section == 'statistics' %}active{% endif %}"
+                data-target="statistics"
+            >
+
+                <span class="menu-icon">
+                    ▥
+                </span>
+
+                <span>
+                    Thống kê
+                </span>
+
+            </button>
+
+
+        </nav>
+
+
+
+        <div class="sidebar-footer">
+
+
+            <a
+                href="/logout"
+                class="logout-link"
+            >
+
+                <span>
+                    ↪
+                </span>
+
+                <span>
+                    Đăng xuất
+                </span>
+
+            </a>
+
+
+        </div>
+
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="main-content">
+
+
+        <!-- =================================================
+             OVERVIEW
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'overview' %}active{% endif %}"
+            id="overview"
+        >
+
+
+            <header class="dashboard-header">
+
+
+                <div class="header-title">
+
+
+                    <p class="eyebrow">
+                        TRUNG TÂM GIAO HÀNG
+                    </p>
+
+
+                    <h1>
+
+                        Xin chào,
+                        {{ username or 'Shipper' }}
+
+                    </h1>
+
+
+                    <p>
+
+                        Theo dõi đơn hàng và
+                        quản lý ca làm việc của bạn.
+
+                    </p>
+
+
+                </div>
+
+
+
+                <div class="shift-control">
+
+
+                    {% if is_working %}
+
+
+                    <div class="shift-status online">
+
+
+                        <span class="status-dot"></span>
+
+
+                        <div>
+
+                            <small>
+                                TRẠNG THÁI
+                            </small>
+
+                            <strong>
+                                Đang nhận đơn
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="toggleWorkBtn"
+                        class="shift-button stop"
+                    >
+
+                        Nghỉ ca
+
+                    </button>
+
+
+                    {% else %}
+
+
+                    <div class="shift-status offline">
+
+
+                        <span class="status-dot"></span>
+
+
+                        <div>
+
+                            <small>
+                                TRẠNG THÁI
+                            </small>
+
+                            <strong>
+                                Đang nghỉ ca
+                            </strong>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="toggleWorkBtn"
+                        class="shift-button start"
+                    >
+
+                        Bắt đầu nhận đơn
+
+                    </button>
+
+
+                    {% endif %}
+
+
+                </div>
+
+
+            </header>
+
+
+
+            <!-- =================================================
+                 KPI
+            ================================================== -->
+
+            <div class="stats-grid">
+
+
+                <article class="stat-card">
+
+
+                    <div class="stat-icon blue">
+                        ✓
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Đã giao hôm nay
+                        </span>
+
+                        <strong>
+                            {{ today_done or 0 }}
+                        </strong>
+
+                        <small>
+                            đơn thành công
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+
+                <article class="stat-card">
+
+
+                    <div class="stat-icon green">
+                        ▣
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Tháng này
+                        </span>
+
+                        <strong>
+                            {{ month_done or 0 }}
+                        </strong>
+
+                        <small>
+                            đơn hoàn thành
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+
+                <article class="stat-card">
+
+
+                    <div class="stat-icon purple">
+                        ↑
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Tổng đã giao
+                        </span>
+
+                        <strong>
+                            {{ total_done or 0 }}
+                        </strong>
+
+                        <small>
+                            tất cả thời gian
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+
+                <article class="stat-card">
+
+
+                    <div class="stat-icon orange">
+                        🛵
+                    </div>
+
+
+                    <div class="stat-content">
+
+                        <span>
+                            Đang xử lý
+                        </span>
+
+                        <strong class="active-orders-total">
+
+                            {{ active_order_count or 0 }}
+
+                        </strong>
+
+                        <small>
+                            đơn hiện tại
+                        </small>
+
+                    </div>
+
+
+                </article>
 
 
             </div>
 
 
 
+            <!-- =================================================
+                 ORDERS
+            ================================================== -->
 
-            <div class="customer-info">
-
-
-                <p>
-                    👤 
-                    {{ order.CustomerName }}
-                </p>
+            <div class="section-heading">
 
 
-                <p>
-                    📞
-                    {{ order.Phone }}
-                </p>
+                <div>
+
+                    <h2>
+                        Đơn hàng gần đây
+                    </h2>
+
+                    <p>
+                        Theo dõi các đơn được phân công cho bạn.
+                    </p>
+
+                </div>
 
 
-                <p>
-                    📍
-                    {{ order.Address }},
-                    {{ order.Ward }},
-                    {{ order.District }},
-                    {{ order.Province }}
-                </p>
+                <button
+                    type="button"
+                    class="text-button"
+                    data-open-section="active-orders"
+                >
+
+                    Xem đơn đang xử lý →
+
+                </button>
 
 
-                {% if order.Note %}
+            </div>
 
-                <p>
-                    📝
-                    {{ order.Note }}
-                </p>
+
+
+            <div class="orders-container">
+
+
+                {% if orders|length == 0 %}
+
+
+                <div class="empty-state">
+
+
+                    <div class="empty-icon">
+                        📦
+                    </div>
+
+
+                    <h3>
+                        Chưa có đơn hàng
+                    </h3>
+
+
+                    <p>
+
+                        Khi Admin giao đơn,
+                        đơn hàng sẽ xuất hiện tại đây.
+
+                    </p>
+
+
+                </div>
+
 
                 {% endif %}
 
 
+
+                {% for order in orders %}
+
+
+                <article
+                    class="order-card"
+                    data-order-status="{{ order[9] }}"
+                >
+
+
+                    <div class="order-header">
+
+
+                        <div class="order-identity">
+
+
+                            <span class="order-number">
+
+                                #{{ order[1] }}
+
+                            </span>
+
+
+                            <span class="order-created">
+
+                                {{ order[10] or '' }}
+
+                            </span>
+
+
+                        </div>
+
+
+
+                        <span
+                            class="
+                                order-badge
+
+                                {% if order[9] == 'Hoàn thành' %}
+                                    completed
+
+                                {% elif order[9] == 'Đang giao' %}
+                                    delivering
+
+                                {% elif order[9] == 'Đang chuẩn bị' %}
+                                    preparing
+
+                                {% elif order[9] in ['Không giao được', 'Đã hủy'] %}
+                                    failed
+
+                                {% else %}
+                                    assigned
+
+                                {% endif %}
+                            "
+                        >
+
+                            {{ order[9] }}
+
+                        </span>
+
+
+                    </div>
+
+
+
+                    <div class="order-body">
+
+
+                        <div class="customer-column">
+
+
+                            <div class="info-row">
+
+
+                                <span class="info-icon">
+                                    👤
+                                </span>
+
+
+                                <div>
+
+                                    <span class="info-label">
+                                        Khách hàng
+                                    </span>
+
+                                    <strong>
+
+                                        {{ order[2] or 'Chưa cập nhật' }}
+
+                                    </strong>
+
+                                </div>
+
+
+                            </div>
+
+
+
+                            <div class="info-row">
+
+
+                                <span class="info-icon">
+                                    ☎
+                                </span>
+
+
+                                <div>
+
+                                    <span class="info-label">
+                                        Số điện thoại
+                                    </span>
+
+
+                                    {% if order[3] %}
+
+                                    <a
+                                        href="tel:{{ order[3] }}"
+                                        class="phone-link"
+                                    >
+
+                                        {{ order[3] }}
+
+                                    </a>
+
+
+                                    {% else %}
+
+                                    <strong>
+                                        Chưa cập nhật
+                                    </strong>
+
+                                    {% endif %}
+
+
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+
+
+
+                        <div class="address-column">
+
+
+                            <span class="info-label">
+                                Địa chỉ giao hàng
+                            </span>
+
+
+                            <strong class="delivery-address">
+
+                                {{ order[4] or 'Chưa cập nhật địa chỉ' }}
+
+                            </strong>
+
+
+                            {% if order[5] %}
+
+
+                            <div class="customer-note">
+
+                                <span>
+                                    Ghi chú:
+                                </span>
+
+                                {{ order[5] }}
+
+                            </div>
+
+
+                            {% endif %}
+
+
+                        </div>
+
+
+
+                        <div class="payment-column">
+
+
+                            <span class="info-label">
+                                Tiền cần thu
+                            </span>
+
+
+                            <strong class="order-money">
+
+                                {{ "{:,.0f}".format(order[8] or 0) }}
+
+                                ₫
+
+                            </strong>
+
+
+                            <small>
+                                Thu từ khách hàng
+                            </small>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                    {% if order[9] in ['Đang chuẩn bị', 'Đang giao'] %}
+
+                    <section
+                        class="shipper-map-panel"
+                        data-order-code="{{ order[1] }}"
+                        data-destination-lat="{{ order[11] if order[11] is not none else '' }}"
+                        data-destination-lng="{{ order[12] if order[12] is not none else '' }}"
+                        data-address="{{ order[4] or '' }}"
+                    >
+
+                        <div class="shipper-map-heading">
+
+                            <div>
+                                <span class="shipper-map-eyebrow">
+                                    ĐIỀU HƯỚNG ĐƠN #{{ order[1] }}
+                                </span>
+
+                                <h3>
+                                    🛵 Đường đến khách hàng
+                                </h3>
+
+                                <p class="shipper-map-gps-text">
+                                    Đang chờ GPS của thiết bị...
+                                </p>
+                            </div>
+
+                            {% if order[11] is not none and order[12] is not none %}
+
+                            <a
+                                class="shipper-open-navigation"
+                                href="https://www.google.com/maps/dir/?api=1&destination={{ order[11] }},{{ order[12] }}&travelmode=driving"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Mở điều hướng ↗
+                            </a>
+
+                            {% endif %}
+
+                        </div>
+
+                        <div class="shipper-map-metrics">
+
+                            <div>
+                                <span>Khoảng cách còn lại</span>
+                                <strong class="shipper-map-distance">-- km</strong>
+                            </div>
+
+                            <div>
+                                <span>Thời gian dự kiến</span>
+                                <strong class="shipper-map-eta">-- phút</strong>
+                            </div>
+
+                            <div>
+                                <span>GPS</span>
+                                <strong class="shipper-map-live-status">Đang chờ</strong>
+                            </div>
+
+                        </div>
+
+                        {% if order[11] is not none and order[12] is not none %}
+
+                        <div class="shipper-route-map"></div>
+
+                        {% else %}
+
+                        <div class="shipper-map-missing">
+                            Đơn này chưa có tọa độ khách hàng nên chưa thể dựng tuyến đường.
+                        </div>
+
+                        {% endif %}
+
+                    </section>
+
+                    {% endif %}
+
+
+
+                    <div class="order-actions">
+
+
+                        {% if order[9] == 'Đã giao shipper' %}
+
+
+                        <button
+                            type="button"
+                            class="action-button primary status-btn"
+                            data-id="{{ order[0] }}"
+                            data-status="Đang chuẩn bị"
+                        >
+
+                            ✓ Đã lấy món
+
+                        </button>
+
+
+                        {% elif order[9] == 'Đang chuẩn bị' %}
+
+
+                        <button
+                            type="button"
+                            class="action-button primary status-btn"
+                            data-id="{{ order[0] }}"
+                            data-status="Đang giao"
+                        >
+
+                            🛵 Bắt đầu giao
+
+                        </button>
+
+
+                        {% elif order[9] == 'Đang giao' %}
+
+
+                        <button
+                            type="button"
+                            class="action-button success status-btn"
+                            data-id="{{ order[0] }}"
+                            data-status="Hoàn thành"
+                        >
+
+                            ✓ Đã giao thành công
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="action-button danger-outline failed-order-btn"
+                            data-id="{{ order[0] }}"
+                            data-code="{{ order[1] }}"
+                        >
+
+                            × Không giao được
+
+                        </button>
+
+
+                        {% elif order[9] == 'Hoàn thành' %}
+
+
+                        <div class="order-finished completed">
+
+                            ✓ Đơn hàng đã giao thành công
+
+                        </div>
+
+
+                        {% elif order[9] in ['Không giao được', 'Đã hủy'] %}
+
+
+                        <div class="order-finished failed">
+
+                            ! Đơn hàng không giao được
+
+                        </div>
+
+
+                        {% else %}
+
+
+                        <div class="order-finished waiting">
+
+                            Đang chờ xử lý
+
+                        </div>
+
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                </article>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             ACTIVE
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'active-orders' %}active{% endif %}"
+            id="active-orders"
+        >
+
+
+            <div class="page-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        ĐƠN HÀNG
+                    </p>
+
+                    <h1>
+                        Đơn đang xử lý
+                    </h1>
+
+                    <p>
+                        Các đơn bạn cần lấy món hoặc đang giao.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                class="filtered-orders"
+                data-filter-section="active"
+            >
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             COMPLETED
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'completed-orders' %}active{% endif %}"
+            id="completed-orders"
+        >
+
+
+            <div class="page-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        LỊCH SỬ
+                    </p>
+
+                    <h1>
+                        Đơn đã hoàn thành
+                    </h1>
+
+                    <p>
+                        Các đơn bạn đã giao thành công.
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                class="filtered-orders"
+                data-filter-section="completed"
+            >
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             FAILED
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'failed-orders' %}active{% endif %}"
+            id="failed-orders"
+        >
+
+
+            <div class="page-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        LỊCH SỬ
+                    </p>
+
+                    <h1>
+                        Không giao được
+                    </h1>
+
+                    <p>
+                        Các đơn khách từ chối nhận hoặc giao thất bại.
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    <span class="order-badge failed">
+
+                        {{ failed_order_count or 0 }}
+                        đơn
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                class="filtered-orders"
+                data-filter-section="failed"
+            >
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             STATISTICS
+        ================================================== -->
+
+        <section
+            class="content-section {% if current_section == 'statistics' %}active{% endif %}"
+            id="statistics"
+        >
+
+
+            <div class="page-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        BÁO CÁO
+                    </p>
+
+                    <h1>
+                        Thống kê giao hàng
+                    </h1>
+
+                    <p>
+                        Xem số đơn đã giao và tiền đã thu từ khách hàng.
+                    </p>
+
+                </div>
+
+
             </div>
 
 
 
+            <form
+                class="statistics-filter"
+                method="GET"
+                action="{{ url_for('shipper.orders') }}"
+            >
 
 
-            <div class="action-group">
+                <input
+                    type="hidden"
+                    name="section"
+                    value="statistics"
+                >
+
+
+                <div class="date-field">
+
+
+                    <label for="fromDate">
+                        Từ ngày
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="fromDate"
+                        name="from_date"
+                        value="{{ from_date }}"
+                        required
+                    >
+
+
+                </div>
+
+
+
+                <div class="date-field">
+
+
+                    <label for="toDate">
+                        Đến ngày
+                    </label>
+
+
+                    <input
+                        type="date"
+                        id="toDate"
+                        name="to_date"
+                        value="{{ to_date }}"
+                        required
+                    >
+
+
+                </div>
+
 
 
                 <button
-                class="status-btn"
-                data-id="{{ order.OrderID }}"
-                data-status="Đang chuẩn bị">
+                    type="submit"
+                    class="statistics-submit"
+                >
 
-                    🍜 Đã lấy món
+                    Xem thống kê
 
                 </button>
 
 
-
-
-                <button
-                class="status-btn"
-                data-id="{{ order.OrderID }}"
-                data-status="Đang giao">
-
-                    🛵 Bắt đầu giao
-
-                </button>
+            </form>
 
 
 
+            <div class="statistics-summary">
 
-                <button
-                class="status-btn"
-                data-id="{{ order.OrderID }}"
-                data-status="Hoàn thành">
 
-                    ✅ Hoàn thành
+                <article class="report-card">
 
-                </button>
+
+                    <div class="report-icon blue">
+                        ✓
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Đơn giao thành công
+                        </span>
+
+                        <strong>
+
+                            {{ range_completed_count or 0 }}
+
+                        </strong>
+
+                        <small>
+                            trong khoảng đã chọn
+                        </small>
+
+                    </div>
+
+
+                </article>
+
+
+
+                <article class="report-card money-report">
+
+
+                    <div class="report-icon green">
+                        ₫
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            Tổng tiền đã thu
+                        </span>
+
+                        <strong>
+
+                            {{ "{:,.0f}".format(
+                                range_collected_total or 0
+                            ) }}
+
+                            ₫
+
+                        </strong>
+
+                        <small>
+                            tiền thu từ khách hàng
+                        </small>
+
+                    </div>
+
+
+                </article>
 
 
             </div>
 
+
+
+            <div class="statistics-table-card">
+
+
+                <div class="statistics-table-header">
+
+
+                    <div>
+
+                        <h2>
+                            Chi tiết đơn đã giao
+                        </h2>
+
+                        <p>
+
+                            {{ from_date }}
+
+                            đến
+
+                            {{ to_date }}
+
+                        </p>
+
+                    </div>
+
+
+                    <div class="report-total">
+
+                        {{ statistic_orders|length }}
+
+                        đơn
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="table-responsive">
+
+
+                    <table class="statistics-table">
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Mã đơn
+                                </th>
+
+                                <th>
+                                    Khách hàng
+                                </th>
+
+                                <th>
+                                    Địa chỉ
+                                </th>
+
+                                <th>
+                                    Thời gian giao
+                                </th>
+
+                                <th>
+                                    Tiền thu
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+
+                        <tbody>
+
+
+                            {% if statistic_orders %}
+
+
+                                {% for item in statistic_orders %}
+
+
+                                <tr>
+
+
+                                    <td>
+
+                                        <strong class="table-order-code">
+
+                                            #{{ item[1] }}
+
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+
+
+                                        <div class="table-customer">
+
+                                            <strong>
+
+                                                {{ item[2] or 'Không có tên' }}
+
+                                            </strong>
+
+                                            <span>
+
+                                                {{ item[3] or '' }}
+
+                                            </span>
+
+                                        </div>
+
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <div class="table-address">
+
+                                            {{ item[4] or '' }}
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{ item[6] or '' }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <strong class="table-money">
+
+                                            {{ "{:,.0f}".format(
+                                                item[5] or 0
+                                            ) }}
+
+                                            ₫
+
+                                        </strong>
+
+                                    </td>
+
+
+                                </tr>
+
+
+                                {% endfor %}
+
+
+                            {% else %}
+
+
+                            <tr>
+
+
+                                <td
+                                    colspan="5"
+                                    class="empty-table"
+                                >
+
+
+                                    <div>
+
+
+                                        <span class="empty-table-icon">
+                                            📦
+                                        </span>
+
+
+                                        <strong>
+                                            Không có đơn hoàn thành
+                                        </strong>
+
+
+                                        <p>
+
+                                            Không tìm thấy đơn đã giao
+                                            trong khoảng thời gian này.
+
+                                        </p>
+
+
+                                    </div>
+
+
+                                </td>
+
+
+                            </tr>
+
+
+                            {% endif %}
+
+
+                        </tbody>
+
+
+                    </table>
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     FAILED DELIVERY MODAL
+====================================================== -->
+
+<div
+    class="modal-overlay"
+    id="failedDeliveryModal"
+>
+
+
+    <div class="modal-card">
+
+
+        <div class="modal-header">
+
+
+            <div>
+
+                <span class="modal-eyebrow">
+                    XỬ LÝ ĐƠN HÀNG
+                </span>
+
+                <h2>
+                    Không giao được
+                </h2>
+
+                <p id="failedOrderCode">
+                    Đơn hàng
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeFailedModal"
+            >
+
+                ×
+
+            </button>
 
 
         </div>
 
 
-        {% else %}
+
+        <div class="modal-body">
 
 
-        <div class="empty">
+            <label for="failedReason">
+                Lý do
+            </label>
 
-            Hiện chưa có đơn hàng
+
+            <select id="failedReason">
+
+                <option value="">
+                    Chọn lý do
+                </option>
+
+                <option value="Khách không nhận hàng">
+                    Khách không nhận hàng
+                </option>
+
+                <option value="Không liên lạc được với khách">
+                    Không liên lạc được với khách
+                </option>
+
+                <option value="Sai địa chỉ giao hàng">
+                    Sai địa chỉ giao hàng
+                </option>
+
+                <option value="Khách yêu cầu hủy">
+                    Khách yêu cầu hủy
+                </option>
+
+                <option value="Khác">
+                    Lý do khác
+                </option>
+
+            </select>
+
+
+
+            <label for="failedNote">
+                Ghi chú thêm
+            </label>
+
+
+            <textarea
+                id="failedNote"
+                rows="4"
+                placeholder="Ví dụ: Đã gọi khách 3 lần nhưng không liên lạc được."
+            ></textarea>
+
+
+
+            <div class="modal-warning">
+
+                <strong>
+                    Lưu ý
+                </strong>
+
+                <p>
+
+                    Chỉ xác nhận khi bạn thực sự
+                    không thể hoàn thành việc giao hàng.
+
+                </p>
+
+            </div>
+
 
         </div>
 
 
-        {% endfor %}
 
+        <div class="modal-footer">
+
+
+            <button
+                type="button"
+                class="modal-button secondary"
+                id="cancelFailedModal"
+            >
+
+                Quay lại
+
+            </button>
+
+
+            <button
+                type="button"
+                class="modal-button danger"
+                id="confirmFailedDelivery"
+            >
+
+                Xác nhận không giao được
+
+            </button>
+
+
+        </div>
 
 
     </div>
 
 
-</main>
+</div>
 
 
 
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
 
-<script src="/static/js/shipper.js"></script>
+
+<script
+    src="{{ url_for('static', filename='js/shipper.js') }}"
+>
+</script>
 
 
 </body>

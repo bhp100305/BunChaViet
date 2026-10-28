@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    Quản lý thanh toán | Bún Chả Việt
+</title>
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+>
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/dashboard.css') }}"
+>
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/payments.css') }}"
+>
+
+</head>
+
+
+<body>
+
+
+{% set active_page = 'payments' %}
+
+
+<div class="admin-layout">
+
+
+{% include 'admin/_sidebar.html' %}
+
+
+<main class="content payment-content">
+
+
+<header class="payment-header">
+
+
+<div>
+
+<p class="payment-eyebrow">
+    ADMIN / THANH TOÁN
+</p>
+
+<h1>
+    Quản lý thanh toán
+</h1>
+
+<p>
+    Theo dõi phương thức thanh toán
+    và xác nhận các giao dịch của đơn hàng.
+</p>
+
+</div>
+
+
+<a
+    href="{{ url_for('admin.orders') }}"
+    class="payment-orders-btn"
+>
+    Xem đơn hàng
+</a>
+
+
+</header>
+
+
+<section class="payment-stats">
+
+
+<article class="payment-stat-card">
+
+<div class="payment-stat-icon total">
+    ₫
+</div>
+
+<div>
+
+<span>
+    Tổng đơn
+</span>
+
+<strong>
+    {{ total_count }}
+</strong>
+
+<small>
+    có thông tin thanh toán
+</small>
+
+</div>
+
+</article>
+
+
+<article class="payment-stat-card">
+
+<div class="payment-stat-icon report">
+    !
+</div>
+
+<div>
+
+<span>
+    Khách báo CK
+</span>
+
+<strong>
+    {{ reported_count }}
+</strong>
+
+<small>
+    cần Admin kiểm tra
+</small>
+
+</div>
+
+</article>
+
+
+<article class="payment-stat-card">
+
+<div class="payment-stat-icon cash">
+    💵
+</div>
+
+<div>
+
+<span>
+    Chờ thu tiền mặt
+</span>
+
+<strong>
+    {{ cash_pending_count }}
+</strong>
+
+<small>
+    thanh toán khi nhận
+</small>
+
+</div>
+
+</article>
+
+
+<article class="payment-stat-card">
+
+<div class="payment-stat-icon paid">
+    ✓
+</div>
+
+<div>
+
+<span>
+    Đã thanh toán
+</span>
+
+<strong>
+    {{ paid_count }}
+</strong>
+
+<small>
+    đã xác nhận
+</small>
+
+</div>
+
+</article>
+
+
+</section>
+
+
+<section class="payment-panel">
+
+
+<div class="payment-panel-header">
+
+
+<div>
+
+<p class="payment-eyebrow">
+    DANH SÁCH
+</p>
+
+<h2>
+    Thanh toán đơn hàng
+</h2>
+
+</div>
+
+
+<span class="payment-result-count">
+    {{ payments | length }}
+    kết quả
+</span>
+
+
+</div>
+
+
+<form
+    method="GET"
+    action="{{ url_for('admin_payments.payments') }}"
+    class="payment-filter"
+>
+
+
+<input
+    type="search"
+    name="q"
+    value="{{ keyword }}"
+    placeholder="Mã đơn, khách hàng, SĐT..."
+>
+
+
+<select name="method">
+
+<option value="">
+    Tất cả phương thức
+</option>
+
+<option
+    value="CASH"
+    {% if selected_method == 'CASH' %}
+    selected
+    {% endif %}
+>
+    Tiền mặt
+</option>
+
+<option
+    value="BANK_TRANSFER"
+    {% if selected_method == 'BANK_TRANSFER' %}
+    selected
+    {% endif %}
+>
+    Chuyển khoản
+</option>
+
+</select>
+
+
+<select name="status">
+
+<option value="">
+    Tất cả trạng thái
+</option>
+
+{% for status in [
+    'Thanh toán khi nhận hàng',
+    'Chờ khách chuyển khoản',
+    'Khách báo đã chuyển khoản',
+    'Đã thanh toán',
+    'Đã thu tiền'
+] %}
+
+<option
+    value="{{ status }}"
+    {% if selected_status == status %}
+    selected
+    {% endif %}
+>
+    {{ status }}
+</option>
+
+{% endfor %}
+
+</select>
+
+
+<button type="submit">
+    Lọc
+</button>
+
+
+<a
+    href="{{ url_for('admin_payments.payments') }}"
+>
+    Đặt lại
+</a>
+
+
+</form>
+
+
+<div class="payment-table-wrap">
+
+
+<table class="payment-table">
+
+
+<thead>
+
+<tr>
+
+<th>
+    Đơn hàng
+</th>
+
+<th>
+    Khách hàng
+</th>
+
+<th>
+    Tổng tiền
+</th>
+
+<th>
+    Phương thức
+</th>
+
+<th>
+    Thanh toán
+</th>
+
+<th>
+    Đơn hàng
+</th>
+
+<th>
+    Thời gian
+</th>
+
+<th>
+    Thao tác
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+
+{% for payment in payments %}
+
+
+<tr>
+
+
+<td>
+
+<strong class="payment-order-code">
+    {{ payment.OrderCode }}
+</strong>
+
+<small>
+    #{{ payment.OrderID }}
+</small>
+
+</td>
+
+
+<td>
+
+<div class="payment-customer">
+
+<strong>
+    {{ payment.CustomerName }}
+</strong>
+
+<span>
+    {{ payment.Phone }}
+</span>
+
+</div>
+
+</td>
+
+
+<td>
+
+<strong class="payment-money">
+
+    {{
+        "{:,.0f}".format(
+            payment.FinalMoney or 0
+        )
+        .replace(",", ".")
+    }}
+
+    ₫
+
+</strong>
+
+</td>
+
+
+<td>
+
+
+{% if payment.PaymentMethod == 'CASH' %}
+
+
+<span class="method-badge cash">
+    💵 Tiền mặt
+</span>
+
+
+{% else %}
+
+
+<span class="method-badge bank">
+    🏦 Chuyển khoản
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+<td>
+
+
+<span
+    class="
+        payment-status
+
+        {% if payment.PaymentStatus == 'Khách báo đã chuyển khoản' %}
+        status-reported
+
+        {% elif payment.PaymentStatus in ['Đã thanh toán', 'Đã thu tiền'] %}
+        status-paid
+
+        {% else %}
+        status-pending
+
+        {% endif %}
+    "
+>
+
+    {{ payment.PaymentStatus }}
+
+</span>
+
+
+{% if payment.ReportedTime %}
+
+<small class="reported-time">
+
+    Báo CK:
+    {{ payment.ReportedTime }}
+
+</small>
+
+{% endif %}
+
+
+{% if payment.PaidTime %}
+
+<small class="paid-time">
+
+    Xác nhận:
+    {{ payment.PaidTime }}
+
+</small>
+
+{% endif %}
+
+
+</td>
+
+
+<td>
+
+<span class="order-status">
+    {{ payment.OrderStatus }}
+</span>
+
+</td>
+
+
+<td>
+
+<span class="payment-created">
+    {{ payment.CreatedTime }}
+</span>
+
+</td>
+
+
+<td>
+
+
+{% if
+    payment.PaymentMethod == 'BANK_TRANSFER'
+    and
+    payment.PaymentStatus == 'Khách báo đã chuyển khoản'
+%}
+
+
+<button
+    type="button"
+    class="payment-action-btn confirm-bank"
+    data-order-id="{{ payment.OrderID }}"
+    data-payment-action="CONFIRM_PAID"
+>
+    Xác nhận đã nhận tiền
+</button>
+
+
+{% elif
+    payment.PaymentMethod == 'CASH'
+    and
+    payment.OrderStatus == 'Hoàn thành'
+    and
+    payment.PaymentStatus != 'Đã thu tiền'
+%}
+
+
+<button
+    type="button"
+    class="payment-action-btn confirm-cash"
+    data-order-id="{{ payment.OrderID }}"
+    data-payment-action="CONFIRM_CASH_COLLECTED"
+>
+    Xác nhận đã thu tiền
+</button>
+
+
+{% elif
+    payment.PaymentStatus in [
+        'Đã thanh toán',
+        'Đã thu tiền'
+    ]
+%}
+
+
+<span class="payment-finished">
+    ✓ Hoàn tất
+</span>
+
+
+{% else %}
+
+
+<span class="payment-no-action">
+    Chưa thể xác nhận
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="8">
+
+<div class="payment-empty">
+
+<div>
+    ₫
+</div>
+
+<strong>
+    Chưa có dữ liệu thanh toán
+</strong>
+
+<span>
+    Các đơn hàng sẽ xuất hiện tại đây.
+</span>
+
+</div>
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</section>
+
+
+</main>
+
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/payments.js') }}"
+>
+</script>
+
+
+</body>
+
+</html>
