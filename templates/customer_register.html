@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bún Chả Việt | Đăng ký khách hàng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="stylesheet" href="/static/css/customer-auth.css">
+    <script src="/static/js/customer-register.js" defer></script>
+</head>
+<body class="login-body customer-auth-body">
+    <div class="login-container">
+        <main class="login-card customer-auth-card customer-register-card">
+            <header class="login-header">
+                <div class="logo-circle" aria-hidden="true">🍜</div>
+                <h1>BÚN CHẢ VIỆT</h1>
+                <p>Tạo tài khoản khách hàng</p>
+                <span>Xác thực email để hoàn tất đăng ký</span>
+            </header>
+
+            <form id="register-form" class="customer-auth-form">
+                <div id="auth-message" class="error-message auth-message" role="status" aria-live="polite"></div>
+                <div class="input-box">
+                    <label for="full-name">Họ và tên</label>
+                    <input id="full-name" name="fullName" autocomplete="name" maxlength="100" placeholder="Nhập họ tên" required>
+                </div>
+                <div class="input-box">
+                    <label for="phone">Số điện thoại</label>
+                    <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="Nhập số điện thoại" required>
+                </div>
+                <div class="input-box">
+                    <label for="register-email">Email</label>
+                    <div class="auth-email-row">
+                        <input id="register-email" name="email" type="email" autocomplete="email" maxlength="255" placeholder="Nhập email của bạn" required>
+                        <button class="auth-otp-button" id="send-otp" type="button">Gửi OTP</button>
+                    </div>
+                </div>
+                <div id="otp-fields" class="input-box auth-otp-fields" hidden>
+                    <label for="otp-code">Mã xác thực</label>
+                    <div class="auth-email-row">
+                        <input id="otp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Nhập mã 6 số">
+                        <button class="auth-otp-button" id="verify-otp" type="button">Xác thực</button>
+                    </div>
+                </div>
+                <div class="input-box">
+                    <label for="register-password">Mật khẩu</label>
+                    <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Tối thiểu 8 ký tự" required>
+                </div>
+                <button class="login-btn" type="submit">TẠO TÀI KHOẢN</button>
+            </form>
+
+            <p class="customer-auth-switch">Đã có tài khoản? <a href="/customer/login">Đăng nhập</a></p>
+            <div class="back-home"><a href="/">← Quay lại trang bán hàng</a></div>
+        </main>
+    </div>
+</body>
+</html>

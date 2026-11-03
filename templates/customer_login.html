@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bún Chả Việt | Đăng nhập khách hàng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="stylesheet" href="/static/css/customer-auth.css">
+    <script src="/static/js/customer-login.js" defer></script>
+</head>
+<body class="login-body customer-auth-body">
+    <div class="login-container">
+        <main class="login-card customer-auth-card">
+            <header class="login-header">
+                <div class="logo-circle" aria-hidden="true">🍜</div>
+                <h1>BÚN CHẢ VIỆT</h1>
+                <p>Đăng nhập khách hàng</p>
+                <span>Đặt món ngon, theo dõi đơn hàng dễ dàng</span>
+            </header>
+
+            <form id="login-form" class="customer-auth-form">
+                <div id="auth-message" class="error-message auth-message" role="status" aria-live="polite"></div>
+                <div class="input-box">
+                    <label for="customer-email">Email</label>
+                    <input id="customer-email" name="email" type="email" autocomplete="email" placeholder="Nhập email của bạn" required>
+                </div>
+                <div class="input-box">
+                    <label for="customer-password">Mật khẩu</label>
+                    <input id="customer-password" name="password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required>
+                </div>
+                <button class="login-btn" type="submit">ĐĂNG NHẬP</button>
+            </form>
+
+            <p class="customer-auth-switch">Chưa có tài khoản? <a href="/customer/register">Đăng ký</a></p>
+            <div class="back-home"><a href="/">← Quay lại trang bán hàng</a></div>
+        </main>
+    </div>
+</body>
+</html>

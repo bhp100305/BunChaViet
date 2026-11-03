@@ -19,7 +19,8 @@ def get_products():
             Description,
             Price,
             Image,
-            CategoryID
+            CategoryID,
+            IsAvailable
         FROM Products
         WHERE IsActive = 1
     """)
@@ -36,7 +37,8 @@ def get_products():
             "description": row.Description,
             "price": float(row.Price),
             "image": row.Image,
-            "category_id": row.CategoryID
+            "category_id": row.CategoryID,
+            "isAvailable": bool(row.IsAvailable),
         })
 
     conn.close()

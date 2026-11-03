@@ -32,6 +32,11 @@
 
     <link
         rel="stylesheet"
+        href="{{ url_for('static', filename='css/dashboard.css') }}"
+    >
+
+    <link
+        rel="stylesheet"
         href="{{ url_for('static', filename='css/orders.css') }}"
     >
 
@@ -41,6 +46,7 @@
 <body>
 
 
+{% set active_page = 'orders' %}
 {% set summary = namespace(
     pending=0,
     active=0,
@@ -96,6 +102,9 @@
 
 
 
+<div class="admin-layout">
+    {% include 'admin/_sidebar.html' %}
+    <main class="content">
 <div class="page">
 
 
@@ -107,6 +116,8 @@
 
 
         <div class="header-left">
+
+            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Mở menu">☰</button>
 
 
             <p class="header-eyebrow">
@@ -132,7 +143,7 @@
 
 
             <a
-                href="{{ url_for('admin.shippers') }}"
+                href="{{ url_for('admin_shippers.shippers') }}"
                 class="secondary-header-btn"
             >
                 Quản lý shipper
@@ -781,6 +792,30 @@
                             </div>
 
 
+                            <div class="payment-cell">
+
+                                <strong class="payment-method-label">
+                                    {% if o.PaymentMethod == 'BANK_TRANSFER' %}
+                                        QR / Chuyển khoản
+                                    {% else %}
+                                        Tiền mặt
+                                    {% endif %}
+                                </strong>
+
+                                <div class="payment-status-label">{{ o.PaymentStatus or 'Chưa cập nhật' }}</div>
+
+                                {% if o.PaymentMethod == 'BANK_TRANSFER'
+                                      and o.PaymentStatus == 'Khách báo đã chuyển khoản' %}
+                                <button
+                                    type="button"
+                                    class="order-payment-confirm"
+                                    data-order-id="{{ o.OrderID }}"
+                                >Xác nhận đã nhận tiền</button>
+                                {% endif %}
+
+                            </div>
+
+
                         </td>
 
 
@@ -1210,10 +1245,14 @@
 
 
 
+</main>
+</div>
+
 <script
     src="{{ url_for('static', filename='js/orders.js') }}"
 >
 </script>
+<script src="{{ url_for('static', filename='js/admin-dashboard.js') }}"></script>
 
 
 </body>

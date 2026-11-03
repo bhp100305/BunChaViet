@@ -15,6 +15,7 @@ env/
 # Environment variables
 .env
 .env.*
+.flask_secret_key
 
 # Database local
 *.db
@@ -31,3 +32,8 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node dependencies and local credentials
+node_modules/
+gmail_token.json
+credentials.json

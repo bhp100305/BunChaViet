@@ -189,6 +189,7 @@ CREATE TABLE [dbo].[Products](
 	[Image] [varchar](500) NULL,
 	[CategoryID] [int] NULL,
 	[IsActive] [bit] NOT NULL,
+	[IsAvailable] [bit] NOT NULL CONSTRAINT [DF_Products_IsAvailable] DEFAULT ((1)),
 PRIMARY KEY CLUSTERED 
 (
 	[ProductID] ASC

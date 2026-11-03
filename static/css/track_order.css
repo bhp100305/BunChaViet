@@ -4,757 +4,924 @@
     box-sizing: border-box;
 }
 
+
 html {
     scroll-behavior: smooth;
 }
 
+
 body {
-    font-family: "Roboto", sans-serif;
+    font-family:
+        "Roboto",
+        sans-serif;
+
     background: #f8f5ef;
-    color: #333;
+
+    color: #333333;
 }
 
-/* ==============================
-   CONTAINER
-============================== */
 
 .container {
     width: 960px;
-    max-width: calc(100% - 32px);
-    margin: 45px auto 70px;
+
+    max-width:
+        calc(
+            100% - 32px
+        );
+
+    margin:
+        45px
+        auto
+        70px;
 }
 
-/* ==============================
+
+/* =========================================================
    SEARCH
-============================== */
+========================================================= */
 
 .search-box {
-    background: #ffffff;
     padding: 40px;
+
+    border:
+        1px solid
+        #eee4d7;
+
     border-radius: 24px;
-    border: 1px solid #eee4d7;
-    box-shadow: 0 10px 35px rgba(75, 45, 30, 0.08);
+
+    background: #ffffff;
+
+    box-shadow:
+        0
+        10px
+        35px
+        rgba(
+            75,
+            45,
+            30,
+            0.08
+        );
+
     text-align: center;
 }
 
-.search-icon {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 15px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-    background: #fff3d0;
-
-    font-size: 28px;
-}
 
 .search-box h2 {
     margin-bottom: 8px;
 
     color: #7a0c1e;
 
-    font-family: "Playfair Display", serif;
+    font-family:
+        "Playfair Display",
+        serif;
+
     font-size: 30px;
 }
+
 
 .search-box p {
     margin-bottom: 25px;
 
-    color: #777;
+    color: #777777;
+
     font-size: 15px;
 }
 
+
 .search-form {
     width: 100%;
+
     max-width: 680px;
+
     margin: auto;
 
     display: flex;
+
     gap: 10px;
 }
+
 
 .search-form input {
     flex: 1;
 
     height: 54px;
 
-    padding: 0 20px;
+    padding:
+        0
+        20px;
 
-    border: 1px solid #ded8cf;
+    border:
+        1px solid
+        #ded8cf;
+
     border-radius: 30px;
 
     outline: none;
 
-    font-family: "Roboto", sans-serif;
     font-size: 15px;
 
-    transition: 0.2s;
+    transition:
+        0.2s;
 }
+
 
 .search-form input:focus {
     border-color: #7a0c1e;
 
     box-shadow:
-        0 0 0 4px rgba(122, 12, 30, 0.08);
+        0
+        0
+        0
+        4px
+        rgba(
+            122,
+            12,
+            30,
+            0.08
+        );
 }
+
 
 .search-form button {
     height: 54px;
 
-    padding: 0 28px;
+    padding:
+        0
+        28px;
 
-    border: none;
+    border: 0;
+
     border-radius: 30px;
 
     background: #7a0c1e;
-    color: white;
 
-    font-size: 15px;
-    font-weight: 700;
+    color: #ffffff;
 
     cursor: pointer;
 
-    transition: 0.2s;
+    font-size: 15px;
+
+    font-weight: 700;
+
+    transition:
+        0.2s;
 }
+
 
 .search-form button:hover {
     background: #5f0717;
-    transform: translateY(-1px);
+
+    transform:
+        translateY(-1px);
 }
 
-/* ==============================
-   ORDER RESULT
-============================== */
+
+/* =========================================================
+   RESULTS
+========================================================= */
 
 .order-result {
     margin-top: 28px;
-}
 
-.order-card {
-    background: #ffffff;
-
-    padding: 32px;
-
-    border-radius: 24px;
-
-    border: 1px solid #eee4d7;
-
-    box-shadow:
-        0 10px 35px rgba(75, 45, 30, 0.08);
-}
-
-/* ==============================
-   ORDER HEADER
-============================== */
-
-.order-heading {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+
+    flex-direction: column;
 
     gap: 20px;
 }
 
+
+.order-card,
+.tracking-empty {
+    padding: 30px;
+
+    border:
+        1px solid
+        #eee4d7;
+
+    border-radius: 24px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0
+        10px
+        35px
+        rgba(
+            75,
+            45,
+            30,
+            0.08
+        );
+}
+
+
+/* =========================================================
+   ORDER HEADER
+========================================================= */
+
+.order-heading {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+
 .order-label {
     margin-bottom: 5px;
 
-    color: #999;
+    color: #999999;
 
     font-size: 11px;
+
     font-weight: 700;
 
     letter-spacing: 1.5px;
 }
 
+
 .order-heading h2 {
     color: #7a0c1e;
 
-    font-family: "Playfair Display", serif;
+    font-family:
+        "Playfair Display",
+        serif;
 
     font-size: 26px;
 }
 
+
+.tracking-created-time {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #999999;
+
+    font-size: 11px;
+}
+
+
 .status-badge {
-    padding: 9px 17px;
+    padding:
+        9px
+        17px;
 
     border-radius: 30px;
 
-    background: #fff3c7;
-    color: #7a0c1e;
+    font-size: 12px;
 
-    font-size: 13px;
     font-weight: 700;
 
     white-space: nowrap;
 }
 
-/* ==============================
-   STATUS TRACKER
-============================== */
 
-.status-tracker {
-    display: flex;
-    align-items: flex-start;
+.status-badge.received {
+    background: #fff3c7;
 
-    width: 100%;
-
-    margin: 38px 0;
+    color: #8d6800;
 }
 
-.status-step {
-    width: 145px;
-    flex-shrink: 0;
+
+.status-badge.assigned {
+    background: #eeeaff;
+
+    color: #7455c7;
+}
+
+
+.status-badge.preparing {
+    background: #fff1dc;
+
+    color: #c67610;
+}
+
+
+.status-badge.delivering {
+    background: #eaf1ff;
+
+    color: #246bfd;
+}
+
+
+.status-badge.completed {
+    background: #def7e9;
+
+    color: #15864a;
+}
+
+
+.status-badge.failed {
+    background: #fde6e8;
+
+    color: #c6333c;
+}
+
+
+.status-badge.cancelled,
+.status-badge.neutral {
+    background: #efefed;
+
+    color: #777777;
+}
+
+
+/* =========================================================
+   STATUS TRACKER
+========================================================= */
+
+.customer-status-tracker {
+    margin:
+        34px
+        0;
+
+    display: flex;
+
+    align-items: flex-start;
+}
+
+
+.customer-status-step {
+    width: 120px;
+
+    flex: 0 0 auto;
 
     text-align: center;
 }
 
-.status-icon {
-    width: 54px;
-    height: 54px;
 
-    margin: 0 auto 10px;
+.customer-status-icon {
+    width: 52px;
+    height: 52px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin:
+        0
+        auto
+        9px;
+
+    display: grid;
+
+    place-items: center;
 
     border-radius: 50%;
 
-    background: #eeeeee;
-    color: #999;
+    background: #eceae5;
 
-    font-size: 20px;
+    color: #999999;
+
+    font-size: 19px;
+
     font-weight: 700;
 
-    transition: 0.3s;
+    transition:
+        0.25s;
 }
 
-.status-content {
-    display: flex;
-    flex-direction: column;
 
-    gap: 4px;
-}
-
-.status-content strong {
-    font-size: 13px;
-}
-
-.status-content small {
-    color: #999;
+.customer-status-step strong {
+    color: #96918a;
 
     font-size: 11px;
-    line-height: 1.4;
 }
 
-.status-step.completed .status-icon {
+
+.customer-status-step.completed
+.customer-status-icon {
     background: #7a0c1e;
+
     color: #ffffff;
 }
 
-.status-step.completed strong {
+
+.customer-status-step.completed
+strong {
     color: #7a0c1e;
 }
 
-.status-step.current .status-icon {
-    background: #ffcc00;
-    color: #7a0c1e;
 
-    transform: scale(1.12);
-
+.customer-status-step.active
+.customer-status-icon {
     box-shadow:
-        0 0 0 7px rgba(255, 204, 0, 0.15);
-
-    animation: statusPulse 1.5s infinite;
+        0
+        0
+        0
+        6px
+        rgba(
+            122,
+            12,
+            30,
+            0.08
+        );
 }
 
-.status-step.current strong {
-    color: #7a0c1e;
-    font-weight: 700;
-}
 
-.status-line {
-    flex: 1;
-
+.customer-status-line {
     height: 4px;
 
-    margin-top: 25px;
+    flex: 1;
 
-    border-radius: 20px;
+    margin-top: 24px;
 
-    background: #e5e5e5;
+    border-radius: 999px;
+
+    background: #eceae5;
 }
 
-.status-line.completed {
+
+.customer-status-line.completed {
     background: #7a0c1e;
 }
 
-/* ==============================
-   ORDER INFO
-============================== */
 
-.order-info {
-    margin-top: 25px;
+/* =========================================================
+   ORDER INFORMATION
+========================================================= */
 
-    padding: 24px;
+.tracking-order-info {
+    padding: 18px;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        2fr
+        160px;
+
+    gap: 18px;
+
+    border-radius: 15px;
 
     background: #faf8f4;
-
-    border-radius: 18px;
 }
 
-.order-info h3 {
-    margin-bottom: 15px;
 
-    color: #7a0c1e;
+.tracking-order-info > div {
+    min-width: 0;
 
-    font-size: 17px;
-}
-
-.info-row {
     display: flex;
-    justify-content: space-between;
 
-    gap: 20px;
+    flex-direction: column;
 
-    padding: 12px 0;
-
-    border-bottom: 1px solid #ebe5dc;
+    gap: 5px;
 }
 
-.info-row:last-child {
-    border-bottom: none;
+
+.tracking-order-info span {
+    color: #999999;
+
+    font-size: 10px;
 }
 
-.info-row span {
-    color: #777;
+
+.tracking-order-info strong {
+    color: #3d3935;
+
+    font-size: 12px;
+
+    line-height: 1.45;
 }
 
-.info-row strong {
-    text-align: right;
+
+.tracking-total {
+    color:
+        #7a0c1e !important;
+
+    font-family:
+        "Playfair Display",
+        serif;
+
+    font-size:
+        16px !important;
 }
 
-.status-text {
-    color: #7a0c1e;
-}
 
-/* ==============================
-   TOTAL
-============================== */
+/* =========================================================
+   LIVE MAP PANEL
+========================================================= */
 
-.order-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.customer-live-map-panel {
+    margin-top: 18px;
 
-    margin-top: 20px;
+    overflow: hidden;
 
-    padding: 20px 23px;
-
-    border: 1px solid #eadfce;
+    border:
+        1px solid
+        #eadfd4;
 
     border-radius: 17px;
 
-    background: #fff;
+    background: #ffffff;
 }
 
-.order-total span {
-    color: #666;
-}
 
-.order-total strong {
-    color: #7a0c1e;
+.tracking-map-heading {
+    padding:
+        17px
+        18px;
 
-    font-size: 22px;
-}
-
-/* ==============================
-   DRIVER
-============================== */
-
-.driver {
-    margin-top: 25px;
-
-    padding: 23px;
-
-    border-radius: 18px;
-
-    background: #fff8d8;
-}
-
-.driver h3 {
-    margin-bottom: 7px;
-
-    color: #7a0c1e;
-}
-
-.driver p {
-    color: #666;
-}
-
-.driver-header {
     display: flex;
+
+    align-items: flex-start;
+
     justify-content: space-between;
-    align-items: center;
 
     gap: 15px;
+
+    border-bottom:
+        1px solid
+        #eee5dc;
 }
 
-.delivery-live {
-    padding: 7px 12px;
 
-    border-radius: 20px;
+.tracking-map-eyebrow {
+    display: block;
 
-    background: #e8f8ee;
+    margin-bottom: 5px;
 
-    color: #168344;
+    color: #aaa19a;
 
-    font-size: 12px;
+    font-size: 9px;
+
     font-weight: 700;
+
+    letter-spacing: 1px;
 }
 
-/* ==============================
-   MAP SECTION
-============================== */
 
-.map-section {
-    margin-top: 25px;
-
-    padding: 22px;
-
-    background: #ffffff;
-
-    border: 1px solid #eee4d7;
-
-    border-radius: 20px;
-
-    box-shadow:
-        0 7px 25px rgba(50, 30, 20, 0.07);
-}
-
-.map-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    margin-bottom: 8px;
-}
-
-.map-header h3 {
+.tracking-map-heading h3 {
     color: #7a0c1e;
+
+    font-family:
+        "Playfair Display",
+        serif;
 
     font-size: 18px;
 }
 
-.live-status {
-    padding: 6px 11px;
 
-    border-radius: 20px;
+.tracking-map-message {
+    margin-top: 5px;
 
-    background: #eaf8ee;
+    color: #777777;
 
-    color: #168344;
+    font-size: 11px;
+}
 
-    font-size: 12px;
+
+.tracking-live-badge {
+    padding:
+        7px
+        10px;
+
+    flex: 0 0 auto;
+
+    border-radius: 999px;
+
+    background: #efefed;
+
+    color: #777777;
+
+    font-size: 10px;
+
     font-weight: 700;
 }
 
-.driver-location {
-    margin-bottom: 14px;
 
-    color: #777;
+.tracking-live-badge.is-live {
+    background: #def7e9;
+
+    color: #16884d;
+}
+
+
+.tracking-live-badge.is-stale {
+    background: #fff1dc;
+
+    color: #b96e11;
+}
+
+
+/* =========================================================
+   MAP METRICS
+========================================================= */
+
+.tracking-map-metrics {
+    padding:
+        13px
+        18px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 10px;
+
+    background: #fbfaf7;
+
+    border-bottom:
+        1px solid
+        #eee5dc;
+}
+
+
+.tracking-map-metrics > div {
+    min-width: 0;
+
+    padding:
+        9px
+        10px;
+
+    border:
+        1px solid
+        #eee5dc;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+}
+
+
+.tracking-map-metrics span {
+    display: block;
+
+    color: #999999;
+
+    font-size: 9px;
+}
+
+
+.tracking-map-metrics strong {
+    display: block;
+
+    margin-top: 4px;
+
+    overflow: hidden;
+
+    color: #3b3834;
+
+    font-size: 12px;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   MAP
+========================================================= */
+
+.customer-live-map {
+    width: 100%;
+
+    height: 390px;
+
+    background: #eeeae5;
+}
+
+
+.tracking-map-unavailable {
+    padding:
+        30px
+        20px;
+
+    color: #8f8983;
+
+    text-align: center;
+
+    font-size: 12px;
+}
+
+
+.tracking-driver-marker-wrap,
+.tracking-customer-marker-wrap {
+    background:
+        transparent !important;
+
+    border:
+        0 !important;
+}
+
+
+.tracking-driver-marker {
+    width: 56px;
+    height: 56px;
+
+    display: grid;
+
+    place-items: center;
+
+    border:
+        3px solid
+        #ffcc00;
+
+    border-radius: 50%;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.97
+        );
+
+    box-shadow:
+        0
+        6px
+        22px
+        rgba(
+            0,
+            0,
+            0,
+            0.22
+        );
+}
+
+
+.tracking-bike-body {
+    font-size: 31px;
+
+    transform-origin: center;
+
+    transition:
+        transform
+        0.25s
+        linear;
+}
+
+
+.tracking-customer-marker {
+    font-size: 36px;
+
+    filter:
+        drop-shadow(
+            0
+            4px
+            4px
+            rgba(
+                0,
+                0,
+                0,
+                0.23
+            )
+        );
+}
+
+
+.leaflet-control-attribution {
+    font-size:
+        8px !important;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.tracking-empty {
+    text-align: center;
+}
+
+
+.tracking-empty-icon {
+    margin-bottom: 10px;
+
+    font-size: 40px;
+}
+
+
+.tracking-empty h3 {
+    color: #7a0c1e;
+
+    font-family:
+        "Playfair Display",
+        serif;
+
+    font-size: 19px;
+}
+
+
+.tracking-empty p {
+    margin-top: 7px;
+
+    color: #777777;
 
     font-size: 13px;
 }
 
-/* ==============================
-   LEAFLET MAP
-============================== */
 
-.driver-map {
-    width: 100% !important;
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
-    height: 440px !important;
-
-    min-height: 440px !important;
-
-    display: block !important;
-
-    position: relative;
-
-    overflow: hidden;
-
-    border-radius: 18px;
-
-    border: 1px solid #ddd5c9;
-
-    background: #e8e8e8;
-
-    box-shadow:
-        0 7px 22px rgba(0, 0, 0, 0.12);
-}
-
-/*
-   QUAN TRỌNG:
-   Leaflet phải có height thật.
-*/
-
-#driver-map {
-    width: 100% !important;
-    height: 440px !important;
-}
-
-/* ==============================
-   LEAFLET
-============================== */
-
-.leaflet-container {
-    width: 100% !important;
-    height: 100% !important;
-
-    font-family: "Roboto", sans-serif;
-
-    background: #e5e5e5;
-}
-
-.leaflet-control-zoom {
-    border: none !important;
-
-    box-shadow:
-        0 3px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-.leaflet-control-zoom a {
-    color: #7a0c1e !important;
-}
-
-/* ==============================
-   SHOP MARKER
-============================== */
-
-.shop-marker {
-    width: 50px;
-    height: 50px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: white;
-
-    border: 3px solid #7a0c1e;
-
-    font-size: 25px;
-
-    box-shadow:
-        0 5px 16px rgba(0, 0, 0, 0.25);
-}
-
-/* ==============================
-   DRIVER MARKER
-============================== */
-
-.driver-marker {
-    width: 58px;
-    height: 58px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: #7a0c1e;
-
-    border: 4px solid white;
-
-    font-size: 29px;
-
-    box-shadow:
-        0 5px 18px rgba(0, 0, 0, 0.30);
-
-    animation: driverPulse 1.7s infinite;
-}
-
-.driver-popup {
-    min-width: 180px;
-
-    padding: 5px;
-
-    text-align: center;
-
-    font-family: "Roboto", sans-serif;
-}
-
-.driver-popup-name {
-    margin-bottom: 5px;
-
-    color: #7a0c1e;
-
-    font-size: 15px;
-    font-weight: 700;
-}
-
-.driver-popup-status {
-    color: #168344;
-
-    font-size: 12px;
-    font-weight: 700;
-}
-
-/* ==============================
-   COMPLETED
-============================== */
-
-.completed-driver {
-    background: #eaf8ee;
-}
-
-/* ==============================
-   NOT FOUND
-============================== */
-
-.not-found {
-    padding: 50px 20px;
-
-    text-align: center;
-}
-
-.not-found-icon {
-    margin-bottom: 12px;
-
-    font-size: 45px;
-}
-
-.not-found h3 {
-    margin-bottom: 8px;
-
-    color: #7a0c1e;
-}
-
-.not-found p {
-    color: #777;
-}
-
-/* ==============================
-   ANIMATION
-============================== */
-
-@keyframes driverPulse {
-
-    0% {
-        transform: scale(1);
-
-        box-shadow:
-            0 5px 18px rgba(0, 0, 0, 0.30);
-    }
-
-    50% {
-        transform: scale(1.08);
-
-        box-shadow:
-            0 5px 25px rgba(122, 12, 30, 0.40);
-    }
-
-    100% {
-        transform: scale(1);
-
-        box-shadow:
-            0 5px 18px rgba(0, 0, 0, 0.30);
-    }
-}
-
-@keyframes statusPulse {
-
-    0% {
-        box-shadow:
-            0 0 0 0 rgba(255, 204, 0, 0.45);
-    }
-
-    70% {
-        box-shadow:
-            0 0 0 12px rgba(255, 204, 0, 0);
-    }
-
-    100% {
-        box-shadow:
-            0 0 0 0 rgba(255, 204, 0, 0);
-    }
-}
-
-/* ==============================
-   MOBILE
-============================== */
-
-@media (max-width: 768px) {
+@media (
+    max-width: 760px
+) {
 
     .container {
-        width: 100%;
-        max-width: calc(100% - 20px);
+        max-width:
+            calc(
+                100% - 20px
+            );
 
-        margin-top: 20px;
+        margin-top: 25px;
     }
 
-    .search-box {
-        padding: 28px 18px;
+
+    .search-box,
+    .order-card {
+        padding:
+            22px
+            17px;
+
+        border-radius: 18px;
     }
 
-    .search-box h2 {
-        font-size: 25px;
-    }
 
     .search-form {
         flex-direction: column;
     }
+
 
     .search-form input,
     .search-form button {
         width: 100%;
     }
 
-    .order-card {
-        padding: 20px;
-    }
 
     .order-heading {
-        flex-direction: column;
-
         align-items: flex-start;
+
+        flex-direction: column;
     }
 
-    .status-tracker {
+
+    .customer-status-tracker {
         overflow-x: auto;
 
-        padding-bottom: 15px;
+        padding-bottom: 7px;
     }
 
-    .status-step {
-        min-width: 120px;
+
+    .customer-status-step {
+        width: 95px;
     }
 
-    .info-row {
+
+    .tracking-order-info {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .tracking-map-heading {
         flex-direction: column;
-
-        gap: 5px;
     }
 
-    .info-row strong {
-        text-align: left;
+
+    .tracking-map-metrics {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
     }
 
-    .map-section {
-        padding: 15px;
+
+    .customer-live-map {
+        height: 330px;
     }
 
-    .driver-map,
-    #driver-map {
-        height: 360px !important;
-        min-height: 360px !important;
+}
+
+
+@media (
+    max-width: 430px
+) {
+
+    .tracking-map-metrics {
+        grid-template-columns:
+            1fr;
     }
+
+
+    .customer-live-map {
+        height: 300px;
+    }
+
 }

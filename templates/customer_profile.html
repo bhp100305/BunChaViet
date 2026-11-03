@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ khách hàng | Bún Chả Việt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="stylesheet" href="/static/css/customer-auth.css">
+    <link rel="stylesheet" href="/static/css/customer-profile.css">
+    <script src="/static/js/customer-profile.js" defer></script>
+</head>
+<body class="login-body customer-auth-body profile-body">
+    <div class="profile-shell">
+        <header class="profile-topbar">
+            <a href="/" class="profile-brand">🍜 BÚN CHẢ VIỆT</a>
+            <nav aria-label="Điều hướng tài khoản">
+                <a href="/">Trang chủ</a>
+                <button id="profile-logout" type="button">Đăng xuất</button>
+            </nav>
+        </header>
+
+        <main class="profile-main">
+            <section class="profile-heading">
+                <div class="profile-avatar" aria-hidden="true">👤</div>
+                <div>
+                    <p class="profile-eyebrow">TÀI KHOẢN CỦA BẠN</p>
+                    <h1>Hồ sơ cá nhân</h1>
+                    <p>Quản lý thông tin liên hệ và bảo mật tài khoản.</p>
+                </div>
+            </section>
+
+            <div class="profile-grid">
+                <section class="profile-panel">
+                    <div class="profile-panel-heading">
+                        <div><h2>Thông tin cá nhân</h2><p>Cập nhật tên và số điện thoại nhận đơn.</p></div>
+                        <span class="profile-panel-icon" aria-hidden="true">✎</span>
+                    </div>
+                    <form id="profile-form">
+                        <div id="profile-message" class="profile-message" role="status" aria-live="polite"></div>
+                        <label class="profile-field" for="profile-name">Họ và tên
+                            <input id="profile-name" name="fullName" autocomplete="name" maxlength="100" required>
+                        </label>
+                        <label class="profile-field" for="profile-phone">Số điện thoại
+                            <input id="profile-phone" name="phone" type="tel" autocomplete="tel" maxlength="20" required>
+                        </label>
+                        <label class="profile-field" for="profile-email">Email đăng nhập
+                            <input id="profile-email" name="email" type="email" readonly>
+                            <small>Email đang được dùng làm tài khoản đăng nhập.</small>
+                        </label>
+                        <button class="profile-submit" type="submit">Lưu thay đổi</button>
+                    </form>
+                </section>
+
+                <section class="profile-panel security-panel">
+                    <div class="profile-panel-heading">
+                        <div><h2>Bảo mật</h2><p>Đổi mật khẩu để bảo vệ tài khoản.</p></div>
+                        <span class="profile-panel-icon" aria-hidden="true">♢</span>
+                    </div>
+                    <form id="password-form">
+                        <div id="password-message" class="profile-message" role="status" aria-live="polite"></div>
+                        <label class="profile-field" for="current-password">Mật khẩu hiện tại
+                            <input id="current-password" name="currentPassword" type="password" autocomplete="current-password" required>
+                        </label>
+                        <label class="profile-field" for="new-password">Mật khẩu mới
+                            <input id="new-password" name="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+                            <small>Mật khẩu cần có ít nhất 8 ký tự.</small>
+                        </label>
+                        <label class="profile-field" for="confirm-password">Nhập lại mật khẩu mới
+                            <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+                        </label>
+                        <button class="profile-submit profile-submit-secondary" type="submit">Cập nhật mật khẩu</button>
+                    </form>
+                </section>
+            </div>
+            <a class="profile-back" href="/">← Quay lại cửa hàng</a>
+        </main>
+    </div>
+</body>
+</html>
