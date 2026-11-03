@@ -201,12 +201,16 @@ function displayProducts(list){
         product.productName ??
         product.name;
 
+        const isAvailable =
+        product.isAvailable !== false &&
+        Number(product.isAvailable) !== 0;
+
 
 
         container.innerHTML += `
 
 
-        <div class="product-card">
+        <div class="product-card ${isAvailable ? "" : "is-out-of-stock"}">
 
 
             <img 
@@ -216,6 +220,8 @@ function displayProducts(list){
 
 
             <div class="product-info">
+
+                ${isAvailable ? "" : '<span class="stock-badge">Hết hàng</span>'}
 
 
                 <h3>
@@ -240,10 +246,11 @@ function displayProducts(list){
 
                 <button 
                 class="add-cart"
+                ${isAvailable ? "" : "disabled"}
                 onclick="addToCart(${id})">
 
 
-                    🛒 Thêm vào giỏ
+                    ${isAvailable ? "🛒 Thêm vào giỏ" : "Hết hàng"}
 
 
                 </button>
@@ -342,6 +349,11 @@ document
 
 function addToCart(productId){
 
+    if (!window.customerLoggedIn) {
+        window.location.href = "/customer/login";
+        return;
+    }
+
 
     const product =
     products.find(
@@ -353,6 +365,11 @@ function addToCart(productId){
 
 
     if(!product) return;
+
+    if (product.isAvailable === false || Number(product.isAvailable) === 0) {
+        alert("Món này hiện đã hết hàng.");
+        return;
+    }
 
 
 

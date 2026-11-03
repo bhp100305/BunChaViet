@@ -1131,6 +1131,31 @@ button:disabled {
     font-size: 10px;
 }
 
+.payment-column .payment-paid-label,
+.payment-column .payment-unconfirmed-label {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 240px;
+    margin-top: 9px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.payment-column .payment-paid-label {
+    border: 1px solid #ccebd9;
+    background: #effaf3;
+    color: #16804c;
+}
+
+.payment-column .payment-unconfirmed-label {
+    border: 1px solid #f0dfb9;
+    background: #fff8e8;
+    color: #936810;
+}
+
 
 /* =========================================================
    ACTIONS

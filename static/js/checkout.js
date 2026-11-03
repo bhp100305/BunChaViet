@@ -415,21 +415,33 @@ if (
             13
         );
 
-    L.tileLayer(
-        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    const mapTiles = L.tileLayer(
+        "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
         {
-
-            maxZoom:
-                19,
-
-            attribution:
-                "&copy; OpenStreetMap"
-
+            maxZoom: 19,
+            subdomains: "abc",
+            attribution: "&copy; OpenStreetMap contributors, tiles &copy; OpenStreetMap France / HOT",
         }
     )
     .addTo(
         map
     );
+
+    let fallbackTilesEnabled = false;
+    mapTiles.on("tileerror", () => {
+        if (fallbackTilesEnabled) return;
+        fallbackTilesEnabled = true;
+        map.removeLayer(mapTiles);
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map);
+    });
+
+    window.addEventListener("load", () => {
+        window.setTimeout(() => map.invalidateSize(), 100);
+    });
+    window.addEventListener("resize", () => map.invalidateSize());
 
 }
 
@@ -538,10 +550,9 @@ async function setMarker(
         shouldReverseGeocode
     ) {
 
-        await reverseGeocode(
-            latitude,
-            longitude
-        );
+        reverseGeocode(latitude, longitude).catch((error) => {
+            console.warn("Unable to resolve delivery address:", error);
+        });
 
     }
 
@@ -743,62 +754,89 @@ function calculateShipping(
 // REVERSE GEOCODE
 // =========================================================
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+        window.clearTimeout(timeoutId);
+    }
+}
+
 async function reverseGeocode(
     lat,
     lng
 ) {
 
+    const encodedLat = encodeURIComponent(lat);
+    const encodedLng = encodeURIComponent(lng);
+
+    // Giữ cách tra địa chỉ trực tiếp như trước; đây là luồng đã hoạt động trên desktop.
     try {
-
-        const url =
-
-            `https://nominatim.openstreetmap.org/reverse`
-
-            +
-
-            `?format=json&lat=${encodeURIComponent(lat)}`
-
-            +
-
-            `&lon=${encodeURIComponent(lng)}&accept-language=vi`;
-
-        const response =
-            await fetch(
-                url
-            );
-
-        if (
-            !response.ok
-        ) {
-
-            return;
-
-        }
-
-        const data =
-            await response.json();
-
-        if (
-            data.display_name
-            &&
-            addressInput
-        ) {
-
-            addressInput.value =
-                data.display_name;
-
-        }
-
-    }
-    catch (
-        error
-    ) {
-
-        console.warn(
-            "Reverse geocode error:",
-            error
+        const response = await fetchWithTimeout(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodedLat}&lon=${encodedLng}&accept-language=vi`,
+            { headers: { "Accept": "application/json" } }
         );
+        if (response.ok) {
+            const data = await response.json();
+            if (data.display_name && addressInput) {
+                addressInput.value = data.display_name;
+                addressInput.placeholder = "Nhập địa chỉ giao hàng...";
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn("Direct reverse geocoding unavailable:", error);
+    }
 
+    // Same-origin fallback supports in-app mobile browsers that block cross-origin requests.
+    try {
+        const response = await fetchWithTimeout(
+            `/api/geocode/reverse?lat=${encodedLat}&lon=${encodedLng}`,
+            { credentials: "same-origin", headers: { "Accept": "application/json" } }
+        );
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.address && addressInput) {
+                addressInput.value = data.address;
+                addressInput.placeholder = "Nhập địa chỉ giao hàng...";
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn("Local reverse geocoding unavailable:", error);
+    }
+
+    // Last fallback uses Photon so a failed Nominatim response does not leave the address blank.
+    try {
+        const response = await fetchWithTimeout(
+            `https://photon.komoot.io/reverse?lat=${encodedLat}&lon=${encodedLng}&lang=vi`,
+            { headers: { "Accept": "application/json" } }
+        );
+        if (response.ok) {
+            const payload = await response.json();
+            const properties = payload.features?.[0]?.properties || {};
+            const photonAddress = [
+                [properties.housenumber, properties.street].filter(Boolean).join(" "),
+                properties.name,
+                properties.district,
+                properties.city || properties.county,
+                properties.state,
+            ].filter(Boolean).filter((part, index, all) => all.indexOf(part) === index).join(", ");
+
+            if (photonAddress && addressInput) {
+                addressInput.value = photonAddress;
+                addressInput.placeholder = "Nhập địa chỉ giao hàng...";
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn("Photon reverse geocoding unavailable:", error);
+    }
+
+    if (addressInput) {
+        addressInput.placeholder = "Không lấy được địa chỉ, vui lòng nhập địa chỉ giao hàng...";
     }
 
 }
@@ -822,21 +860,10 @@ async function searchAddress(
 
     try {
 
-        const url =
-
-            `https://nominatim.openstreetmap.org/search`
-
-            +
-
-            `?format=json&limit=5&countrycodes=vn&accept-language=vi`
-
-            +
-
-            `&q=${encodeURIComponent(keyword)}`;
-
         const response =
             await fetch(
-                url
+                `/api/geocode/search?q=${encodeURIComponent(keyword)}`,
+                { credentials: "same-origin", headers: { "Accept": "application/json" } }
             );
 
         if (
@@ -849,8 +876,14 @@ async function searchAddress(
 
         }
 
-        const data =
+        const payload =
             await response.json();
+
+        if (!payload.success) {
+            throw new Error(payload.message || "Không thể tìm địa chỉ.");
+        }
+
+        const data = payload.results;
 
         suggestionBox.innerHTML =
             "";

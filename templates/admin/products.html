@@ -37,9 +37,16 @@
 
     <div class="toolbar">
 
+        <nav class="product-view-tabs" aria-label="Lọc sản phẩm">
+            <a href="/admin/products" class="{% if product_view == 'active' %}active{% endif %}">Đang kinh doanh</a>
+            <a href="/admin/products?view=archived" class="{% if product_view == 'archived' %}active{% endif %}">Kho lưu trữ</a>
+        </nav>
+
+        {% if product_view == 'active' %}
         <button id="btnAdd" class="add-btn">
             + Thêm món mới
         </button>
+        {% endif %}
 
     </div>
 
@@ -55,6 +62,7 @@
                     <th>Tên món</th>
                     <th>Danh mục</th>
                     <th>Giá</th>
+                    <th>Tình trạng</th>
                     <th>Thao tác</th>
                 </tr>
             </thead>
@@ -116,9 +124,20 @@
 
                     </td>
 
+                    <td>
+                        {% if product_view == 'archived' %}
+                            <span class="availability-badge archived">Đã lưu trữ</span>
+                        {% elif p.IsAvailable %}
+                            <span class="availability-badge available">Còn hàng</span>
+                        {% else %}
+                            <span class="availability-badge unavailable">Hết hàng</span>
+                        {% endif %}
+                    </td>
+
 
                     <td>
 
+                        {% if product_view == 'active' %}
                         <button class="edit-btn edit-product"
                                 data-id="{{ p.ProductID }}"
                                 data-name="{{ p.ProductName }}"
@@ -131,12 +150,24 @@
                         </button>
 
 
-                        <button class="delete-btn delete-product"
+                        <button class="stock-btn toggle-stock"
+                                data-id="{{ p.ProductID }}"
+                                data-available="{{ 1 if p.IsAvailable else 0 }}">
+                            {% if p.IsAvailable %}Hết hàng{% else %}Bán lại{% endif %}
+                        </button>
+
+
+                        <button class="archive-btn archive-product"
                                 data-id="{{ p.ProductID }}">
 
-                            🗑 Xóa
+                            Lưu trữ
 
                         </button>
+                        {% else %}
+                        <button class="restore-btn restore-product" data-id="{{ p.ProductID }}">
+                            Khôi phục
+                        </button>
+                        {% endif %}
 
                     </td>
 
@@ -173,6 +204,8 @@
         <h2 id="modalTitle">
             Thêm món ăn
         </h2>
+
+        <div id="productFormMessage" class="product-form-message" role="alert" aria-live="polite" hidden></div>
 
 
         <form id="productForm"
@@ -262,7 +295,7 @@
 
 
 <script src="/static/js/products.js"></script>
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin-dashboard.js') }}"></script>
 
 </body>
 </html>

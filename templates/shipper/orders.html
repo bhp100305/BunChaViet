@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -748,6 +748,8 @@
 
                         <div class="payment-column">
 
+                            {% set already_paid = order[13] == 'BANK_TRANSFER' and order[14] == 'Đã thanh toán' %}
+
 
                             <span class="info-label">
                                 Tiền cần thu
@@ -756,16 +758,20 @@
 
                             <strong class="order-money">
 
-                                {{ "{:,.0f}".format(order[8] or 0) }}
+                                {{ "{:,.0f}".format(0 if already_paid else (order[8] or 0)) }}
 
                                 ₫
 
                             </strong>
 
 
-                            <small>
-                                Thu từ khách hàng
-                            </small>
+                            {% if already_paid %}
+                            <small class="payment-paid-label">Đã thanh toán qua QR · Không thu tiền khách</small>
+                            {% elif order[13] == 'BANK_TRANSFER' %}
+                            <small class="payment-unconfirmed-label">Chuyển khoản chưa được xác nhận · Vui lòng báo Admin, không tự thu tiền</small>
+                            {% else %}
+                            <small>Thu từ khách hàng</small>
+                            {% endif %}
 
 
                         </div>
@@ -1667,7 +1673,7 @@
 
 
 <script
-    src="{{ url_for('static', filename='js/shipper.js') }}"
+    src="{{ url_for('static', filename='js/shipper-portal.js') }}"
 >
 </script>
 

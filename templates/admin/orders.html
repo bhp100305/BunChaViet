@@ -143,7 +143,7 @@
 
 
             <a
-                href="{{ url_for('admin.shippers') }}"
+                href="{{ url_for('admin_shippers.shippers') }}"
                 class="secondary-header-btn"
             >
                 Quản lý shipper
@@ -792,6 +792,30 @@
                             </div>
 
 
+                            <div class="payment-cell">
+
+                                <strong class="payment-method-label">
+                                    {% if o.PaymentMethod == 'BANK_TRANSFER' %}
+                                        QR / Chuyển khoản
+                                    {% else %}
+                                        Tiền mặt
+                                    {% endif %}
+                                </strong>
+
+                                <div class="payment-status-label">{{ o.PaymentStatus or 'Chưa cập nhật' }}</div>
+
+                                {% if o.PaymentMethod == 'BANK_TRANSFER'
+                                      and o.PaymentStatus == 'Khách báo đã chuyển khoản' %}
+                                <button
+                                    type="button"
+                                    class="order-payment-confirm"
+                                    data-order-id="{{ o.OrderID }}"
+                                >Xác nhận đã nhận tiền</button>
+                                {% endif %}
+
+                            </div>
+
+
                         </td>
 
 
@@ -1228,7 +1252,7 @@
     src="{{ url_for('static', filename='js/orders.js') }}"
 >
 </script>
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin-dashboard.js') }}"></script>
 
 
 </body>

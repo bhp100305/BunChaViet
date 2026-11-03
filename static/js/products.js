@@ -19,6 +19,13 @@ const description = document.getElementById("description");
 const price = document.getElementById("price");
 
 const category = document.getElementById("category");
+const formMessage = document.getElementById("productFormMessage");
+
+function showProductFormMessage(message) {
+    if (!formMessage) return;
+    formMessage.textContent = message;
+    formMessage.hidden = !message;
+}
 
 
 
@@ -28,7 +35,7 @@ const category = document.getElementById("category");
 
 document
 .getElementById("btnAdd")
-.addEventListener("click", () => {
+?.addEventListener("click", () => {
 
 
     mode = "add";
@@ -39,6 +46,7 @@ document
 
 
     form.reset();
+    showProductFormMessage("");
 
 
     productID.value = "";
@@ -64,6 +72,7 @@ document
 
 
         mode = "edit";
+        showProductFormMessage("");
 
 
         modalTitle.innerHTML =
@@ -132,115 +141,91 @@ window.onclick = function(event){
 // SAVE PRODUCT
 // ======================
 
-form.addEventListener("submit", function(e){
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showProductFormMessage("");
 
+    const url = mode === "add"
+        ? "/admin/products/add"
+        : `/admin/products/edit/${productID.value}`;
+    const submitButton = form.querySelector('[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
 
-    e.preventDefault();
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            body: new FormData(form),
+            credentials: "same-origin",
+        });
+        const data = await response.json();
 
-
-    let url;
-
-
-    if(mode === "add"){
-
-        url = "/admin/products/add";
-
-    }
-    else{
-
-        url =
-        "/admin/products/edit/"
-        + productID.value;
-
-    }
-
-
-
-    fetch(url, {
-
-        method:"POST",
-
-        body:new FormData(form)
-
-    })
-
-    .then(res => res.json())
-
-    .then(data => {
-
-
-        if(data.success){
-
-            alert("Lưu thành công!");
-
-            location.reload();
-
-        }
-        else{
-
-            alert("Có lỗi xảy ra!");
-
+        if (!response.ok || !data.success) {
+            showProductFormMessage(data.message || "Không thể lưu sản phẩm.");
+            return;
         }
 
-
-    });
-
-
+        alert("Lưu thành công!");
+        location.reload();
+    } catch (error) {
+        showProductFormMessage("Không thể kết nối máy chủ. Vui lòng thử lại.");
+    } finally {
+        if (submitButton) submitButton.disabled = false;
+    }
 });
 
 
 
 
-// ======================
-// DELETE PRODUCT
-// ======================
-
-document
-.querySelectorAll(".delete-product")
-.forEach(button => {
-
-
-    button.addEventListener("click", () => {
-
-
-        let id =
-        button.dataset.id;
-
-
-
-        if(!confirm("Bạn có chắc muốn xóa món này?")){
-
-            return;
-
-        }
-
-
-
-        fetch(
-            "/admin/products/delete/" + id,
-            {
-                method:"DELETE"
-            }
-        )
-
-        .then(res => res.json())
-
-        .then(data => {
-
-
-            if(data.success){
-
-                alert("Đã xóa!");
-
-                location.reload();
-
-            }
-
-
-        });
-
-
+async function sendProductAction(url, body = undefined) {
+    const response = await fetch(url, {
+        method: "POST",
+        headers: body ? { "Content-Type": "application/json" } : {},
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: "same-origin",
     });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+        throw new Error(data.message || "Không thể cập nhật món ăn.");
+    }
+    location.reload();
+}
 
+document.querySelectorAll(".toggle-stock").forEach((button) => {
+    button.addEventListener("click", async () => {
+        const makeAvailable = button.dataset.available !== "1";
+        const message = makeAvailable
+            ? "Đưa món này trở lại trạng thái còn hàng?"
+            : "Đánh dấu món này đã hết hàng? Món sẽ hiện mờ trên trang chủ và khách không thể đặt.";
+        if (!window.confirm(message)) return;
+        try {
+            await sendProductAction(
+                `/admin/products/availability/${button.dataset.id}`,
+                { isAvailable: makeAvailable }
+            );
+        } catch (error) {
+            window.alert(error.message);
+        }
+    });
+});
 
+document.querySelectorAll(".archive-product").forEach((button) => {
+    button.addEventListener("click", async () => {
+        if (!window.confirm("Lưu trữ món này? Món sẽ được ẩn khỏi trang chủ; dữ liệu đơn hàng cũ vẫn được giữ.")) return;
+        try {
+            await sendProductAction(`/admin/products/archive/${button.dataset.id}`);
+        } catch (error) {
+            window.alert(error.message);
+        }
+    });
+});
+
+document.querySelectorAll(".restore-product").forEach((button) => {
+    button.addEventListener("click", async () => {
+        if (!window.confirm("Khôi phục món này về danh sách kinh doanh?")) return;
+        try {
+            await sendProductAction(`/admin/products/restore/${button.dataset.id}`);
+        } catch (error) {
+            window.alert(error.message);
+        }
+    });
 });

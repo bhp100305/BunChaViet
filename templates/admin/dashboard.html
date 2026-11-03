@@ -111,7 +111,7 @@
         <section class="stats-grid">
 
             <a
-                href="{{ url_for('admin.orders') }}"
+                href="{{ url_for('admin_orders.orders') }}"
                 class="stat-card"
             >
                 <div class="stat-icon primary">
@@ -141,7 +141,7 @@
 
 
             <a
-                href="{{ url_for('admin.orders') }}?status=Đã tiếp nhận"
+                href="{{ url_for('admin_orders.orders') }}?status=Đã tiếp nhận"
                 class="stat-card"
             >
                 <div class="stat-icon warning">
@@ -171,7 +171,7 @@
 
 
             <a
-                href="{{ url_for('admin.orders') }}"
+                href="{{ url_for('admin_orders.orders') }}"
                 class="stat-card"
             >
                 <div class="stat-icon blue">
@@ -201,7 +201,7 @@
 
 
             <a
-                href="{{ url_for('admin.orders') }}?status=Hoàn thành"
+                href="{{ url_for('admin_orders.orders') }}?status=Hoàn thành"
                 class="stat-card"
             >
                 <div class="stat-icon success">
@@ -257,7 +257,7 @@
 
 
             <a
-                href="{{ url_for('admin.shippers') }}"
+                href="{{ url_for('admin_shippers.shippers') }}"
                 class="stat-card"
             >
                 <div class="stat-icon online">
@@ -314,7 +314,7 @@
                     </div>
 
                     <a
-                        href="{{ url_for('admin.orders') }}"
+                        href="{{ url_for('admin_orders.orders') }}"
                         class="view-all-link"
                     >
                         Xem tất cả →
@@ -523,7 +523,7 @@
                         </div>
 
                         <a
-                            href="{{ url_for('admin.products') }}"
+                            href="/admin/products"
                             class="operation-link"
                         >
                             ›
@@ -551,7 +551,7 @@
                         </div>
 
                         <a
-                            href="{{ url_for('admin.shippers') }}"
+                            href="{{ url_for('admin_shippers.shippers') }}"
                             class="operation-link"
                         >
                             ›
@@ -579,7 +579,7 @@
                         </div>
 
                         <a
-                            href="{{ url_for('admin.shippers') }}"
+                            href="{{ url_for('admin_shippers.shippers') }}"
                             class="operation-link"
                         >
                             ›
@@ -607,7 +607,7 @@
                         </div>
 
                         <a
-                            href="{{ url_for('admin.orders') }}"
+                            href="{{ url_for('admin_orders.orders') }}"
                             class="operation-link"
                         >
                             ›
@@ -666,7 +666,7 @@
             <div class="quick-grid">
 
                 <a
-                    href="{{ url_for('admin.products') }}"
+                    href="/admin/products"
                     class="quick-card"
                 >
 
@@ -694,7 +694,7 @@
 
 
                 <a
-                    href="{{ url_for('admin.orders') }}"
+                    href="{{ url_for('admin_orders.orders') }}"
                     class="quick-card"
                 >
 
@@ -722,7 +722,7 @@
 
 
                 <a
-                    href="{{ url_for('admin.shippers') }}"
+                    href="{{ url_for('admin_shippers.shippers') }}"
                     class="quick-card"
                 >
 
@@ -749,33 +749,6 @@
                 </a>
 
 
-                <a
-                    href="{{ url_for('admin.users') }}"
-                    class="quick-card"
-                >
-
-                    <div class="quick-icon employee">
-                        ◉
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Nhân viên
-                        </strong>
-
-                        <p>
-                            Quản lý người dùng nội bộ.
-                        </p>
-
-                    </div>
-
-                    <span class="quick-arrow">
-                        ›
-                    </span>
-
-                </a>
-
             </div>
 
         </section>
@@ -799,7 +772,7 @@
 
 
 <script
-    src="{{ url_for('static', filename='js/dashboard.js') }}"
+    src="{{ url_for('static', filename='js/admin-dashboard.js') }}"
 >
 </script>
 

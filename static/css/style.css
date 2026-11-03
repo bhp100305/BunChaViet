@@ -371,6 +371,25 @@ nav {
     box-shadow: var(--shadow-md);
 }
 
+.product-card.is-out-of-stock {
+    opacity: .72;
+}
+
+.product-card.is-out-of-stock img {
+    filter: grayscale(.72);
+}
+
+.stock-badge {
+    align-self: flex-start;
+    margin: 0 0 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eee9e4;
+    color: #655c55;
+    font-size: .78rem;
+    font-weight: 800;
+}
+
 .product-card img {
     width: 100%;
     height: 200px;
@@ -418,6 +437,12 @@ nav {
 
 .add-cart:hover {
     background-color: var(--primary-hover);
+}
+
+.add-cart:disabled {
+    background: #aaa;
+    color: #fff;
+    cursor: not-allowed;
 }
 
 /* ==========================================

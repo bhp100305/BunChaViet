@@ -14,10 +14,54 @@ document.addEventListener(
 
         setupOrderStatusButtons();
 
+        setupOrderPaymentActions();
+
         setupDateMonthBehavior();
 
     }
 );
+
+
+function setupOrderPaymentActions() {
+    document
+        .querySelectorAll(".order-payment-confirm")
+        .forEach((button) => {
+            button.addEventListener("click", async () => {
+                const orderId = button.dataset.orderId;
+                if (!orderId) return;
+
+                if (!window.confirm("Xác nhận bạn đã kiểm tra tài khoản và nhận được tiền chuyển khoản cho đơn này?")) {
+                    return;
+                }
+
+                button.disabled = true;
+                const oldText = button.textContent;
+                button.textContent = "Đang xác nhận...";
+
+                try {
+                    const response = await fetch(
+                        `/admin/orders/${encodeURIComponent(orderId)}/confirm-payment`,
+                        {
+                            method: "POST",
+                            credentials: "same-origin",
+                            headers: { "Accept": "application/json" },
+                        }
+                    );
+                    const data = await readJsonResponse(response);
+
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.message || "Không thể xác nhận thanh toán.");
+                    }
+
+                    window.location.reload();
+                } catch (error) {
+                    window.alert(error.message || "Không thể xác nhận thanh toán.");
+                    button.disabled = false;
+                    button.textContent = oldText;
+                }
+            });
+        });
+}
 
 
 // =========================================================

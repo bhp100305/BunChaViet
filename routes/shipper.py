@@ -568,6 +568,8 @@ def orders() -> str | Response:
         # 10 CreatedTime
         # 11 CustomerLatitude
         # 12 CustomerLongitude
+        # 13 PaymentMethod
+        # 14 PaymentStatus
         # =================================================
         cursor.execute(
             """
@@ -622,7 +624,9 @@ def orders() -> str | Response:
                 Latitude
                     AS CustomerLatitude,
                 Longitude
-                    AS CustomerLongitude
+                    AS CustomerLongitude,
+                PaymentMethod,
+                PaymentStatus
             FROM Orders
             WHERE DriverID = ?
             ORDER BY

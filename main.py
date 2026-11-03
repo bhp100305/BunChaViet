@@ -9,22 +9,53 @@ from flask import (
     jsonify
 )
 from decimal import Decimal
+from datetime import timedelta
 import os
 import time
 import secrets
+import json
+from urllib.error import URLError
+from urllib.parse import urlencode
+from urllib.request import Request as URLRequest, urlopen
 from routes.product import product_bp
 from database import get_connection
 from routes.admin import admin_bp
+from routes.admin_orders import admin_orders_bp
+from routes.admin_products import admin_products_bp
+from routes.admin_shippers import admin_shippers_bp
 from routes.shipper import shipper_bp
 from routes.admin_contacts import admin_contacts_bp
-from routes.admin_payments import admin_payments_bp
 from routes.email_otp import email_otp_bp
 from routes.customer_auth import customer_auth_bp
 app = Flask(__name__)
 
-app.secret_key = os.getenv(
-    "FLASK_SECRET_KEY"
-)
+def get_flask_secret_key() -> str:
+    """Dùng khóa cấu hình; nếu thiếu thì tạo một khóa ổn định trên máy chạy app."""
+    configured_key = os.getenv("FLASK_SECRET_KEY")
+    if configured_key:
+        return configured_key
+
+    key_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        ".flask_secret_key",
+    )
+
+    try:
+        with open(key_path, "r", encoding="ascii") as key_file:
+            return key_file.read().strip()
+    except FileNotFoundError:
+        generated_key = secrets.token_urlsafe(48)
+        try:
+            with open(key_path, "x", encoding="ascii") as key_file:
+                key_file.write(generated_key)
+            return generated_key
+        except FileExistsError:
+            with open(key_path, "r", encoding="ascii") as key_file:
+                return key_file.read().strip()
+
+
+app.secret_key = get_flask_secret_key()
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 print(
     "GMAIL_ADDRESS loaded:",
     bool(os.getenv("GMAIL_ADDRESS"))
@@ -42,17 +73,20 @@ print(
 
 app.register_blueprint(product_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(admin_orders_bp)
+app.register_blueprint(admin_products_bp)
+app.register_blueprint(admin_shippers_bp)
 app.register_blueprint(shipper_bp)
 app.register_blueprint(admin_contacts_bp)
-app.register_blueprint(
-    admin_payments_bp
-)
 app.register_blueprint(email_otp_bp)
 app.register_blueprint(customer_auth_bp)
 @app.route("/")
 def home():
 
-    return render_template("index.html")
+    return render_template(
+        "index.html",
+        customer_logged_in=bool(session.get("customer_id")),
+    )
 
 
 @app.route(
@@ -192,6 +226,8 @@ def login():
             "role"
         ] = user.Role
 
+        session.permanent = True
+
 
         # Shipper chỉ được có một phiên hoạt động: mỗi lần đăng nhập tạo token mới.
         # Token trong database sẽ thay token cũ, khiến các thiết bị đăng nhập trước
@@ -319,153 +355,6 @@ def staff_orders():
 
 
 @app.route(
-    "/api/session"
-)
-def check_session():
-    """Kiểm tra session hiện tại."""
-
-    if (
-        "user_id"
-        not in session
-    ):
-
-        return jsonify({
-
-            "logged_in":
-                False,
-
-        })
-
-
-    # =====================================================
-    # SHIPPER PHẢI CÓ TOKEN ĐÚNG
-    # =====================================================
-
-    if (
-        session.get(
-            "role"
-        )
-        ==
-        "Shipper"
-    ):
-
-        token = (
-            session.get(
-                "shipper_session_token"
-            )
-        )
-
-
-        if not token:
-
-            session.clear()
-
-
-            return jsonify({
-
-                "logged_in":
-                    False,
-
-                "reason":
-                    "SESSION_INVALID",
-
-            })
-
-
-        conn = get_connection()
-
-        cursor = conn.cursor()
-
-
-        try:
-
-            cursor.execute(
-                """
-                SELECT
-                    ActiveSessionToken,
-                    IsActive
-
-                FROM Users
-
-                WHERE UserID = ?
-
-                  AND Role =
-                      'Shipper'
-                """,
-                (
-                    session.get(
-                        "user_id"
-                    ),
-                ),
-            )
-
-
-            user = (
-                cursor.fetchone()
-            )
-
-
-            if (
-                not user
-                or
-                user.IsActive != 1
-                or
-                not user.ActiveSessionToken
-                or
-                user.ActiveSessionToken
-                !=
-                token
-            ):
-
-                session.clear()
-
-
-                return jsonify({
-
-                    "logged_in":
-                        False,
-
-                    "reason":
-                        "SESSION_CONFLICT",
-
-                })
-
-
-        finally:
-
-            cursor.close()
-
-            conn.close()
-
-
-    return jsonify({
-
-        "logged_in":
-            True,
-
-        "user_id":
-            session.get(
-                "user_id"
-            ),
-
-        "username":
-            session.get(
-                "username"
-            ),
-
-        "fullname":
-            session.get(
-                "fullname"
-            ),
-
-        "role":
-            session.get(
-                "role"
-            ),
-
-    })
-
-@app.route(
     "/logout"
 )
 def logout():
@@ -576,9 +465,90 @@ def server_error(error):
 @app.route("/checkout")
 def checkout():
 
+    if not session.get("customer_id"):
+        return redirect("/customer/login")
+
     return render_template(
         "checkout.html"
     )
+
+
+@app.route("/api/geocode/reverse")
+def reverse_geocode_address():
+    """Tra địa chỉ từ tọa độ giao hàng qua Nominatim."""
+    try:
+        latitude = float(request.args.get("lat", ""))
+        longitude = float(request.args.get("lon", ""))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Tọa độ không hợp lệ."}), 400
+
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return jsonify({"success": False, "message": "Tọa độ nằm ngoài phạm vi hợp lệ."}), 400
+
+    query = urlencode({
+        "format": "jsonv2",
+        "lat": latitude,
+        "lon": longitude,
+        "accept-language": "vi",
+    })
+    upstream = URLRequest(
+        f"https://nominatim.openstreetmap.org/reverse?{query}",
+        headers={
+            "User-Agent": "NguonMoDelivery/1.0",
+            "Accept": "application/json",
+        },
+    )
+
+    try:
+        with urlopen(upstream, timeout=8) as response:
+            result = json.loads(response.read().decode("utf-8"))
+        address = (result.get("display_name") or "").strip()
+        if not address:
+            return jsonify({"success": False, "message": "Không tìm thấy địa chỉ cho vị trí này."}), 404
+        return jsonify({"success": True, "address": address})
+    except (URLError, TimeoutError, ValueError) as error:
+        app.logger.warning("Reverse geocoding failed: %s", error)
+        return jsonify({"success": False, "message": "Dịch vụ tìm địa chỉ hiện không phản hồi."}), 502
+
+
+@app.route("/api/geocode/search")
+def search_geocode_address():
+    """Tìm gợi ý địa chỉ giao hàng qua Nominatim, tránh CORS trên mobile."""
+    keyword = (request.args.get("q") or "").strip()
+    if len(keyword) < 3:
+        return jsonify({"success": False, "message": "Nhập ít nhất 3 ký tự để tìm địa chỉ."}), 400
+
+    query = urlencode({
+        "format": "jsonv2",
+        "limit": 5,
+        "countrycodes": "vn",
+        "accept-language": "vi",
+        "q": keyword,
+    })
+    upstream = URLRequest(
+        f"https://nominatim.openstreetmap.org/search?{query}",
+        headers={
+            "User-Agent": "NguonMoDelivery/1.0",
+            "Accept": "application/json",
+        },
+    )
+
+    try:
+        with urlopen(upstream, timeout=8) as response:
+            places = json.loads(response.read().decode("utf-8"))
+        results = [
+            {
+                "display_name": (place.get("display_name") or "").strip(),
+                "lat": place.get("lat"),
+                "lon": place.get("lon"),
+            }
+            for place in places
+            if place.get("display_name") and place.get("lat") and place.get("lon")
+        ]
+        return jsonify({"success": True, "results": results})
+    except (URLError, TimeoutError, ValueError) as error:
+        app.logger.warning("Address search failed: %s", error)
+        return jsonify({"success": False, "message": "Dịch vụ tìm địa chỉ hiện không phản hồi."}), 502
 
 @app.route("/track-order")
 def track_order():
@@ -594,6 +564,9 @@ def track_order():
 )
 def create_order():
     """Tạo đơn hàng mới."""
+
+    if not session.get("customer_id"):
+        return jsonify({"success": False, "message": "Vui lòng đăng nhập trước khi đặt hàng.", "redirect": "/customer/login"}), 401
 
     data = (
         request.get_json(
@@ -791,6 +764,20 @@ def create_order():
 
         }), 400
 
+    try:
+        product_ids = []
+        for item in products:
+            if not isinstance(item, dict):
+                raise ValueError("Invalid product")
+            product_ids.append(int(item.get("id") or item.get("productId")))
+        if any(product_id <= 0 for product_id in product_ids):
+            raise ValueError("Invalid product")
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "Giỏ hàng có món không hợp lệ. Vui lòng tải lại thực đơn.",
+        }), 400
+
 
     # =====================================================
     # CALCULATE TOTAL
@@ -864,6 +851,33 @@ def create_order():
 
 
     try:
+
+        placeholders = ",".join("?" for _ in product_ids)
+        cursor.execute(
+            f"""
+            SELECT ProductID, IsActive, IsAvailable
+            FROM Products
+            WHERE ProductID IN ({placeholders})
+            """,
+            product_ids,
+        )
+        current_products = {
+            int(row.ProductID): row
+            for row in cursor.fetchall()
+        }
+        if any(product_id not in current_products or not current_products[product_id].IsActive
+               for product_id in product_ids):
+            conn.rollback()
+            return jsonify({
+                "success": False,
+                "message": "Một món trong giỏ đã được lưu trữ. Vui lòng tải lại thực đơn.",
+            }), 409
+        if any(not current_products[product_id].IsAvailable for product_id in product_ids):
+            conn.rollback()
+            return jsonify({
+                "success": False,
+                "message": "Một món trong giỏ vừa hết hàng. Vui lòng cập nhật giỏ hàng.",
+            }), 409
 
         # =================================================
         # INSERT ORDER
@@ -1379,148 +1393,6 @@ def get_order_tracking(order_code):
         cursor.close()
         conn.close()
 
-
-@app.route(
-"/api/admin/orders/update/<int:id>",
-methods=["POST"]
-)
-def update_order(id):
-
-
-    data = request.json
-
-
-    status = data.get("status")
-
-
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
-
-
-    cursor.execute("""
-
-        UPDATE Orders
-
-        SET Status=?
-
-        WHERE OrderID=?
-
-    """,
-    (
-        status,
-        id
-    ))
-
-
-
-    conn.commit()
-
-
-    cursor.close()
-
-    conn.close()
-
-
-
-    return jsonify({
-
-        "success":True
-
-    })
-
-
-@app.route(
-    "/api/driver/location",
-    methods=["POST"]
-)
-def update_driver_location():
-
-    if "user_id" not in session:
-        return jsonify({
-            "success": False,
-            "message": "Chưa đăng nhập!"
-        }), 401
-
-
-    if session.get("role") != "Shipper":
-        return jsonify({
-            "success": False,
-            "message": "Không có quyền!"
-        }), 403
-
-
-    data = request.get_json()
-
-
-    latitude = data.get("latitude")
-    longitude = data.get("longitude")
-
-
-    if latitude is None or longitude is None:
-
-        return jsonify({
-            "success": False,
-            "message": "Thiếu tọa độ GPS!"
-        }), 400
-
-
-    driver_id = session.get("user_id")
-
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-
-    try:
-
-        cursor.execute("""
-            INSERT INTO DriverLocations
-            (
-                DriverID,
-                Latitude,
-                Longitude,
-                UpdatedAt
-            )
-
-            VALUES (?, ?, ?, GETDATE())
-        """, (
-            driver_id,
-            latitude,
-            longitude
-        ))
-
-
-        conn.commit()
-
-
-        return jsonify({
-            "success": True
-        })
-
-
-    except Exception as e:
-
-        conn.rollback()
-
-        print(
-            "LỖI GPS SHIPPER:",
-            e
-        )
-
-
-        return jsonify({
-            "success": False,
-            "message": "Không thể lưu vị trí!"
-        }), 500
-
-
-    finally:
-
-        cursor.close()
-        conn.close()
 
 # ============================================================
 # CONTACT PAGE

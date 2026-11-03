@@ -70,7 +70,7 @@
 
         <a
             class="nav-item {% if active_page == 'products' %}active{% endif %}"
-            href="{{ url_for('admin.products') }}"
+            href="/admin/products"
         >
 
             <span class="nav-icon">
@@ -90,7 +90,7 @@
 
         <a
             class="nav-item {% if active_page == 'orders' %}active{% endif %}"
-            href="{{ url_for('admin.orders') }}"
+            href="{{ url_for('admin_orders.orders') }}"
         >
 
             <span class="nav-icon">
@@ -116,32 +116,12 @@
 
 
         <!-- =================================================
-             USERS
-        ================================================== -->
-
-        <a
-            class="nav-item {% if active_page == 'users' %}active{% endif %}"
-            href="{{ url_for('admin.users') }}"
-        >
-
-            <span class="nav-icon">
-                ◉
-            </span>
-
-            <span class="nav-text">
-                Nhân viên
-            </span>
-
-        </a>
-
-
-        <!-- =================================================
              SHIPPERS
         ================================================== -->
 
         <a
             class="nav-item {% if active_page == 'shippers' %}active{% endif %}"
-            href="{{ url_for('admin.shippers') }}"
+            href="{{ url_for('admin_shippers.shippers') }}"
         >
 
             <span class="nav-icon">
@@ -158,37 +138,6 @@
             {% if sidebar_online_shippers > 0 %}
 
             <span class="online-indicator"></span>
-
-            {% endif %}
-
-        </a>
-
-
-        <!-- =================================================
-             PAYMENTS
-        ================================================== -->
-
-        <a
-            class="nav-item {% if active_page == 'payments' %}active{% endif %}"
-            href="{{ url_for('admin_payments.payments') }}"
-        >
-
-            <span class="nav-icon">
-                ₫
-            </span>
-
-            <span class="nav-text">
-                Thanh toán
-            </span>
-
-
-            {% set sidebar_reported_count = reported_count | default(0, true) %}
-
-            {% if sidebar_reported_count > 0 %}
-
-            <span class="nav-count">
-                {{ sidebar_reported_count }}
-            </span>
 
             {% endif %}
 

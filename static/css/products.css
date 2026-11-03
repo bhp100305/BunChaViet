@@ -212,7 +212,33 @@ textarea {
 
     display: flex;
 
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.product-view-tabs {
+    display: inline-flex;
+    gap: 6px;
+    padding: 5px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--white);
+}
+
+.product-view-tabs a {
+    padding: 10px 13px;
+    border-radius: 7px;
+    color: var(--text-soft);
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.product-view-tabs a.active {
+    background: var(--primary-soft);
+    color: var(--primary);
 }
 
 
@@ -467,7 +493,10 @@ tbody tr:hover {
 ========================================================= */
 
 .edit-btn,
-.delete-btn {
+.delete-btn,
+.stock-btn,
+.archive-btn,
+.restore-btn {
     min-height: 35px;
 
     padding:
@@ -522,6 +551,52 @@ tbody tr:hover {
 
     transform:
         translateY(-1px);
+}
+
+.stock-btn,
+.archive-btn,
+.restore-btn {
+    margin: 3px;
+    background: #f1eee8;
+    color: #5d5147;
+}
+
+.stock-btn:hover,
+.restore-btn:hover {
+    background: var(--gold-soft);
+    color: var(--primary);
+}
+
+.archive-btn {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.archive-btn:hover {
+    background: var(--danger);
+    color: #fff;
+}
+
+.availability-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 27px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.availability-badge.available {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.availability-badge.unavailable,
+.availability-badge.archived {
+    background: var(--danger-bg);
+    color: var(--danger);
 }
 
 
@@ -598,6 +673,17 @@ tbody tr:hover {
         serif;
 
     font-size: 23px;
+}
+
+.product-form-message {
+    margin: -8px 0 14px;
+    padding: 11px 13px;
+    border: 1px solid #f1b8bd;
+    border-radius: 9px;
+    background: #fff1f2;
+    color: #9f1239;
+    font-size: 13px;
+    line-height: 1.45;
 }
 
 
