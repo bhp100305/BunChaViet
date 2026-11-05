@@ -1,4 +1,3 @@
-
 from flask import (
     Flask,
     render_template,
@@ -9,6 +8,8 @@ from flask import (
     jsonify
 )
 from decimal import Decimal
+import base64
+import math
 from datetime import timedelta
 import os
 import time
@@ -29,11 +30,111 @@ from routes.email_otp import email_otp_bp
 from routes.customer_auth import customer_auth_bp
 app = Flask(__name__)
 
+# Match static/js/checkout.js: Haversine distance and existing delivery tiers.
+SHOP_LATITUDE = 21.0338
+SHOP_LONGITUDE = 105.8019
+MAX_PRODUCT_QUANTITY = 99
+MAX_CART_LINES = 100
+
+
+def checkout_integer(value, maximum):
+    """Accept JSON integers or ASCII digit strings; never truncate floats."""
+    if isinstance(value, str):
+        value = value.strip()
+        if not value.isascii() or not value.isdecimal() or len(value) > 10:
+            raise ValueError("Invalid checkout integer")
+        value = int(value)
+    if type(value) is not int or not 1 <= value <= maximum:
+        raise ValueError("Invalid checkout integer")
+    return value
+
+
+def checkout_quantities(items):
+    """Merge repeated IDs and apply the quantity limit to each product total."""
+    if not isinstance(items, list) or not 1 <= len(items) <= MAX_CART_LINES:
+        raise ValueError("Invalid cart size")
+    quantities = {}
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("Invalid cart item")
+        raw_id = item.get("id") if item.get("id") is not None else item.get("productId")
+        product_id = checkout_integer(raw_id, 2_147_483_647)
+        quantity = checkout_integer(item.get("quantity"), MAX_PRODUCT_QUANTITY)
+        quantities[product_id] = checkout_integer(quantities.get(product_id, 0) + quantity, MAX_PRODUCT_QUANTITY)
+    return quantities
+
+
+def checkout_coordinates(latitude, longitude):
+    if isinstance(latitude, bool) or isinstance(longitude, bool):
+        raise ValueError("Invalid coordinates")
+    latitude, longitude = float(latitude), float(longitude)
+    if not math.isfinite(latitude) or not math.isfinite(longitude):
+        raise ValueError("Invalid coordinates")
+    if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+        raise ValueError("Invalid coordinates")
+    return latitude, longitude
+
+
+def checkout_shipping_fee(distance_km):
+    """Existing frontend tiers, returned as exact monetary values."""
+    if not math.isfinite(distance_km) or distance_km < 0:
+        raise ValueError("Invalid distance")
+    if distance_km <= 2:
+        return Decimal("10000")
+    if distance_km <= 5:
+        return Decimal("15000")
+    if distance_km <= 10:
+        return Decimal("25000")
+    return Decimal("50000")
+
+
+def shipping_fee_for_coordinates(latitude, longitude):
+    latitude, longitude = checkout_coordinates(latitude, longitude)
+    d_lat = math.radians(latitude - SHOP_LATITUDE)
+    d_lon = math.radians(longitude - SHOP_LONGITUDE)
+    a = (
+        math.sin(d_lat / 2) ** 2
+        + math.cos(math.radians(SHOP_LATITUDE)) * math.cos(math.radians(latitude))
+        * math.sin(d_lon / 2) ** 2
+    )
+    a = min(1.0, max(0.0, a))
+    distance = 6371 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return checkout_shipping_fee(distance)
+
+
+def generate_order_code():
+    """85 random bits, uppercase, within SQL Server VARCHAR(20)."""
+    return "BCV" + base64.b32encode(secrets.token_bytes(11)).decode("ascii")[:17]
+
+
+def checkout_total(current_products, quantities):
+    """Calculate from database prices only; never round to a storage scale here."""
+    total = Decimal("0")
+    for product_id, quantity in quantities.items():
+        price = Decimal(str(current_products[product_id].Price))
+        if not price.is_finite() or price <= 0:
+            raise ValueError("Invalid database product price")
+        total += price * quantity
+    if total > Decimal("999999999999999999"):
+        raise ValueError("Order total exceeds database capacity")
+    return total
+
+
+def is_unique_violation(error):
+    """Recognize SQL Server unique errors without logging database row values."""
+    args = getattr(error, "args", ())
+    return (
+        bool(args) and args[0] == "23000"
+        and any(code in str(args[1:]) for code in ("(2601)", "(2627)"))
+    )
+
 def get_flask_secret_key() -> str:
     """Dùng khóa cấu hình; nếu thiếu thì tạo một khóa ổn định trên máy chạy app."""
     configured_key = os.getenv("FLASK_SECRET_KEY")
-    if configured_key:
+    if configured_key and configured_key.strip():
         return configured_key
+
+
 
     key_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -55,21 +156,13 @@ def get_flask_secret_key() -> str:
 
 
 app.secret_key = get_flask_secret_key()
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
-print(
-    "GMAIL_ADDRESS loaded:",
-    bool(os.getenv("GMAIL_ADDRESS"))
+app.config.update(
+    PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
 )
 
-print(
-    "GMAIL_APP_PASSWORD loaded:",
-    bool(os.getenv("GMAIL_APP_PASSWORD"))
-)
-
-print(
-    "OTP_HMAC_SECRET loaded:",
-    bool(os.getenv("OTP_HMAC_SECRET"))
-)
 
 app.register_blueprint(product_bp)
 app.register_blueprint(admin_bp)
@@ -158,8 +251,7 @@ def login():
         cursor = conn.cursor()
 
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 UserID,
                 Username,
@@ -174,12 +266,7 @@ def login():
               AND Password = ?
 
               AND IsActive = 1
-            """,
-            (
-                username,
-                password,
-            ),
-        )
+            """, (username, password))
 
 
         user = (
@@ -248,8 +335,7 @@ def login():
 
 
             # Lưu token mới làm phiên duy nhất đang hoạt động của tài khoản này.
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE Users
 
                 SET
@@ -262,12 +348,7 @@ def login():
 
                   AND Role =
                       'Shipper'
-                """,
-                (
-                    shipper_token,
-                    user.UserID,
-                ),
-            )
+                """, (shipper_token, user.UserID))
 
 
             conn.commit()
@@ -400,8 +481,7 @@ def logout():
 
         try:
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE Users
 
                 SET
@@ -417,12 +497,7 @@ def logout():
                       'Shipper'
 
                   AND ActiveSessionToken = ?
-                """,
-                (
-                    user_id,
-                    token,
-                ),
-            )
+                """, (user_id, token))
 
 
             conn.commit()
@@ -830,19 +905,7 @@ def create_order():
     # ORDER CODE
     # =====================================================
 
-    order_code = (
-
-        "BCV"
-
-        +
-
-        str(
-            int(
-                time.time()
-            )
-        )[-6:]
-
-    )
+    order_code = generate_order_code()
 
 
     conn = get_connection()
@@ -853,14 +916,7 @@ def create_order():
     try:
 
         placeholders = ",".join("?" for _ in product_ids)
-        cursor.execute(
-            f"""
-            SELECT ProductID, IsActive, IsAvailable
-            FROM Products
-            WHERE ProductID IN ({placeholders})
-            """,
-            product_ids,
-        )
+        cursor.execute(f'\n            SELECT ProductID, IsActive, IsAvailable\n            FROM Products\n            WHERE ProductID IN ({placeholders})\n            ', (*product_ids,))
         current_products = {
             int(row.ProductID): row
             for row in cursor.fetchall()
@@ -883,8 +939,7 @@ def create_order():
         # INSERT ORDER
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO Orders
             (
                 OrderCode,
@@ -927,33 +982,7 @@ def create_order():
                 ?,
                 ?
             )
-            """,
-            (
-                order_code,
-
-                customer_name,
-
-                phone,
-
-                address,
-
-                latitude,
-
-                longitude,
-
-                note,
-
-                total_money,
-
-                shipping_fee,
-
-                "Đã tiếp nhận",
-
-                payment_method,
-
-                payment_status,
-            ),
-        )
+            """, (order_code, customer_name, phone, address, latitude, longitude, note, total_money, shipping_fee, 'Đã tiếp nhận', payment_method, payment_status))
 
 
         conn.commit()
@@ -991,10 +1020,13 @@ def create_order():
         conn.rollback()
 
 
-        print(
-            "LỖI TẠO ĐƠN:",
-            error
-        )
+        if is_unique_violation(error):
+            return jsonify({
+                "success": False,
+                "message": "Không thể tạo đơn do mã hoặc dữ liệu bị trùng. Vui lòng thử lại.",
+            }), 409
+
+        app.logger.error("Order creation failed (%s).", type(error).__name__)
 
 
         return jsonify({
@@ -1068,24 +1100,7 @@ def report_bank_transfer(
         # CHECK ORDER
         # =================================================
 
-        cursor.execute(
-            """
-            SELECT
-                OrderID,
-                PaymentMethod,
-                PaymentStatus
-
-            FROM Orders
-
-            WHERE OrderCode = ?
-
-              AND Phone = ?
-            """,
-            (
-                order_code,
-                phone,
-            ),
-        )
+        cursor.execute('SELECT OrderID, PaymentMethod, PaymentStatus FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderCode = ? AND Phone = ?', (order_code, phone))
 
 
         order = (
@@ -1127,8 +1142,16 @@ def report_bank_transfer(
         # UPDATE PAYMENT REPORT
         # =================================================
 
-        cursor.execute(
-            """
+        # The SELECT holds the order lock: a repeated report must not undo
+        # the administrator's confirmed payment.
+        if order.PaymentStatus == "Đã thanh toán":
+            return jsonify({
+                "success": True,
+                "paymentStatus": "Đã thanh toán",
+                "message": "Đơn hàng đã được xác nhận thanh toán.",
+            })
+
+        cursor.execute("""
             UPDATE Orders
 
             SET
@@ -1139,11 +1162,7 @@ def report_bank_transfer(
                     GETDATE()
 
             WHERE OrderID = ?
-            """,
-            (
-                order.OrderID,
-            ),
-        )
+            """, (order.OrderID,))
 
 
         conn.commit()
@@ -1198,8 +1217,7 @@ def get_orders(phone):
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 o.OrderID,
                 o.OrderCode,
@@ -1223,9 +1241,7 @@ def get_orders(phone):
                 ON o.DriverID = u.UserID
             WHERE o.Phone = ?
             ORDER BY o.OrderID DESC
-            """,
-            (phone,),
-        )
+            """, (phone,))
 
         orders = cursor.fetchall()
         result = []
@@ -1294,8 +1310,7 @@ def get_order_tracking(order_code):
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 o.OrderID,
                 o.OrderCode,
@@ -1309,9 +1324,7 @@ def get_order_tracking(order_code):
                 ON o.DriverID = u.UserID
             WHERE o.OrderCode = ?
               AND o.Phone = ?
-            """,
-            (order_code, phone),
-        )
+            """, (order_code, phone))
 
         order = cursor.fetchone()
 
@@ -1344,8 +1357,7 @@ def get_order_tracking(order_code):
             response["message"] = "Đơn chưa được phân công shipper."
             return jsonify(response)
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT TOP 1
                 Latitude,
                 Longitude,
@@ -1358,9 +1370,7 @@ def get_order_tracking(order_code):
             FROM DriverLocations
             WHERE DriverID = ?
             ORDER BY UpdatedAt DESC, LocationID DESC
-            """,
-            (order.DriverID,),
-        )
+            """, (order.DriverID,))
 
         location = cursor.fetchone()
 
@@ -1649,8 +1659,7 @@ def create_contact():
 
         if order_code:
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT
                     OrderID
 
@@ -1659,12 +1668,7 @@ def create_contact():
                 WHERE OrderCode = ?
 
                   AND Phone = ?
-                """,
-                (
-                    order_code,
-                    phone,
-                ),
-            )
+                """, (order_code, phone))
 
 
             order = (
@@ -1690,8 +1694,7 @@ def create_contact():
         # INSERT CONTACT
         # ====================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO Contacts
             (
                 FullName,
@@ -1715,16 +1718,7 @@ def create_contact():
                 N'Mới',
                 SYSDATETIME()
             )
-            """,
-            (
-                full_name,
-                phone,
-                email or None,
-                subject,
-                order_code or None,
-                message,
-            ),
-        )
+            """, (full_name, phone, email or None, subject, order_code or None, message))
 
 
         conn.commit()

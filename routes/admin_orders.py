@@ -98,6 +98,7 @@ def orders() -> Any:
     """
 
 
+
     params: list[Any] = []
 
 
@@ -117,9 +118,7 @@ def orders() -> Any:
         """
 
 
-        params.append(
-            selected_date
-        )
+        params.append(selected_date)
 
 
     elif selected_month:
@@ -183,9 +182,7 @@ def orders() -> Any:
         """
 
 
-        params.append(
-            selected_status
-        )
+        params.append(selected_status)
 
 
     query += """
@@ -195,16 +192,17 @@ def orders() -> Any:
     """
 
 
+
     conn = get_connection()
     cursor = conn.cursor()
 
 
     try:
 
-        cursor.execute(
-            query,
-            params,
-        )
+        if params:
+            cursor.execute(query, tuple(params))
+        else:
+            cursor.execute(query)
 
 
         order_rows = (
@@ -216,8 +214,7 @@ def orders() -> Any:
         # SHIPPER CHO DROPDOWN
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 u.UserID,
 
@@ -298,8 +295,7 @@ def orders() -> Any:
                 u.IsActive DESC,
                 u.IsWorking DESC,
                 u.FullName
-            """
-        )
+            """)
 
 
         shipper_rows = (
@@ -386,14 +382,11 @@ def confirm_order_payment(order_id: int) -> Any:
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT PaymentMethod, PaymentStatus
             FROM Orders WITH (UPDLOCK, HOLDLOCK)
             WHERE OrderID = ?
-            """,
-            (order_id,),
-        )
+            """, (order_id,))
         order = cursor.fetchone()
 
         if not order:
@@ -412,15 +405,12 @@ def confirm_order_payment(order_id: int) -> Any:
             conn.rollback()
             return jsonify({"success": False, "message": "Khách chưa báo đã chuyển khoản."}), 409
 
-        cursor.execute(
-            """
+        cursor.execute("""
             UPDATE Orders
             SET PaymentStatus = N'Đã thanh toán',
                 PaidAt = SYSDATETIME()
             WHERE OrderID = ?
-            """,
-            (order_id,),
-        )
+            """, (order_id,))
         conn.commit()
         return jsonify({"success": True, "message": "Đã xác nhận đơn hàng thanh toán qua QR."})
 
@@ -495,24 +485,7 @@ def assign_shipper() -> Any:
         # CHECK SHIPPER
         # =================================================
 
-        cursor.execute(
-            """
-            SELECT
-                UserID,
-                FullName,
-                IsActive,
-                IsWorking
-
-            FROM Users
-
-            WHERE UserID = ?
-
-              AND Role = 'Shipper'
-            """,
-            (
-                driver_id,
-            ),
-        )
+        cursor.execute("SELECT UserID, FullName, IsActive, IsWorking FROM Users WITH (UPDLOCK, HOLDLOCK) WHERE UserID = ? AND Role = 'Shipper'", (driver_id,))
 
 
         shipper = (
@@ -555,22 +528,7 @@ def assign_shipper() -> Any:
         # CHECK ORDER
         # =================================================
 
-        cursor.execute(
-            """
-            SELECT
-                OrderID,
-                OrderCode,
-                Status,
-                DriverID
-
-            FROM Orders
-
-            WHERE OrderID = ?
-            """,
-            (
-                order_id,
-            ),
-        )
+        cursor.execute('SELECT OrderID, OrderCode, Status, DriverID FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ?', (order_id,))
 
 
         order = (
@@ -657,8 +615,7 @@ def assign_shipper() -> Any:
         # ASSIGN
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             UPDATE Orders
 
             SET
@@ -668,12 +625,7 @@ def assign_shipper() -> Any:
                     N'Đã giao shipper'
 
             WHERE OrderID = ?
-            """,
-            (
-                shipper.UserID,
-                order_id,
-            ),
-        )
+            """, (shipper.UserID, order_id))
 
 
         conn.commit()
@@ -755,20 +707,7 @@ def update_order_status(
 
     try:
 
-        cursor.execute(
-            """
-            SELECT
-                Status,
-                DriverID
-
-            FROM Orders
-
-            WHERE OrderID = ?
-            """,
-            (
-                id,
-            ),
-        )
+        cursor.execute('SELECT Status, DriverID FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ?', (id,))
 
 
         order = (
@@ -817,8 +756,7 @@ def update_order_status(
 
         if new_status == "Đã hủy":
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE Orders
 
                 SET
@@ -827,27 +765,17 @@ def update_order_status(
                     DriverID = NULL
 
                 WHERE OrderID = ?
-                """,
-                (
-                    id,
-                ),
-            )
+                """, (id,))
 
         else:
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE Orders
 
                 SET Status = ?
 
                 WHERE OrderID = ?
-                """,
-                (
-                    new_status,
-                    id,
-                ),
-            )
+                """, (new_status, id))
 
 
         conn.commit()

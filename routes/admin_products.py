@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 from decimal import Decimal, InvalidOperation
@@ -39,8 +39,7 @@ def products() -> Any:
 
     try:
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 p.ProductID,
                 p.ProductName,
@@ -59,17 +58,14 @@ def products() -> Any:
             WHERE p.IsActive = ?
 
             ORDER BY p.ProductID DESC
-            """,
-            (0 if product_view == "archived" else 1,),
-        )
+            """, (product_view != 'archived',))
 
         product_rows = (
             cursor.fetchall()
         )
 
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 CategoryID,
                 CategoryName
@@ -77,8 +73,7 @@ def products() -> Any:
             FROM Categories
 
             ORDER BY CategoryName
-            """
-        )
+            """)
 
         category_rows = (
             cursor.fetchall()
@@ -183,6 +178,9 @@ def add_product() -> Any:
 
     try:
         # 7. Kiểm tra danh mục có tồn tại không
+        # PostgreSQL locks the existing category even when the product does not
+        # exist yet. Concurrent adds in this category wait until commit/rollback;
+        # the following duplicate SELECT sees the committed insert at READ COMMITTED.
         cursor.execute("""
             SELECT CategoryID
             FROM Categories
@@ -257,13 +255,7 @@ def add_product() -> Any:
                 IsActive
             )
             VALUES (?, ?, ?, ?, ?, 1)
-        """, (
-            name,
-            description,
-            price,
-            filename,
-            category_id
-        ))
+        """, (name, description, price, filename, category_id))
 
         # 11. Xác nhận lưu vào database
         conn.commit()
@@ -396,8 +388,7 @@ def update_product(
             )
 
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE Products
 
                 SET
@@ -408,21 +399,11 @@ def update_product(
                     Image = ?
 
                 WHERE ProductID = ?
-                """,
-                (
-                    name,
-                    description,
-                    price,
-                    category,
-                    filename,
-                    id,
-                ),
-            )
+                """, (name, description, price, category, filename, id))
 
         else:
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE Products
 
                 SET
@@ -432,15 +413,7 @@ def update_product(
                     CategoryID = ?
 
                 WHERE ProductID = ?
-                """,
-                (
-                    name,
-                    description,
-                    price,
-                    category,
-                    id,
-                ),
-            )
+                """, (name, description, price, category, id))
 
 
         conn.commit()
@@ -476,10 +449,7 @@ def set_product_availability(id: int) -> Any:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "UPDATE Products SET IsAvailable = ? WHERE ProductID = ? AND IsActive = 1",
-            (1 if is_available else 0, id),
-        )
+        cursor.execute('UPDATE Products SET IsAvailable = ? WHERE ProductID = ? AND IsActive = 1', (is_available, id))
         if cursor.rowcount == 0:
             conn.rollback()
             return jsonify({"success": False, "message": "Không tìm thấy món đang hoạt động."}), 404
@@ -501,7 +471,7 @@ def archive_product(id: int) -> Any:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE Products SET IsActive = 0 WHERE ProductID = ?", (id,))
+        cursor.execute('UPDATE Products SET IsActive = 0 WHERE ProductID = ?', (id,))
         if cursor.rowcount == 0:
             conn.rollback()
             return jsonify({"success": False, "message": "Không tìm thấy món ăn."}), 404
@@ -523,7 +493,7 @@ def restore_product(id: int) -> Any:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE Products SET IsActive = 1 WHERE ProductID = ?", (id,))
+        cursor.execute('UPDATE Products SET IsActive = 1 WHERE ProductID = ?', (id,))
         if cursor.rowcount == 0:
             conn.rollback()
             return jsonify({"success": False, "message": "Không tìm thấy món trong kho lưu trữ."}), 404
@@ -560,18 +530,13 @@ def delete_product(
 
     try:
 
-        cursor.execute(
-            """
+        cursor.execute("""
             UPDATE Products
 
             SET IsActive = 0
 
             WHERE ProductID = ?
-            """,
-            (
-                id,
-            ),
-        )
+            """, (id,))
 
 
         conn.commit()

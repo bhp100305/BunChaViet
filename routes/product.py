@@ -8,39 +8,45 @@ product_bp = Blueprint("product", __name__)
 @product_bp.route("/api/products", methods=["GET"])
 def get_products():
 
+
     conn = get_connection()
 
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT
-            ProductID,
-            ProductName,
-            Description,
-            Price,
-            Image,
-            CategoryID,
-            IsAvailable
-        FROM Products
-        WHERE IsActive = 1
-    """)
+        query = """
+                SELECT
+                    ProductID,
+                    ProductName,
+                    Description,
+                    Price,
+                    Image,
+                    CategoryID,
+                    IsAvailable
+                FROM Products
+                WHERE IsActive = 1
+                ORDER BY ProductID
+            """
 
-    rows = cursor.fetchall()
+        cursor.execute(query)
+        rows = cursor.fetchall()
 
-    products = []
+        products = []
 
-    for row in rows:
+        for row in rows:
+            products.append({
+                "id": row.ProductID,
+                "name": row.ProductName,
+                "description": row.Description,
+                "price": float(row.Price),
+                "image": row.Image,
+                "category_id": row.CategoryID,
+                "isAvailable": bool(row.IsAvailable),
+            })
 
-        products.append({
-            "id": row.ProductID,
-            "name": row.ProductName,
-            "description": row.Description,
-            "price": float(row.Price),
-            "image": row.Image,
-            "category_id": row.CategoryID,
-            "isAvailable": bool(row.IsAvailable),
-        })
+        cursor.close()
 
-    conn.close()
+        return jsonify(products)
 
-    return jsonify(products)
+    finally:
+        conn.close()

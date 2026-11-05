@@ -118,12 +118,8 @@ def get_shipper_session_state_with_cursor(
             WHERE UserID = ?
               AND Role = 'Shipper'
         """
-    cursor.execute(
-        query,
-        (
-            user_id,
-        ),
-    )
+
+    cursor.execute(query, (user_id,))
     shipper = cursor.fetchone()
     if not shipper:
         return (
@@ -422,19 +418,14 @@ def orders() -> str | Response:
         # =================================================
         # SHIPPER INFO
         # =================================================
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 IsWorking,
                 IsActive
             FROM Users
             WHERE UserID = ?
               AND Role = 'Shipper'
-            """,
-            (
-                user_id,
-            ),
-        )
+            """, (user_id,))
         shipper = (
             cursor.fetchone()
         )
@@ -452,8 +443,7 @@ def orders() -> str | Response:
         # =================================================
         # OVERVIEW STATISTICS
         # =================================================
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 COUNT(*),
                 SUM(
@@ -507,11 +497,7 @@ def orders() -> str | Response:
             WHERE DriverID = ?
               AND Status =
                   N'Hoàn thành'
-            """,
-            (
-                user_id,
-            ),
-        )
+            """, (user_id,))
         statistic = (
             cursor.fetchone()
         )
@@ -530,8 +516,7 @@ def orders() -> str | Response:
         # =================================================
         # ACTIVE ORDERS COUNT
         # =================================================
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT COUNT(*)
             FROM Orders
             WHERE DriverID = ?
@@ -541,11 +526,7 @@ def orders() -> str | Response:
                   N'Đang chuẩn bị',
                   N'Đang giao'
               )
-            """,
-            (
-                user_id,
-            ),
-        )
+            """, (user_id,))
         active_order_count = (
             cursor.fetchone()[0]
             or 0
@@ -571,8 +552,7 @@ def orders() -> str | Response:
         # 13 PaymentMethod
         # 14 PaymentStatus
         # =================================================
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 OrderID,
                 OrderCode,
@@ -631,19 +611,14 @@ def orders() -> str | Response:
             WHERE DriverID = ?
             ORDER BY
                 OrderID DESC
-            """,
-            (
-                user_id,
-            ),
-        )
+            """, (user_id,))
         order_rows = (
             cursor.fetchall()
         )
         # =================================================
         # RANGE STATISTICS
         # =================================================
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 COUNT(*)
                     AS CompletedCount,
@@ -686,13 +661,7 @@ def orders() -> str | Response:
                       ?,
                       23
                   )
-            """,
-            (
-                user_id,
-                from_date,
-                to_date,
-            ),
-        )
+            """, (user_id, from_date, to_date))
         range_statistic = (
             cursor.fetchone()
         )
@@ -707,8 +676,7 @@ def orders() -> str | Response:
         # =================================================
         # COMPLETED ORDERS IN RANGE
         # =================================================
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 OrderID,
                 OrderCode,
@@ -788,21 +756,14 @@ def orders() -> str | Response:
                     CreatedAt
                 )
                 DESC
-            """,
-            (
-                user_id,
-                from_date,
-                to_date,
-            ),
-        )
+            """, (user_id, from_date, to_date))
         statistic_orders = (
             cursor.fetchall()
         )
         # =================================================
         # FAILED ORDERS
         # =================================================
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT COUNT(*)
             FROM Orders
             WHERE DriverID = ?
@@ -811,11 +772,7 @@ def orders() -> str | Response:
                   N'Không giao được',
                   N'Đã hủy'
               )
-            """,
-            (
-                user_id,
-            ),
-        )
+            """, (user_id,))
         failed_order_count = (
             cursor.fetchone()[0]
             or 0
@@ -890,8 +847,7 @@ def toggle_work() -> ApiResponse:
             ==
             1
         ):
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT COUNT(*)
                 FROM Orders
                 WHERE DriverID = ?
@@ -901,11 +857,7 @@ def toggle_work() -> ApiResponse:
                       N'Đang chuẩn bị',
                       N'Đang giao'
                   )
-                """,
-                (
-                    user_id,
-                ),
-            )
+                """, (user_id,))
             unfinished = (
                 cursor.fetchone()[0]
                 or 0
@@ -931,19 +883,13 @@ def toggle_work() -> ApiResponse:
             else
             1
         )
-        cursor.execute(
-            """
+        cursor.execute("""
             UPDATE Users
             SET IsWorking = ?
             WHERE UserID = ?
               AND Role =
                   'Shipper'
-            """,
-            (
-                new_status,
-                user_id,
-            ),
-        )
+            """, (bool(new_status), user_id))
         conn.commit()
         return jsonify({
             "success":
@@ -997,18 +943,7 @@ def update_status(
         )
         if auth_error:
             return auth_error
-        cursor.execute(
-            """
-            SELECT Status
-            FROM Orders
-            WHERE OrderID = ?
-              AND DriverID = ?
-            """,
-            (
-                id,
-                user_id,
-            ),
-        )
+        cursor.execute('SELECT Status FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ? AND DriverID = ?', (id, user_id))
         order = (
             cursor.fetchone()
         )
@@ -1068,8 +1003,7 @@ def update_status(
             ==
             "Hoàn thành"
         ):
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE Orders
                 SET
                     Status =
@@ -1080,28 +1014,15 @@ def update_status(
                   AND DriverID = ?
                   AND Status =
                       N'Đang giao'
-                """,
-                (
-                    id,
-                    user_id,
-                ),
-            )
+                """, (id, user_id))
         else:
-            cursor.execute(
-                """
+            cursor.execute("""
                 UPDATE Orders
                 SET Status = ?
                 WHERE OrderID = ?
                   AND DriverID = ?
                   AND Status = ?
-                """,
-                (
-                    new_status,
-                    id,
-                    user_id,
-                    current_status,
-                ),
-            )
+                """, (new_status, id, user_id, current_status))
         if (
             cursor.rowcount
             ==
@@ -1180,20 +1101,7 @@ def cancel_order(
         )
         if auth_error:
             return auth_error
-        cursor.execute(
-            """
-            SELECT
-                Status,
-                Note
-            FROM Orders
-            WHERE OrderID = ?
-              AND DriverID = ?
-            """,
-            (
-                id,
-                user_id,
-            ),
-        )
+        cursor.execute('SELECT Status, Note FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ? AND DriverID = ?', (id, user_id))
         order = (
             cursor.fetchone()
         )
@@ -1248,8 +1156,7 @@ def cancel_order(
             updated_note = (
                 failure_text
             )
-        cursor.execute(
-            """
+        cursor.execute("""
             UPDATE Orders
             SET
                 Status =
@@ -1259,13 +1166,7 @@ def cancel_order(
               AND DriverID = ?
               AND Status =
                   N'Đang giao'
-            """,
-            (
-                updated_note,
-                id,
-                user_id,
-            ),
-        )
+            """, (updated_note, id, user_id))
         if (
             cursor.rowcount
             ==
@@ -1422,8 +1323,7 @@ def update_location() -> ApiResponse:
         # =================================================
         # INSERT GPS
         # =================================================
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO DriverLocations
             (
                 DriverID,
@@ -1438,13 +1338,7 @@ def update_location() -> ApiResponse:
                 ?,
                 GETDATE()
             )
-            """,
-            (
-                user_id,
-                latitude,
-                longitude,
-            ),
-        )
+            """, (user_id, latitude, longitude))
         conn.commit()
         return jsonify({
             "success":

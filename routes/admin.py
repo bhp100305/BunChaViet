@@ -51,8 +51,7 @@ def dashboard() -> Any:
         # THỐNG KÊ ĐƠN HÔM NAY
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 COUNT(*) AS TodayOrders,
 
@@ -85,8 +84,7 @@ def dashboard() -> Any:
                 CAST(CreatedAt AS DATE)
                 =
                 CAST(GETDATE() AS DATE)
-            """
-        )
+            """)
 
         today_row = cursor.fetchone()
 
@@ -110,8 +108,7 @@ def dashboard() -> Any:
         # TRẠNG THÁI ĐƠN TOÀN HỆ THỐNG
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
 
                 SUM(
@@ -156,8 +153,7 @@ def dashboard() -> Any:
                 ) AS FailedOrders
 
             FROM Orders
-            """
-        )
+            """)
 
         order_status_row = (
             cursor.fetchone()
@@ -183,15 +179,13 @@ def dashboard() -> Any:
         # SẢN PHẨM ĐANG BÁN
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT COUNT(*)
 
             FROM Products
 
             WHERE IsActive = 1
-            """
-        )
+            """)
 
         active_products = (
             cursor.fetchone()[0]
@@ -203,8 +197,7 @@ def dashboard() -> Any:
         # SHIPPER
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
 
                 COUNT(*) AS TotalShippers,
@@ -227,8 +220,7 @@ def dashboard() -> Any:
             FROM Users
 
             WHERE Role = 'Shipper'
-            """
-        )
+            """)
 
         shipper_row = (
             cursor.fetchone()
@@ -249,8 +241,7 @@ def dashboard() -> Any:
         # 6 ĐƠN GẦN NHẤT
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT TOP 6
 
                 o.OrderID,
@@ -320,8 +311,7 @@ def dashboard() -> Any:
             ORDER BY
                 o.CreatedAt DESC,
                 o.OrderID DESC
-            """
-        )
+            """)
 
         recent_orders = (
             cursor.fetchall()

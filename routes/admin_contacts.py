@@ -156,8 +156,7 @@ def contacts() -> str | Response:
         # CONTACT SUMMARY
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
 
                 COUNT(*)
@@ -191,8 +190,7 @@ def contacts() -> str | Response:
                     AS RepliedContacts
 
             FROM Contacts
-            """
-        )
+            """)
 
 
         summary = (
@@ -241,15 +239,13 @@ def contacts() -> str | Response:
         # PENDING ORDERS
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT COUNT(*)
 
             FROM Orders
 
             WHERE Status = N'Đã tiếp nhận'
-            """
-        )
+            """)
 
 
         pending_row = (
@@ -268,8 +264,7 @@ def contacts() -> str | Response:
         # ONLINE SHIPPERS
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT COUNT(*)
 
             FROM Users
@@ -279,8 +274,7 @@ def contacts() -> str | Response:
               AND IsActive = 1
 
               AND IsWorking = 1
-            """
-        )
+            """)
 
 
         shipper_row = (
@@ -349,6 +343,7 @@ def contacts() -> str | Response:
 
             WHERE 1 = 1
         """
+
 
 
         params: list[Any] = []
@@ -424,6 +419,7 @@ def contacts() -> str | Response:
             """
 
 
+
             params.extend(
                 [
                     like_keyword,
@@ -464,18 +460,11 @@ def contacts() -> str | Response:
         # EXECUTE QUERY
         # =================================================
 
+
         if params:
-
-            cursor.execute(
-                query,
-                *params,
-            )
-
+            cursor.execute(query, tuple(params))
         else:
-
-            cursor.execute(
-                query
-            )
+            cursor.execute(query)
 
 
         contact_rows = (
@@ -577,8 +566,7 @@ def contact_detail(
 
     try:
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
 
                 c.ContactID,
@@ -607,7 +595,7 @@ def contact_detail(
 
                 o.OrderID,
 
-                o.Status,
+                o.Status AS OrderStatus,
 
                 (
                     ISNULL(
@@ -632,11 +620,7 @@ def contact_detail(
                    c.OrderCode
 
             WHERE c.ContactID = ?
-            """,
-            (
-                contact_id,
-            ),
-        )
+            """, (contact_id,))
 
 
         row = (
@@ -844,19 +828,14 @@ def update_contact_status(
         # CHECK CONTACT
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 ContactID
 
             FROM Contacts
 
             WHERE ContactID = ?
-            """,
-            (
-                contact_id,
-            ),
-        )
+            """, (contact_id,))
 
 
         contact = (
@@ -881,8 +860,7 @@ def update_contact_status(
         # UPDATE CONTACT
         # =================================================
 
-        cursor.execute(
-            """
+        cursor.execute("""
             UPDATE Contacts
 
             SET
@@ -910,18 +888,7 @@ def update_contact_status(
                     END
 
             WHERE ContactID = ?
-            """,
-            (
-                new_status,
-
-                admin_note
-                or None,
-
-                new_status,
-
-                contact_id,
-            ),
-        )
+            """, (new_status, admin_note or None, new_status, contact_id))
 
 
         conn.commit()

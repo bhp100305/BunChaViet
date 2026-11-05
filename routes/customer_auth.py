@@ -80,13 +80,14 @@ def register_customer():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT CustomerID FROM Customers WHERE Email = ?", email)
+        cursor.execute('SELECT CustomerID FROM Customers WHERE Email = ?', (email,))
         if cursor.fetchone():
             return jsonify(success=False, message="Email này đã được đăng ký."), 409
-        cursor.execute(
-            "INSERT INTO Customers (FullName, Email, Phone, PasswordHash, IsActive, CreatedAt) VALUES (?, ?, ?, ?, 1, SYSDATETIME())",
-            full_name, email, phone, hash_password(password),
-        )
+        cursor.execute("""
+            INSERT INTO Customers
+                (FullName, Email, Phone, PasswordHash, IsActive, CreatedAt)
+            VALUES (?, ?, ?, ?, 1, SYSDATETIME())
+            """, (full_name, email, phone, hash_password(password)))
         conn.commit()
         session.pop("checkout_verified_email", None)
         session.pop("checkout_verified_email_at", None)
@@ -111,7 +112,11 @@ def login_customer():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT CustomerID, FullName, Email, PasswordHash FROM Customers WHERE Email = ? AND IsActive = 1", email)
+        cursor.execute("""
+            SELECT CustomerID, FullName, Email, PasswordHash
+            FROM Customers
+            WHERE Email = ? AND IsActive = 1
+            """, (email,))
         customer = cursor.fetchone()
         if not customer or not verify_password(password, str(customer.PasswordHash)):
             return jsonify(success=False, message="Email hoặc mật khẩu không đúng."), 401
@@ -154,10 +159,7 @@ def get_customer_profile():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT FullName, Email, Phone FROM Customers WHERE CustomerID = ? AND IsActive = 1",
-            customer_id,
-        )
+        cursor.execute('SELECT FullName, Email, Phone FROM Customers WHERE CustomerID = ? AND IsActive = 1', (customer_id,))
         customer = cursor.fetchone()
         if not customer:
             session.clear()
@@ -193,10 +195,7 @@ def update_customer_profile():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE Customers SET FullName = ?, Phone = ? WHERE CustomerID = ? AND IsActive = 1",
-            full_name, phone, customer_id,
-        )
+        cursor.execute('UPDATE Customers SET FullName = ?, Phone = ? WHERE CustomerID = ? AND IsActive = 1', (full_name, phone, customer_id))
         if cursor.rowcount != 1:
             conn.rollback()
             return jsonify(success=False, message="Không tìm thấy tài khoản đang hoạt động."), 404
@@ -230,17 +229,11 @@ def update_customer_password():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT PasswordHash FROM Customers WHERE CustomerID = ? AND IsActive = 1",
-            customer_id,
-        )
+        cursor.execute('SELECT PasswordHash FROM Customers WHERE CustomerID = ? AND IsActive = 1', (customer_id,))
         row = cursor.fetchone()
         if not row or not verify_password(current_password, str(row.PasswordHash)):
             return jsonify(success=False, message="Mật khẩu hiện tại không đúng."), 400
-        cursor.execute(
-            "UPDATE Customers SET PasswordHash = ? WHERE CustomerID = ? AND IsActive = 1",
-            hash_password(new_password), customer_id,
-        )
+        cursor.execute('UPDATE Customers SET PasswordHash = ? WHERE CustomerID = ? AND IsActive = 1', (hash_password(new_password), customer_id))
         conn.commit()
         return jsonify(success=True, message="Mật khẩu đã được thay đổi.")
     except Exception:
