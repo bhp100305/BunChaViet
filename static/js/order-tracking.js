@@ -370,6 +370,23 @@ function renderOrderCard(
         );
 
 
+    const driverPhone = String(order.driverPhone || "").trim();
+    const dialPhone = driverPhone.replace(/[^0-9+]/g, "");
+    const shipperSection = order.driverId ? `
+        <div class="tracking-shipper-info">
+            <div>
+                <span>Người giao hàng</span>
+                <strong>${driverName}</strong>
+            </div>
+            <div>
+                <span>Số điện thoại shipper</span>
+                ${dialPhone
+                    ? `<a href="tel:${escapeHTML(dialPhone)}">${escapeHTML(driverPhone)}</a>`
+                    : '<strong>Chưa cập nhật</strong>'}
+            </div>
+        </div>
+    ` : "";
+
     const total =
         formatMoney(
             order.total
@@ -628,6 +645,8 @@ function renderOrderCard(
 
             </div>
 
+
+            ${shipperSection}
 
             ${mapSection}
 
@@ -900,20 +919,44 @@ function initTrackingMap(
         );
 
 
-    L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    const mapTiles = L.tileLayer(
+        "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
         {
 
             maxZoom:
                 19,
 
             attribution:
-                "&copy; OpenStreetMap"
+                "&copy; OpenStreetMap contributors, tiles &copy; OpenStreetMap France / HOT"
 
         }
     ).addTo(
         map
     );
+
+    let fallbackTilesEnabled = false;
+    mapTiles.on("tileerror", () => {
+        if (fallbackTilesEnabled) return;
+        fallbackTilesEnabled = true;
+        map.removeLayer(mapTiles);
+        const fallbackTiles = L.tileLayer(
+            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {maxZoom: 19, attribution: "&copy; OpenStreetMap contributors"}
+        ).addTo(map);
+        fallbackTiles.on("tileerror", () => {
+            let notice = panel.querySelector(".tracking-tile-error");
+            if (!notice) {
+                notice = document.createElement("p");
+                notice.className = "tracking-map-unavailable tracking-tile-error";
+                notice.setAttribute("role", "status");
+                notice.textContent = "Không tải được nền bản đồ. Vui lòng kiểm tra kết nối mạng và tải lại trang.";
+                mapElement.before(notice);
+            }
+        });
+        fallbackTiles.on("tileload", () => {
+            panel.querySelector(".tracking-tile-error")?.remove();
+        });
+    });
 
 
     const customerIcon =

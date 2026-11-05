@@ -22,6 +22,7 @@ from flask import (
 )
 
 from google.auth.transport.requests import Request
+from google.auth.exceptions import GoogleAuthError, RefreshError
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -946,8 +947,22 @@ def send_email_otp(
             otp_code,
         )
 
+    except RefreshError:
+        current_app.logger.warning(
+            "Gmail OAuth refresh failed; run authorize_gmail.py to renew authorization."
+        )
+        return jsonify({
+            "success": False,
+            "code": "gmail_authorization_required",
+            "message": (
+                "Dịch vụ email cần được cấp quyền Google lại. "
+                "Vui lòng liên hệ cửa hàng hoặc thử lại sau."
+            ),
+        }), 503
+
     except (
         HttpError,
+        GoogleAuthError,
         OSError,
         RuntimeError,
         ValueError,

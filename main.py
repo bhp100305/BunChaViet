@@ -1235,7 +1235,8 @@ def get_orders(phone):
                     + LEFT(CONVERT(VARCHAR(8), o.CreatedAt, 108), 5)
                 ) AS CreatedTime,
                 o.DriverID,
-                u.FullName AS DriverName
+                u.FullName AS DriverName,
+                u.Phone AS DriverPhone
             FROM Orders o
             LEFT JOIN Users u
                 ON o.DriverID = u.UserID
@@ -1274,6 +1275,7 @@ def get_orders(phone):
                 ),
                 "driverId": order.DriverID,
                 "driverName": order.DriverName,
+                "driverPhone": order.DriverPhone,
             })
 
         return jsonify(result)

@@ -31,7 +31,7 @@
 
     <link
         rel="stylesheet"
-        href="/static/css/track_order.css"
+        href="/static/css/track_order.css?v=mobile-app-3"
     >
 
 
@@ -43,7 +43,7 @@
 </head>
 
 
-<body>
+<body class="tracking-page">
 
 
 <header class="header">
@@ -97,7 +97,16 @@
 
 
 
-        <nav>
+        <details class="tracking-mobile-menu">
+            <summary aria-label="Mở menu">☰</summary>
+            <div>
+                <a href="/about">Giới thiệu cửa hàng</a>
+                <a href="/contact">Liên hệ cửa hàng</a>
+                <a href="/login">Đăng nhập nội bộ</a>
+            </div>
+        </details>
+
+        <nav aria-label="Điều hướng chính">
 
 
             <a
@@ -136,7 +145,7 @@
 
             <button
                 class="cart-btn"
-                onclick="showCart()"
+                onclick="window.location.href='/checkout'"
             >
 
                 🛒 Giỏ hàng
@@ -221,7 +230,7 @@
 
 
 <script
-    src="/static/js/order-tracking.js"
+    src="/static/js/order-tracking.js?v=map-layout-2"
 >
 </script>
 

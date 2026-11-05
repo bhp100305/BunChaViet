@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 
+from dotenv import load_dotenv
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -11,18 +14,20 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 # CONFIG
 # =========================================================
 
+load_dotenv(Path(__file__).resolve().with_name(".env"))
+
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.send"
 ]
 
 
 CREDENTIALS_PATH = Path(
-    r"C:\BunChaVietSecrets\gmail_credentials.json"
+    os.getenv("GMAIL_CREDENTIALS_PATH") or r"C:\BunChaVietSecrets\gmail_credentials.json"
 )
 
 
 TOKEN_PATH = Path(
-    r"C:\BunChaVietSecrets\gmail_token.json"
+    os.getenv("GMAIL_TOKEN_PATH") or r"C:\BunChaVietSecrets\gmail_token.json"
 )
 
 
@@ -70,11 +75,13 @@ def main() -> None:
                 "Đang refresh Gmail token..."
             )
 
-            credentials.refresh(
-                Request()
-            )
+            try:
+                credentials.refresh(Request())
+            except RefreshError:
+                print("Quyền Gmail đã hết hạn hoặc bị thu hồi. Cần đăng nhập Google lại.")
+                credentials = None
 
-        else:
+        if not credentials or not credentials.valid:
 
             if not CREDENTIALS_PATH.exists():
 
