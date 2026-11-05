@@ -14,7 +14,7 @@ from flask import (
     url_for,
 )
 
-from database import get_connection
+from database import execute_query, get_connection
 
 
 admin_contacts_bp = Blueprint(
@@ -156,7 +156,8 @@ def contacts() -> str | Response:
         # CONTACT SUMMARY
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
 
@@ -191,7 +192,14 @@ def contacts() -> str | Response:
                     AS RepliedContacts
 
             FROM Contacts
+            """,
             """
+            SELECT COUNT(*) AS "TotalContacts",
+                SUM(CASE WHEN "Status" = 'Mới' THEN 1 ELSE 0 END) AS "NewContacts",
+                SUM(CASE WHEN "Status" = 'Đang xử lý' THEN 1 ELSE 0 END) AS "ProcessingContacts",
+                SUM(CASE WHEN "Status" = 'Đã phản hồi' THEN 1 ELSE 0 END) AS "RepliedContacts"
+            FROM "Contacts"
+            """,
         )
 
 
@@ -241,14 +249,16 @@ def contacts() -> str | Response:
         # PENDING ORDERS
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT COUNT(*)
 
             FROM Orders
 
             WHERE Status = N'Đã tiếp nhận'
-            """
+            """,
+            'SELECT COUNT(*) AS "PendingOrders" FROM "Orders" WHERE "Status" = \'Đã tiếp nhận\'',
         )
 
 
@@ -268,7 +278,8 @@ def contacts() -> str | Response:
         # ONLINE SHIPPERS
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT COUNT(*)
 
@@ -279,7 +290,11 @@ def contacts() -> str | Response:
               AND IsActive = 1
 
               AND IsWorking = 1
+            """,
             """
+            SELECT COUNT(*) AS "OnlineShippers" FROM "Users"
+            WHERE "Role" = 'Shipper' AND "IsActive" = TRUE AND "IsWorking" = TRUE
+            """,
         )
 
 
@@ -351,6 +366,16 @@ def contacts() -> str | Response:
         """
 
 
+        query_postgres = """
+            SELECT c."ContactID", c."FullName", c."Phone", c."Email",
+                c."Subject", c."OrderCode", c."Message", c."Status",
+                c."AdminNote", c."CreatedAt", c."UpdatedAt", c."ResolvedAt",
+                o."OrderID", o."Status" AS "OrderStatus"
+            FROM "Contacts" c
+            LEFT JOIN "Orders" o ON o."OrderCode" = c."OrderCode"
+            WHERE 1 = 1
+        """
+
         params: list[Any] = []
 
 
@@ -363,6 +388,7 @@ def contacts() -> str | Response:
             query += """
                 AND c.Status = ?
             """
+            query_postgres += ' AND c."Status" = %s'
 
 
             params.append(
@@ -379,6 +405,7 @@ def contacts() -> str | Response:
             query += """
                 AND c.Subject = ?
             """
+            query_postgres += ' AND c."Subject" = %s'
 
 
             params.append(
@@ -424,6 +451,15 @@ def contacts() -> str | Response:
             """
 
 
+            query_postgres += """
+                AND (
+                    c."FullName" LIKE %s OR c."Phone" LIKE %s
+                    OR COALESCE(c."Email", '') LIKE %s
+                    OR COALESCE(c."OrderCode", '') LIKE %s
+                    OR c."Message" LIKE %s
+                )
+            """
+
             params.extend(
                 [
                     like_keyword,
@@ -464,18 +500,13 @@ def contacts() -> str | Response:
         # EXECUTE QUERY
         # =================================================
 
-        if params:
+        query_postgres += """
+            ORDER BY CASE c."Status"
+                WHEN 'Mới' THEN 0 WHEN 'Đang xử lý' THEN 1 ELSE 2 END,
+                c."CreatedAt" DESC NULLS LAST, c."ContactID" DESC
+        """
 
-            cursor.execute(
-                query,
-                *params,
-            )
-
-        else:
-
-            cursor.execute(
-                query
-            )
+        execute_query(cursor, query, query_postgres, *params)
 
 
         contact_rows = (
@@ -577,7 +608,8 @@ def contact_detail(
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
 
@@ -607,7 +639,7 @@ def contact_detail(
 
                 o.OrderID,
 
-                o.Status,
+                o.Status AS OrderStatus,
 
                 (
                     ISNULL(
@@ -633,9 +665,17 @@ def contact_detail(
 
             WHERE c.ContactID = ?
             """,
-            (
-                contact_id,
-            ),
+            """
+            SELECT c."ContactID", c."FullName", c."Phone", c."Email",
+                c."Subject", c."OrderCode", c."Message", c."Status",
+                c."AdminNote", c."CreatedAt", c."UpdatedAt", c."ResolvedAt",
+                o."OrderID", o."Status" AS "OrderStatus",
+                (COALESCE(o."TotalMoney", 0) + COALESCE(o."ShippingFee", 0)) AS "FinalMoney"
+            FROM "Contacts" c
+            LEFT JOIN "Orders" o ON o."OrderCode" = c."OrderCode"
+            WHERE c."ContactID" = %s
+            """,
+            contact_id,
         )
 
 
@@ -844,7 +884,8 @@ def update_contact_status(
         # CHECK CONTACT
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 ContactID
@@ -853,9 +894,8 @@ def update_contact_status(
 
             WHERE ContactID = ?
             """,
-            (
-                contact_id,
-            ),
+            'SELECT "ContactID" FROM "Contacts" WHERE "ContactID" = %s',
+            contact_id,
         )
 
 
@@ -881,7 +921,8 @@ def update_contact_status(
         # UPDATE CONTACT
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             UPDATE Contacts
 
@@ -911,16 +952,18 @@ def update_contact_status(
 
             WHERE ContactID = ?
             """,
-            (
-                new_status,
-
-                admin_note
-                or None,
-
-                new_status,
-
-                contact_id,
-            ),
+            """
+            UPDATE "Contacts"
+            SET "Status" = %s, "AdminNote" = %s,
+                "UpdatedAt" = CURRENT_TIMESTAMP,
+                "ResolvedAt" = CASE WHEN %s = 'Đã phản hồi'
+                    THEN CURRENT_TIMESTAMP ELSE NULL END
+            WHERE "ContactID" = %s
+            """,
+            new_status,
+            admin_note or None,
+            new_status,
+            contact_id,
         )
 
 

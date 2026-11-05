@@ -4,7 +4,7 @@ from typing import Any
 
 from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 
-from database import get_connection
+from database import execute_query, get_connection
 
 
 admin_orders_bp = Blueprint("admin_orders", __name__, url_prefix="/admin")
@@ -98,6 +98,15 @@ def orders() -> Any:
     """
 
 
+    query_postgres = """
+        SELECT "OrderID", "OrderCode", "CustomerName", "Phone", "Address", "Note",
+            COALESCE("TotalMoney",0) AS "TotalMoney", "Status", "CreatedAt", "DriverID",
+            COALESCE("ShippingFee",0) AS "ShippingFee",
+            (COALESCE("TotalMoney",0)+COALESCE("ShippingFee",0)) AS "FinalMoney",
+            "DeliveredAt", "PaymentMethod", "PaymentStatus", "PaymentReportedAt"
+        FROM "Orders" WHERE 1 = 1
+    """
+
     params: list[Any] = []
 
 
@@ -117,9 +126,8 @@ def orders() -> Any:
         """
 
 
-        params.append(
-            selected_date
-        )
+        query_postgres += ' AND CAST("CreatedAt" AS DATE) = CAST(%s AS DATE)'
+        params.append(selected_date)
 
 
     elif selected_month:
@@ -162,6 +170,7 @@ def orders() -> Any:
             """
 
 
+            query_postgres += ' AND EXTRACT(YEAR FROM "CreatedAt") = %s AND EXTRACT(MONTH FROM "CreatedAt") = %s'
             params.extend([
                 year,
                 month_number,
@@ -183,9 +192,8 @@ def orders() -> Any:
         """
 
 
-        params.append(
-            selected_status
-        )
+        query_postgres += ' AND "Status" = %s'
+        params.append(selected_status)
 
 
     query += """
@@ -195,15 +203,19 @@ def orders() -> Any:
     """
 
 
+    query_postgres += ' ORDER BY "CreatedAt" DESC NULLS LAST, "OrderID" DESC'
+
     conn = get_connection()
     cursor = conn.cursor()
 
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
             query,
-            params,
+            query_postgres,
+            *params,
         )
 
 
@@ -216,7 +228,8 @@ def orders() -> Any:
         # SHIPPER CHO DROPDOWN
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 u.UserID,
@@ -298,6 +311,13 @@ def orders() -> Any:
                 u.IsActive DESC,
                 u.IsWorking DESC,
                 u.FullName
+            """,
+            """
+            SELECT u."UserID", u."FullName", u."IsActive", u."IsWorking",
+             (SELECT COUNT(*) FROM "Orders" ao WHERE ao."DriverID" = u."UserID" AND ao."Status" IN ('Đã giao shipper','Đang chuẩn bị','Đang giao')) AS "ActiveOrders",
+             (SELECT COUNT(*) FROM "Orders" co WHERE co."DriverID" = u."UserID" AND co."Status" = 'Hoàn thành' AND CAST(COALESCE(co."DeliveredAt",co."CreatedAt") AS DATE) = CURRENT_DATE) AS "TodayCompleted",
+             (SELECT MAX(dl."UpdatedAt") FROM "DriverLocations" dl WHERE dl."DriverID" = u."UserID") AS "LastLocationAt"
+             FROM "Users" u WHERE u."Role" = 'Shipper' ORDER BY u."IsActive" DESC NULLS LAST, u."IsWorking" DESC NULLS LAST, u."FullName" NULLS FIRST
             """
         )
 
@@ -386,13 +406,17 @@ def confirm_order_payment(order_id: int) -> Any:
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT PaymentMethod, PaymentStatus
             FROM Orders WITH (UPDLOCK, HOLDLOCK)
             WHERE OrderID = ?
             """,
-            (order_id,),
+            """
+            SELECT "PaymentMethod", "PaymentStatus" FROM "Orders" WHERE "OrderID" = %s FOR UPDATE
+            """,
+            order_id,
         )
         order = cursor.fetchone()
 
@@ -412,14 +436,18 @@ def confirm_order_payment(order_id: int) -> Any:
             conn.rollback()
             return jsonify({"success": False, "message": "Khách chưa báo đã chuyển khoản."}), 409
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             UPDATE Orders
             SET PaymentStatus = N'Đã thanh toán',
                 PaidAt = SYSDATETIME()
             WHERE OrderID = ?
             """,
-            (order_id,),
+            """
+            UPDATE "Orders" SET "PaymentStatus" = 'Đã thanh toán', "PaidAt" = CURRENT_TIMESTAMP WHERE "OrderID" = %s
+            """,
+            order_id,
         )
         conn.commit()
         return jsonify({"success": True, "message": "Đã xác nhận đơn hàng thanh toán qua QR."})
@@ -495,23 +523,13 @@ def assign_shipper() -> Any:
         # CHECK SHIPPER
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
+            "SELECT UserID, FullName, IsActive, IsWorking FROM Users WITH (UPDLOCK, HOLDLOCK) WHERE UserID = ? AND Role = 'Shipper'",
             """
-            SELECT
-                UserID,
-                FullName,
-                IsActive,
-                IsWorking
-
-            FROM Users
-
-            WHERE UserID = ?
-
-              AND Role = 'Shipper'
+            SELECT "UserID", "FullName", "IsActive", "IsWorking" FROM "Users" WHERE "UserID" = %s AND "Role" = 'Shipper' FOR UPDATE
             """,
-            (
-                driver_id,
-            ),
+            driver_id,
         )
 
 
@@ -555,21 +573,13 @@ def assign_shipper() -> Any:
         # CHECK ORDER
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
+            'SELECT OrderID, OrderCode, Status, DriverID FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ?',
             """
-            SELECT
-                OrderID,
-                OrderCode,
-                Status,
-                DriverID
-
-            FROM Orders
-
-            WHERE OrderID = ?
+            SELECT "OrderID", "OrderCode", "Status", "DriverID" FROM "Orders" WHERE "OrderID" = %s FOR UPDATE
             """,
-            (
-                order_id,
-            ),
+            order_id,
         )
 
 
@@ -657,7 +667,8 @@ def assign_shipper() -> Any:
         # ASSIGN
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             UPDATE Orders
 
@@ -669,10 +680,11 @@ def assign_shipper() -> Any:
 
             WHERE OrderID = ?
             """,
-            (
-                shipper.UserID,
-                order_id,
-            ),
+            """
+            UPDATE "Orders" SET "DriverID" = %s, "Status" = 'Đã giao shipper' WHERE "OrderID" = %s
+            """,
+            shipper.UserID,
+            order_id,
         )
 
 
@@ -755,19 +767,13 @@ def update_order_status(
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
+            'SELECT Status, DriverID FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ?',
             """
-            SELECT
-                Status,
-                DriverID
-
-            FROM Orders
-
-            WHERE OrderID = ?
+            SELECT "Status", "DriverID" FROM "Orders" WHERE "OrderID" = %s FOR UPDATE
             """,
-            (
-                id,
-            ),
+            id,
         )
 
 
@@ -817,7 +823,8 @@ def update_order_status(
 
         if new_status == "Đã hủy":
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Orders
 
@@ -828,14 +835,16 @@ def update_order_status(
 
                 WHERE OrderID = ?
                 """,
-                (
-                    id,
-                ),
+                """
+                UPDATE "Orders" SET "Status" = 'Đã hủy', "DriverID" = NULL WHERE "OrderID" = %s
+                """,
+                id,
             )
 
         else:
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Orders
 
@@ -843,10 +852,11 @@ def update_order_status(
 
                 WHERE OrderID = ?
                 """,
-                (
-                    new_status,
-                    id,
-                ),
+                """
+                UPDATE "Orders" SET "Status" = %s WHERE "OrderID" = %s
+                """,
+                new_status,
+                id,
             )
 
 

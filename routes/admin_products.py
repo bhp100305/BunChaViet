@@ -8,7 +8,7 @@ from uuid import uuid4
 from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.utils import secure_filename
 
-from database import get_connection
+from database import execute_query, get_connection
 
 
 admin_products_bp = Blueprint("admin_products", __name__, url_prefix="/admin")
@@ -39,7 +39,8 @@ def products() -> Any:
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 p.ProductID,
@@ -60,7 +61,15 @@ def products() -> Any:
 
             ORDER BY p.ProductID DESC
             """,
-            (0 if product_view == "archived" else 1,),
+            """
+            SELECT p."ProductID", p."ProductName", p."Description", p."Price",
+                p."Image", p."CategoryID", c."CategoryName", p."IsAvailable"
+            FROM "Products" p
+            LEFT JOIN "Categories" c ON p."CategoryID" = c."CategoryID"
+            WHERE p."IsActive" = %s
+            ORDER BY p."ProductID" DESC
+            """,
+            product_view != "archived",
         )
 
         product_rows = (
@@ -68,7 +77,8 @@ def products() -> Any:
         )
 
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 CategoryID,
@@ -77,7 +87,8 @@ def products() -> Any:
             FROM Categories
 
             ORDER BY CategoryName
-            """
+            """,
+            'SELECT "CategoryID", "CategoryName" FROM "Categories" ORDER BY "CategoryName"',
         )
 
         category_rows = (
@@ -183,11 +194,17 @@ def add_product() -> Any:
 
     try:
         # 7. Kiểm tra danh mục có tồn tại không
-        cursor.execute("""
+        # PostgreSQL locks the existing category even when the product does not
+        # exist yet. Concurrent adds in this category wait until commit/rollback;
+        # the following duplicate SELECT sees the committed insert at READ COMMITTED.
+        execute_query(cursor, """
             SELECT CategoryID
             FROM Categories
             WHERE CategoryID = ?
-        """, (category_id,))
+        """, """
+            SELECT "CategoryID" FROM "Categories"
+            WHERE "CategoryID" = %s FOR UPDATE
+        """, category_id)
 
         if not cursor.fetchone():
             conn.rollback()
@@ -197,14 +214,18 @@ def add_product() -> Any:
             }), 400
 
         # 8. Kiểm tra tên sản phẩm trùng
-        cursor.execute("""
+        execute_query(cursor, """
             SELECT
                 ProductID,
                 IsActive
             FROM Products WITH (UPDLOCK, HOLDLOCK)
             WHERE CategoryID = ?
               AND LOWER(LTRIM(RTRIM(ProductName))) = LOWER(?)
-        """, (category_id, name))
+        """, """
+            SELECT "ProductID", "IsActive" FROM "Products"
+            WHERE "CategoryID" = %s
+              AND LOWER(BTRIM("ProductName")) = LOWER(%s)
+        """, category_id, name)
 
         existing_product = cursor.fetchone()
 
@@ -246,7 +267,7 @@ def add_product() -> Any:
             image.save(saved_path)
 
         # 10. Thêm sản phẩm vào database
-        cursor.execute("""
+        execute_query(cursor, """
             INSERT INTO Products
             (
                 ProductName,
@@ -257,13 +278,17 @@ def add_product() -> Any:
                 IsActive
             )
             VALUES (?, ?, ?, ?, ?, 1)
-        """, (
+        """, """
+            INSERT INTO "Products"
+                ("ProductName", "Description", "Price", "Image", "CategoryID", "IsActive")
+            VALUES (%s, %s, %s, %s, %s, TRUE)
+        """,
             name,
             description,
             price,
             filename,
             category_id
-        ))
+        )
 
         # 11. Xác nhận lưu vào database
         conn.commit()
@@ -396,7 +421,8 @@ def update_product(
             )
 
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Products
 
@@ -409,19 +435,24 @@ def update_product(
 
                 WHERE ProductID = ?
                 """,
-                (
-                    name,
-                    description,
-                    price,
-                    category,
-                    filename,
-                    id,
-                ),
+                """
+                UPDATE "Products"
+                SET "ProductName" = %s, "Description" = %s, "Price" = %s,
+                    "CategoryID" = %s, "Image" = %s
+                WHERE "ProductID" = %s
+                """,
+                name,
+                description,
+                price,
+                category,
+                filename,
+                id,
             )
 
         else:
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Products
 
@@ -433,13 +464,17 @@ def update_product(
 
                 WHERE ProductID = ?
                 """,
-                (
-                    name,
-                    description,
-                    price,
-                    category,
-                    id,
-                ),
+                """
+                UPDATE "Products"
+                SET "ProductName" = %s, "Description" = %s, "Price" = %s,
+                    "CategoryID" = %s
+                WHERE "ProductID" = %s
+                """,
+                name,
+                description,
+                price,
+                category,
+                id,
             )
 
 
@@ -476,9 +511,11 @@ def set_product_availability(id: int) -> Any:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(
+        execute_query(
+            cursor,
             "UPDATE Products SET IsAvailable = ? WHERE ProductID = ? AND IsActive = 1",
-            (1 if is_available else 0, id),
+            'UPDATE "Products" SET "IsAvailable" = %s WHERE "ProductID" = %s AND "IsActive" = TRUE',
+            is_available, id,
         )
         if cursor.rowcount == 0:
             conn.rollback()
@@ -501,7 +538,8 @@ def archive_product(id: int) -> Any:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE Products SET IsActive = 0 WHERE ProductID = ?", (id,))
+        execute_query(cursor, "UPDATE Products SET IsActive = 0 WHERE ProductID = ?",
+                      'UPDATE "Products" SET "IsActive" = FALSE WHERE "ProductID" = %s', id)
         if cursor.rowcount == 0:
             conn.rollback()
             return jsonify({"success": False, "message": "Không tìm thấy món ăn."}), 404
@@ -523,7 +561,8 @@ def restore_product(id: int) -> Any:
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE Products SET IsActive = 1 WHERE ProductID = ?", (id,))
+        execute_query(cursor, "UPDATE Products SET IsActive = 1 WHERE ProductID = ?",
+                      'UPDATE "Products" SET "IsActive" = TRUE WHERE "ProductID" = %s', id)
         if cursor.rowcount == 0:
             conn.rollback()
             return jsonify({"success": False, "message": "Không tìm thấy món trong kho lưu trữ."}), 404
@@ -560,7 +599,8 @@ def delete_product(
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             UPDATE Products
 
@@ -568,9 +608,8 @@ def delete_product(
 
             WHERE ProductID = ?
             """,
-            (
-                id,
-            ),
+            'UPDATE "Products" SET "IsActive" = FALSE WHERE "ProductID" = %s',
+            id,
         )
 
 

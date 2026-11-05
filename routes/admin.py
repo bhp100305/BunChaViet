@@ -11,7 +11,7 @@ from flask import (
     session,
     url_for,
 )
-from database import get_connection
+from database import execute_query, get_connection
 
 admin_bp = Blueprint(
     "admin",
@@ -51,7 +51,8 @@ def dashboard() -> Any:
         # THỐNG KÊ ĐƠN HÔM NAY
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 COUNT(*) AS TodayOrders,
@@ -85,7 +86,16 @@ def dashboard() -> Any:
                 CAST(CreatedAt AS DATE)
                 =
                 CAST(GETDATE() AS DATE)
+            """,
             """
+            SELECT COUNT(*) AS "TodayOrders",
+                SUM(CASE WHEN "Status" = 'Hoàn thành' THEN 1 ELSE 0 END) AS "TodayCompleted",
+                COALESCE(SUM(CASE WHEN "Status" = 'Hoàn thành'
+                    THEN COALESCE("TotalMoney", 0) + COALESCE("ShippingFee", 0)
+                    ELSE 0 END), 0) AS "TodayCollected"
+            FROM "Orders"
+            WHERE CAST("CreatedAt" AS DATE) = CURRENT_DATE
+            """,
         )
 
         today_row = cursor.fetchone()
@@ -110,7 +120,8 @@ def dashboard() -> Any:
         # TRẠNG THÁI ĐƠN TOÀN HỆ THỐNG
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
 
@@ -156,7 +167,15 @@ def dashboard() -> Any:
                 ) AS FailedOrders
 
             FROM Orders
+            """,
             """
+            SELECT SUM(CASE WHEN "Status" = 'Đã tiếp nhận' THEN 1 ELSE 0 END) AS "PendingOrders",
+                SUM(CASE WHEN "Status" IN ('Đã giao shipper', 'Đang chuẩn bị', 'Đang giao')
+                    THEN 1 ELSE 0 END) AS "ActiveOrders",
+                SUM(CASE WHEN "Status" IN ('Không giao được', 'Đã hủy')
+                    THEN 1 ELSE 0 END) AS "FailedOrders"
+            FROM "Orders"
+            """,
         )
 
         order_status_row = (
@@ -183,14 +202,16 @@ def dashboard() -> Any:
         # SẢN PHẨM ĐANG BÁN
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT COUNT(*)
 
             FROM Products
 
             WHERE IsActive = 1
-            """
+            """,
+            'SELECT COUNT(*) AS "ActiveProducts" FROM "Products" WHERE "IsActive" = TRUE',
         )
 
         active_products = (
@@ -203,7 +224,8 @@ def dashboard() -> Any:
         # SHIPPER
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
 
@@ -227,7 +249,13 @@ def dashboard() -> Any:
             FROM Users
 
             WHERE Role = 'Shipper'
+            """,
             """
+            SELECT COUNT(*) AS "TotalShippers",
+                SUM(CASE WHEN "IsActive" = TRUE AND "IsWorking" = TRUE
+                    THEN 1 ELSE 0 END) AS "OnlineShippers"
+            FROM "Users" WHERE "Role" = 'Shipper'
+            """,
         )
 
         shipper_row = (
@@ -249,7 +277,8 @@ def dashboard() -> Any:
         # 6 ĐƠN GẦN NHẤT
         # =================================================
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT TOP 6
 
@@ -320,7 +349,18 @@ def dashboard() -> Any:
             ORDER BY
                 o.CreatedAt DESC,
                 o.OrderID DESC
+            """,
             """
+            SELECT o."OrderID", o."OrderCode", o."CustomerName",
+                (COALESCE(o."TotalMoney", 0) + COALESCE(o."ShippingFee", 0)) AS "FinalMoney",
+                o."Status",
+                CASE WHEN o."CreatedAt" IS NULL THEN ''
+                    ELSE TO_CHAR(o."CreatedAt", 'DD/MM/YYYY HH24:MI') END AS "CreatedTime",
+                COALESCE(u."FullName", 'Chưa giao shipper') AS "ShipperName"
+            FROM "Orders" o LEFT JOIN "Users" u ON o."DriverID" = u."UserID"
+            ORDER BY o."CreatedAt" DESC NULLS LAST, o."OrderID" DESC
+            LIMIT 6
+            """,
         )
 
         recent_orders = (

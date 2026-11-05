@@ -12,7 +12,7 @@ from flask import (
     session,
     url_for,
 )
-from database import get_connection
+from database import execute_query, get_connection
 shipper_bp = Blueprint(
     "shipper",
     __name__,
@@ -118,11 +118,18 @@ def get_shipper_session_state_with_cursor(
             WHERE UserID = ?
               AND Role = 'Shipper'
         """
-    cursor.execute(
+    query_postgres = """
+        SELECT "IsActive", "IsWorking", "ActiveSessionToken"
+        FROM "Users" WHERE "UserID" = %s AND "Role" = 'Shipper'
+    """
+    if lock:
+        query_postgres += " FOR UPDATE"
+
+    execute_query(
+        cursor,
         query,
-        (
-            user_id,
-        ),
+        query_postgres,
+        user_id,
     )
     shipper = cursor.fetchone()
     if not shipper:
@@ -422,7 +429,8 @@ def orders() -> str | Response:
         # =================================================
         # SHIPPER INFO
         # =================================================
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 IsWorking,
@@ -431,9 +439,10 @@ def orders() -> str | Response:
             WHERE UserID = ?
               AND Role = 'Shipper'
             """,
-            (
-                user_id,
-            ),
+            """
+            SELECT "IsWorking", "IsActive" FROM "Users" WHERE "UserID" = %s AND "Role" = 'Shipper'
+            """,
+            user_id,
         )
         shipper = (
             cursor.fetchone()
@@ -452,7 +461,8 @@ def orders() -> str | Response:
         # =================================================
         # OVERVIEW STATISTICS
         # =================================================
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 COUNT(*),
@@ -508,9 +518,13 @@ def orders() -> str | Response:
               AND Status =
                   N'Hoàn thành'
             """,
-            (
-                user_id,
-            ),
+            """
+            SELECT COUNT(*) AS "TotalDone",
+             SUM(CASE WHEN CAST(COALESCE("DeliveredAt","CreatedAt") AS DATE) = CURRENT_DATE THEN 1 ELSE 0 END) AS "TodayDone",
+             SUM(CASE WHEN DATE_TRUNC('month',COALESCE("DeliveredAt","CreatedAt")) = DATE_TRUNC('month',CURRENT_TIMESTAMP) THEN 1 ELSE 0 END) AS "MonthDone"
+             FROM "Orders" WHERE "DriverID" = %s AND "Status" = 'Hoàn thành'
+            """,
+            user_id,
         )
         statistic = (
             cursor.fetchone()
@@ -530,7 +544,8 @@ def orders() -> str | Response:
         # =================================================
         # ACTIVE ORDERS COUNT
         # =================================================
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT COUNT(*)
             FROM Orders
@@ -542,9 +557,10 @@ def orders() -> str | Response:
                   N'Đang giao'
               )
             """,
-            (
-                user_id,
-            ),
+            """
+            SELECT COUNT(*) AS "ActiveOrders" FROM "Orders" WHERE "DriverID" = %s AND "Status" IN ('Đã giao shipper','Đang chuẩn bị','Đang giao')
+            """,
+            user_id,
         )
         active_order_count = (
             cursor.fetchone()[0]
@@ -571,7 +587,8 @@ def orders() -> str | Response:
         # 13 PaymentMethod
         # 14 PaymentStatus
         # =================================================
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 OrderID,
@@ -632,9 +649,15 @@ def orders() -> str | Response:
             ORDER BY
                 OrderID DESC
             """,
-            (
-                user_id,
-            ),
+            """
+            SELECT "OrderID", "OrderCode", "CustomerName", "Phone", "Address", "Note",
+             COALESCE("TotalMoney",0) AS "TotalMoney", COALESCE("ShippingFee",0) AS "ShippingFee",
+             (COALESCE("TotalMoney",0)+COALESCE("ShippingFee",0)) AS "FinalMoney", "Status",
+             COALESCE(TO_CHAR("CreatedAt",'DD/MM/YYYY HH24:MI'),'') AS "CreatedTime",
+             "Latitude" AS "CustomerLatitude", "Longitude" AS "CustomerLongitude", "PaymentMethod", "PaymentStatus"
+             FROM "Orders" WHERE "DriverID" = %s ORDER BY "OrderID" DESC
+            """,
+            user_id,
         )
         order_rows = (
             cursor.fetchall()
@@ -642,7 +665,8 @@ def orders() -> str | Response:
         # =================================================
         # RANGE STATISTICS
         # =================================================
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 COUNT(*)
@@ -687,11 +711,14 @@ def orders() -> str | Response:
                       23
                   )
             """,
-            (
-                user_id,
-                from_date,
-                to_date,
-            ),
+            """
+            SELECT COUNT(*) AS "CompletedCount", COALESCE(SUM(COALESCE("TotalMoney",0)+COALESCE("ShippingFee",0)),0) AS "CollectedMoney"
+             FROM "Orders" WHERE "DriverID" = %s AND "Status" = 'Hoàn thành'
+             AND CAST(COALESCE("DeliveredAt","CreatedAt") AS DATE) BETWEEN CAST(%s AS DATE) AND CAST(%s AS DATE)
+            """,
+            user_id,
+            from_date,
+            to_date,
         )
         range_statistic = (
             cursor.fetchone()
@@ -707,7 +734,8 @@ def orders() -> str | Response:
         # =================================================
         # COMPLETED ORDERS IN RANGE
         # =================================================
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 OrderID,
@@ -789,11 +817,17 @@ def orders() -> str | Response:
                 )
                 DESC
             """,
-            (
-                user_id,
-                from_date,
-                to_date,
-            ),
+            """
+            SELECT "OrderID", "OrderCode", "CustomerName", "Phone", "Address",
+             (COALESCE("TotalMoney",0)+COALESCE("ShippingFee",0)) AS "FinalMoney",
+             COALESCE(TO_CHAR(COALESCE("DeliveredAt","CreatedAt"),'DD/MM/YYYY HH24:MI'),'') AS "CompletedTime"
+             FROM "Orders" WHERE "DriverID" = %s AND "Status" = 'Hoàn thành'
+             AND CAST(COALESCE("DeliveredAt","CreatedAt") AS DATE) BETWEEN CAST(%s AS DATE) AND CAST(%s AS DATE)
+             ORDER BY COALESCE("DeliveredAt","CreatedAt") DESC NULLS LAST
+            """,
+            user_id,
+            from_date,
+            to_date,
         )
         statistic_orders = (
             cursor.fetchall()
@@ -801,7 +835,8 @@ def orders() -> str | Response:
         # =================================================
         # FAILED ORDERS
         # =================================================
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT COUNT(*)
             FROM Orders
@@ -812,9 +847,10 @@ def orders() -> str | Response:
                   N'Đã hủy'
               )
             """,
-            (
-                user_id,
-            ),
+            """
+            SELECT COUNT(*) AS "FailedOrders" FROM "Orders" WHERE "DriverID" = %s AND "Status" IN ('Không giao được','Đã hủy')
+            """,
+            user_id,
         )
         failed_order_count = (
             cursor.fetchone()[0]
@@ -890,7 +926,8 @@ def toggle_work() -> ApiResponse:
             ==
             1
         ):
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 SELECT COUNT(*)
                 FROM Orders
@@ -902,9 +939,10 @@ def toggle_work() -> ApiResponse:
                       N'Đang giao'
                   )
                 """,
-                (
-                    user_id,
-                ),
+                """
+                SELECT COUNT(*) AS "ActiveOrders" FROM "Orders" WHERE "DriverID" = %s AND "Status" IN ('Đã giao shipper','Đang chuẩn bị','Đang giao')
+                """,
+                user_id,
             )
             unfinished = (
                 cursor.fetchone()[0]
@@ -931,7 +969,8 @@ def toggle_work() -> ApiResponse:
             else
             1
         )
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             UPDATE Users
             SET IsWorking = ?
@@ -939,10 +978,9 @@ def toggle_work() -> ApiResponse:
               AND Role =
                   'Shipper'
             """,
-            (
-                new_status,
-                user_id,
-            ),
+            """
+            UPDATE "Users" SET "IsWorking" = %s WHERE "UserID" = %s AND "Role" = 'Shipper'
+            """, bool(new_status), user_id
         )
         conn.commit()
         return jsonify({
@@ -997,17 +1035,14 @@ def update_status(
         )
         if auth_error:
             return auth_error
-        cursor.execute(
+        execute_query(
+            cursor,
+            'SELECT Status FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ? AND DriverID = ?',
             """
-            SELECT Status
-            FROM Orders
-            WHERE OrderID = ?
-              AND DriverID = ?
+            SELECT "Status" FROM "Orders" WHERE "OrderID" = %s AND "DriverID" = %s FOR UPDATE
             """,
-            (
-                id,
-                user_id,
-            ),
+            id,
+            user_id,
         )
         order = (
             cursor.fetchone()
@@ -1068,7 +1103,8 @@ def update_status(
             ==
             "Hoàn thành"
         ):
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Orders
                 SET
@@ -1081,13 +1117,15 @@ def update_status(
                   AND Status =
                       N'Đang giao'
                 """,
-                (
-                    id,
-                    user_id,
-                ),
+                """
+                UPDATE "Orders" SET "Status" = 'Hoàn thành', "DeliveredAt" = CURRENT_TIMESTAMP WHERE "OrderID" = %s AND "DriverID" = %s AND "Status" = 'Đang giao'
+                """,
+                id,
+                user_id,
             )
         else:
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Orders
                 SET Status = ?
@@ -1095,12 +1133,13 @@ def update_status(
                   AND DriverID = ?
                   AND Status = ?
                 """,
-                (
-                    new_status,
-                    id,
-                    user_id,
-                    current_status,
-                ),
+                """
+                UPDATE "Orders" SET "Status" = %s WHERE "OrderID" = %s AND "DriverID" = %s AND "Status" = %s
+                """,
+                new_status,
+                id,
+                user_id,
+                current_status,
             )
         if (
             cursor.rowcount
@@ -1180,19 +1219,14 @@ def cancel_order(
         )
         if auth_error:
             return auth_error
-        cursor.execute(
+        execute_query(
+            cursor,
+            'SELECT Status, Note FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ? AND DriverID = ?',
             """
-            SELECT
-                Status,
-                Note
-            FROM Orders
-            WHERE OrderID = ?
-              AND DriverID = ?
+            SELECT "Status", "Note" FROM "Orders" WHERE "OrderID" = %s AND "DriverID" = %s FOR UPDATE
             """,
-            (
-                id,
-                user_id,
-            ),
+            id,
+            user_id,
         )
         order = (
             cursor.fetchone()
@@ -1248,7 +1282,8 @@ def cancel_order(
             updated_note = (
                 failure_text
             )
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             UPDATE Orders
             SET
@@ -1260,11 +1295,12 @@ def cancel_order(
               AND Status =
                   N'Đang giao'
             """,
-            (
-                updated_note,
-                id,
-                user_id,
-            ),
+            """
+            UPDATE "Orders" SET "Status" = 'Không giao được', "Note" = %s WHERE "OrderID" = %s AND "DriverID" = %s AND "Status" = 'Đang giao'
+            """,
+            updated_note,
+            id,
+            user_id,
         )
         if (
             cursor.rowcount
@@ -1422,7 +1458,8 @@ def update_location() -> ApiResponse:
         # =================================================
         # INSERT GPS
         # =================================================
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             INSERT INTO DriverLocations
             (
@@ -1439,11 +1476,12 @@ def update_location() -> ApiResponse:
                 GETDATE()
             )
             """,
-            (
-                user_id,
-                latitude,
-                longitude,
-            ),
+            """
+            INSERT INTO "DriverLocations" ("DriverID","Latitude","Longitude","UpdatedAt") VALUES (%s,%s,%s,CURRENT_TIMESTAMP)
+            """,
+            user_id,
+            latitude,
+            longitude,
         )
         conn.commit()
         return jsonify({

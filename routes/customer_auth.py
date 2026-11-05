@@ -7,7 +7,7 @@ import time
 
 from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session
 
-from database import get_connection
+from database import execute_query, get_connection
 
 customer_auth_bp = Blueprint("customer_auth", __name__)
 PASSWORD_ITERATIONS = 310_000
@@ -80,12 +80,31 @@ def register_customer():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT CustomerID FROM Customers WHERE Email = ?", email)
+        execute_query(
+            cursor,
+            "SELECT CustomerID FROM Customers WHERE Email = ?",
+            'SELECT "CustomerID" FROM "Customers" WHERE "Email" = %s',
+            email,
+        )
         if cursor.fetchone():
             return jsonify(success=False, message="Email này đã được đăng ký."), 409
-        cursor.execute(
-            "INSERT INTO Customers (FullName, Email, Phone, PasswordHash, IsActive, CreatedAt) VALUES (?, ?, ?, ?, 1, SYSDATETIME())",
-            full_name, email, phone, hash_password(password),
+        execute_query(
+            cursor,
+            """
+            INSERT INTO Customers
+                (FullName, Email, Phone, PasswordHash, IsActive, CreatedAt)
+            VALUES (?, ?, ?, ?, 1, SYSDATETIME())
+            """,
+            """
+            INSERT INTO "Customers"
+                ("FullName", "Email", "Phone", "PasswordHash",
+                 "IsActive", "CreatedAt")
+            VALUES (%s, %s, %s, %s, TRUE, CURRENT_TIMESTAMP)
+            """,
+            full_name,
+            email,
+            phone,
+            hash_password(password),
         )
         conn.commit()
         session.pop("checkout_verified_email", None)
@@ -111,7 +130,24 @@ def login_customer():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT CustomerID, FullName, Email, PasswordHash FROM Customers WHERE Email = ? AND IsActive = 1", email)
+        execute_query(
+            cursor,
+            """
+            SELECT CustomerID, FullName, Email, PasswordHash
+            FROM Customers
+            WHERE Email = ? AND IsActive = 1
+            """,
+            """
+            SELECT
+                "CustomerID",
+                "FullName",
+                "Email",
+                "PasswordHash"
+            FROM "Customers"
+            WHERE "Email" = %s AND "IsActive" = TRUE
+            """,
+            email,
+        )
         customer = cursor.fetchone()
         if not customer or not verify_password(password, str(customer.PasswordHash)):
             return jsonify(success=False, message="Email hoặc mật khẩu không đúng."), 401
@@ -154,8 +190,10 @@ def get_customer_profile():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(
+        execute_query(
+            cursor,
             "SELECT FullName, Email, Phone FROM Customers WHERE CustomerID = ? AND IsActive = 1",
+            'SELECT "FullName", "Email", "Phone" FROM "Customers" WHERE "CustomerID" = %s AND "IsActive" = TRUE',
             customer_id,
         )
         customer = cursor.fetchone()
@@ -193,8 +231,10 @@ def update_customer_profile():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(
+        execute_query(
+            cursor,
             "UPDATE Customers SET FullName = ?, Phone = ? WHERE CustomerID = ? AND IsActive = 1",
+            'UPDATE "Customers" SET "FullName" = %s, "Phone" = %s WHERE "CustomerID" = %s AND "IsActive" = TRUE',
             full_name, phone, customer_id,
         )
         if cursor.rowcount != 1:
@@ -230,15 +270,19 @@ def update_customer_password():
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(
+        execute_query(
+            cursor,
             "SELECT PasswordHash FROM Customers WHERE CustomerID = ? AND IsActive = 1",
+            'SELECT "PasswordHash" FROM "Customers" WHERE "CustomerID" = %s AND "IsActive" = TRUE',
             customer_id,
         )
         row = cursor.fetchone()
         if not row or not verify_password(current_password, str(row.PasswordHash)):
             return jsonify(success=False, message="Mật khẩu hiện tại không đúng."), 400
-        cursor.execute(
+        execute_query(
+            cursor,
             "UPDATE Customers SET PasswordHash = ? WHERE CustomerID = ? AND IsActive = 1",
+            'UPDATE "Customers" SET "PasswordHash" = %s WHERE "CustomerID" = %s AND "IsActive" = TRUE',
             hash_password(new_password), customer_id,
         )
         conn.commit()

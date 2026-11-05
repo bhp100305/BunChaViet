@@ -4,7 +4,7 @@ from typing import Any
 
 from flask import Blueprint, jsonify, render_template, request, session, redirect, url_for
 
-from database import get_connection
+from database import execute_query, get_connection
 
 
 admin_shippers_bp = Blueprint("admin_shippers", __name__, url_prefix="/admin")
@@ -35,7 +35,8 @@ def shippers() -> Any:
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 u.UserID,
@@ -135,7 +136,27 @@ def shippers() -> Any:
                 u.IsActive DESC,
                 u.IsWorking DESC,
                 u.UserID DESC
+            """,
             """
+            SELECT u."UserID", u."Username", u."FullName", u."Phone",
+                u."IsActive", u."IsWorking",
+                (SELECT COUNT(*) FROM "Orders" ao
+                 WHERE ao."DriverID" = u."UserID"
+                   AND ao."Status" IN ('Đã giao shipper', 'Đang chuẩn bị', 'Đang giao')) AS "ActiveOrders",
+                (SELECT COUNT(*) FROM "Orders" co
+                 WHERE co."DriverID" = u."UserID" AND co."Status" = 'Hoàn thành'
+                   AND CAST(COALESCE(co."DeliveredAt", co."CreatedAt") AS DATE)
+                       = CURRENT_DATE) AS "TodayCompleted",
+                (SELECT COUNT(*) FROM "Orders" fo
+                 WHERE fo."DriverID" = u."UserID"
+                   AND fo."Status" = 'Không giao được') AS "FailedOrders",
+                (SELECT MAX(dl."UpdatedAt") FROM "DriverLocations" dl
+                 WHERE dl."DriverID" = u."UserID") AS "LastLocationAt"
+            FROM "Users" u
+            WHERE u."Role" = 'Shipper'
+            ORDER BY u."IsActive" DESC NULLS LAST,
+                u."IsWorking" DESC NULLS LAST, u."UserID" DESC
+            """,
         )
 
 
@@ -229,7 +250,8 @@ def add_shipper() -> Any:
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT UserID
 
@@ -237,9 +259,8 @@ def add_shipper() -> Any:
 
             WHERE Username = ?
             """,
-            (
-                username,
-            ),
+            'SELECT "UserID" FROM "Users" WHERE "Username" = %s',
+            username,
         )
 
 
@@ -253,7 +274,8 @@ def add_shipper() -> Any:
             }), 400
 
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             INSERT INTO Users
             (
@@ -277,12 +299,15 @@ def add_shipper() -> Any:
                 0
             )
             """,
-            (
-                username,
-                password,
-                fullname,
-                phone,
-            ),
+            """
+            INSERT INTO "Users"
+                ("Username", "Password", "FullName", "Phone", "Role", "IsActive", "IsWorking")
+            VALUES (%s, %s, %s, %s, 'Shipper', TRUE, FALSE)
+            """,
+            username,
+            password,
+            fullname,
+            phone,
         )
 
 
@@ -376,7 +401,8 @@ def update_shipper(
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT UserID
 
@@ -386,10 +412,9 @@ def update_shipper(
 
               AND UserID <> ?
             """,
-            (
-                username,
-                id,
-            ),
+            'SELECT "UserID" FROM "Users" WHERE "Username" = %s AND "UserID" <> %s',
+            username,
+            id,
         )
 
 
@@ -403,7 +428,8 @@ def update_shipper(
             }), 400
 
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT UserID
 
@@ -413,9 +439,8 @@ def update_shipper(
 
               AND Role = 'Shipper'
             """,
-            (
-                id,
-            ),
+            'SELECT "UserID" FROM "Users" WHERE "UserID" = %s AND "Role" = \'Shipper\'',
+            id,
         )
 
 
@@ -431,7 +456,8 @@ def update_shipper(
 
         if password:
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Users
 
@@ -445,18 +471,22 @@ def update_shipper(
 
                   AND Role = 'Shipper'
                 """,
-                (
-                    username,
-                    password,
-                    fullname,
-                    phone,
-                    id,
-                ),
+                """
+                UPDATE "Users"
+                SET "Username" = %s, "Password" = %s, "FullName" = %s, "Phone" = %s
+                WHERE "UserID" = %s AND "Role" = 'Shipper'
+                """,
+                username,
+                password,
+                fullname,
+                phone,
+                id,
             )
 
         else:
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Users
 
@@ -469,12 +499,15 @@ def update_shipper(
 
                   AND Role = 'Shipper'
                 """,
-                (
-                    username,
-                    fullname,
-                    phone,
-                    id,
-                ),
+                """
+                UPDATE "Users"
+                SET "Username" = %s, "FullName" = %s, "Phone" = %s
+                WHERE "UserID" = %s AND "Role" = 'Shipper'
+                """,
+                username,
+                fullname,
+                phone,
+                id,
             )
 
 
@@ -556,7 +589,8 @@ def update_shipper_status(
 
     try:
 
-        cursor.execute(
+        execute_query(
+            cursor,
             """
             SELECT
                 UserID,
@@ -569,9 +603,11 @@ def update_shipper_status(
 
               AND Role = 'Shipper'
             """,
-            (
-                id,
-            ),
+            """
+            SELECT "UserID", "FullName", "IsActive" FROM "Users"
+            WHERE "UserID" = %s AND "Role" = 'Shipper'
+            """,
+            id,
         )
 
 
@@ -596,7 +632,8 @@ def update_shipper_status(
 
         if normalized_status == 0:
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 SELECT COUNT(*)
 
@@ -611,9 +648,12 @@ def update_shipper_status(
                       N'Đang giao'
                   )
                 """,
-                (
-                    id,
-                ),
+                """
+                SELECT COUNT(*) AS "ActiveOrders" FROM "Orders"
+                WHERE "DriverID" = %s
+                  AND "Status" IN ('Đã giao shipper', 'Đang chuẩn bị', 'Đang giao')
+                """,
+                id,
             )
 
 
@@ -635,7 +675,8 @@ def update_shipper_status(
                 }), 400
 
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Users
 
@@ -647,9 +688,11 @@ def update_shipper_status(
 
                   AND Role = 'Shipper'
                 """,
-                (
-                    id,
-                ),
+                """
+                UPDATE "Users" SET "IsActive" = FALSE, "IsWorking" = FALSE
+                WHERE "UserID" = %s AND "Role" = 'Shipper'
+                """,
+                id,
             )
 
 
@@ -659,7 +702,8 @@ def update_shipper_status(
 
         else:
 
-            cursor.execute(
+            execute_query(
+                cursor,
                 """
                 UPDATE Users
 
@@ -671,9 +715,11 @@ def update_shipper_status(
 
                   AND Role = 'Shipper'
                 """,
-                (
-                    id,
-                ),
+                """
+                UPDATE "Users" SET "IsActive" = TRUE, "IsWorking" = FALSE
+                WHERE "UserID" = %s AND "Role" = 'Shipper'
+                """,
+                id,
             )
 
 

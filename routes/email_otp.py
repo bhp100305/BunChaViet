@@ -4,12 +4,13 @@ import base64
 import hashlib
 import hmac
 import os
+import platform
 import re
 import secrets
 import time
 from collections import defaultdict, deque
 from email.message import EmailMessage
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from threading import Lock
 
 from flask import (
@@ -22,9 +23,12 @@ from flask import (
 )
 
 from google.auth.transport.requests import Request
+from google.auth.exceptions import GoogleAuthError
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+from database import is_production
 
 
 # =========================================================
@@ -77,8 +81,7 @@ SCOPES = [
 ]
 
 
-# Nếu không khai báo GMAIL_TOKEN_PATH
-# thì dùng đường dẫn mặc định này
+# Legacy Windows local path only; never use it as a Linux default.
 DEFAULT_GMAIL_TOKEN_PATH = Path(
     r"C:\BunChaVietSecrets\gmail_token.json"
 )
@@ -190,7 +193,7 @@ def get_otp_secret() -> str:
         )
     )
 
-    if not secret:
+    if not secret or not secret.strip():
         raise RuntimeError(
             "Thiếu OTP_HMAC_SECRET "
             "hoặc FLASK_SECRET_KEY."
@@ -379,14 +382,7 @@ def check_rate_limit(
 # =========================================================
 
 def get_gmail_token_path() -> Path:
-    """
-    Lấy đường dẫn gmail_token.json.
-
-    Có thể cấu hình trong Environment Variables:
-
-    GMAIL_TOKEN_PATH=
-    C:\\BunChaVietSecrets\\gmail_token.json
-    """
+    """Resolve the read-only OAuth file for the current environment."""
 
     configured = (
         os.getenv(
@@ -397,13 +393,43 @@ def get_gmail_token_path() -> Path:
     ).strip()
 
     if configured:
+        if platform.system() != "Windows" and PureWindowsPath(configured).drive:
+            raise RuntimeError("GMAIL_TOKEN_PATH must use a Linux path on Linux.")
+        if is_production() and not Path(configured).is_absolute():
+            raise RuntimeError("Production requires an absolute GMAIL_TOKEN_PATH.")
         return Path(
             configured
         )
 
-    return (
-        DEFAULT_GMAIL_TOKEN_PATH
-    )
+    if is_production():
+        return Path("/etc/secrets/gmail_token.json")
+    if platform.system() == "Windows":
+        return DEFAULT_GMAIL_TOKEN_PATH
+    return Path.home() / ".config" / "bunchaviet" / "gmail_token.json"
+
+
+def _read_gmail_credentials() -> Credentials:
+    """Read configuration without refreshing or exposing file/credential contents."""
+    token_path = get_gmail_token_path()
+    try:
+        if not token_path.is_file():
+            raise RuntimeError("Gmail OAuth file is missing; configure GMAIL_TOKEN_PATH.")
+        return Credentials.from_authorized_user_file(str(token_path), SCOPES)
+    except (OSError, ValueError, TypeError, KeyError, GoogleAuthError):
+        raise RuntimeError("Cannot read Gmail OAuth configuration; check GMAIL_TOKEN_PATH and token format.") from None
+
+
+def validate_gmail_configuration() -> None:
+    """Fail startup on unusable production configuration; never contact Google."""
+    credentials = _read_gmail_credentials()
+    if not credentials.refresh_token or not credentials.client_id or not credentials.client_secret:
+        raise RuntimeError("Gmail OAuth configuration requires a refresh token and client credentials.")
+    sender = os.getenv("GMAIL_ADDRESS", "").strip()
+    if sender:
+        try:
+            normalize_email(sender)
+        except ValueError:
+            raise RuntimeError("GMAIL_ADDRESS must be a valid email address.") from None
 
 
 # =========================================================
@@ -411,56 +437,13 @@ def get_gmail_token_path() -> Path:
 # =========================================================
 
 def load_gmail_credentials() -> Credentials:
-    """
-    Đọc gmail_token.json.
-
-    Nếu access token hết hạn nhưng còn refresh token
-    thì tự động refresh.
-    """
-
-    token_path = (
-        get_gmail_token_path()
-    )
-
-    if not token_path.exists():
-
-        raise RuntimeError(
-            (
-                "Không tìm thấy Gmail OAuth token tại: "
-                f"{token_path}. "
-                "Hãy chạy authorize_gmail.py trước."
-            )
-        )
-
-    credentials = (
-        Credentials
-        .from_authorized_user_file(
-            str(
-                token_path
-            ),
-            SCOPES,
-        )
-    )
-
-    # =====================================================
-    # TOKEN HẾT HẠN -> REFRESH
-    # =====================================================
-
-    if (
-        credentials.expired
-        and
-        credentials.refresh_token
-    ):
-
-        credentials.refresh(
-            Request()
-        )
-
-        # Lưu access token mới
-        token_path.write_text(
-            credentials.to_json(),
-            encoding="utf-8",
-        )
+    """Refresh only in memory. Mounted secrets are never modified, even locally."""
+    credentials = _read_gmail_credentials()
+    if not credentials.valid and credentials.refresh_token:
+        try:
+            credentials.refresh(Request())
+        except GoogleAuthError:
+            raise RuntimeError("Gmail OAuth refresh failed; check authorization and connectivity.") from None
 
     if not credentials.valid:
 
@@ -948,18 +931,13 @@ def send_email_otp(
 
     except (
         HttpError,
+        GoogleAuthError,
         OSError,
         RuntimeError,
         ValueError,
     ) as error:
 
-        current_app.logger.exception(
-            (
-                "Gmail API OTP "
-                "send failed: %s"
-            ),
-            error,
-        )
+        current_app.logger.error("Gmail API OTP send failed (%s).", type(error).__name__)
 
         return jsonify({
             "success":
